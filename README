@@ -1,0 +1,43 @@
+vrtater README for initial source release(in early development).
+Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
+license: GNU GPL v3, see COPYING, otherwise see vrtater.c
+
+Info
+Official GNU software status and transfer of copyright to FSF is underway.
+
+Introduction
+
+many of the features missing from the present source and thus in need of
+development have been outlined in the source.  a quick read should give an idea
+of the scope possible with vrtater, however features described below also
+accomplish this.  if you can compile glx programs with gcc already, there is
+a good chance vrtater will compile using make with the j target.  you should
+see a demo when vrtater is run and some term output(Esc to exit).
+
+Features(various stages of development)
+
+hmap_t is the basic unit of data transfer.  these hold data representing a type
+of 'virtual' 'object'(vob).  render*.c will contextually render these using
+attached data, while also providing the capability to render other, locally
+available non-hmap vobs, animations, etc, inside and outside of hmap bounds.  
+the most significant difference between rendering apon an hmap vs. anywhere else
+is the haptic quality hmaps will provide as wrappers that are tended to based on
+their intersection.  hmaps will move around in vobspace, and the renderer may
+use this motion to stoke animation.  the setup of vobspace will be done thru the
+ui, so the renderer will want to provide a robust configuration interface.
+
+transform.c and renderer are driven from dialog.c(ui) and the humdrum result of
+initial conditions and input.  hmap groups fed into and output from transforms
+are always used to apply changes to hmaps where possible.  hmaps and their
+supported geometry options are founded in and honored respectively in stock.c.
+these become generic so that they may be supported by transforms and rendering.
+ui dialog is passed from node to node through hmaps either in their update cycle
+or when they first enter partial(shared vobspace).
+
+session.c will retreive and maintain connections between nodes per ui request,
+and provide authenticity and encryption if desired.
+
+vectors.c and rotation.c provide basic spacial calculation.
+ifnode*.c receives system input while incrementing state, writing frames, and
+tending to presentation of display buffer.
+tug.c maintains miscelanious system bus io devices.
