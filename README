@@ -1,9 +1,14 @@
-vrtater README for initial source release(in early development).
+vrtater README
 Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
 license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 
+Status
+pre-alpha
+
 Info
-Official GNU software status and transfer of copyright to FSF is underway.
+for offering vrtater to GNU as potential Official GNU software, and then
+transfer of copyright to the FSF, code still needs to fulfill some requirements.
+this is underway.  application will be submitted apon an alpha test version.  
 
 Introduction
 
