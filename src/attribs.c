@@ -7,13 +7,14 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "attribs.h" /* !! */
 #include "hmap.h"
 #include "rendergl.h"
 #include "vectors.h"
 #include "rotation.h"
 
-/* LOD envelopes */
+/* lod envelopes */
 #define VRT_SORT_PERIF_RATIO 8
 #define VRT_SORT_FAR_RATIO 64
 #define VRT_NEAR_THRESH 10000.0f /* for now, 10000 meters */
@@ -138,7 +139,7 @@ attach_hmapf(void)
 	return NULL;
 }
 
-/* after recycler(), from selected, reinit hmap */
+/* re-initialize hmap referenced by p.  free any associated memory */
 void
 detach_hmapf(hmapf_t *p)
 {
@@ -185,7 +186,10 @@ detach_hmapf(hmapf_t *p)
 		free(p->p_dialog);
 		return;
 	}
-	__builtin_printf("detach_hmap() ptr error: cant detach.\n");
+	__builtin_fprintf(stderr, "vrtater:%s:%d: "
+		"Error: Can not detach hmap\n "
+		"Pointer reference NULL or outside of buffer\n",
+		__FILE__, __LINE__);
 }
 
 /* sort hmaps and cue them for drawing */
@@ -427,8 +431,8 @@ sort_proc_hmaps(void)
 	}
 }
 
-/* per hmap per frame in frequency:
-   process hmaps as they receive their new indirection */
+/* per hmap referenced by p, per frame in frequency, process humdrum attribs.
+   foreward lod prerequisite to draw function */
 void
 proc_hmapf(hmapf_t *p, int lod)
 {
@@ -451,7 +455,7 @@ proc_hmapf(hmapf_t *p, int lod)
 	sum_vf(&(p->v_pos), q, &(p->v_pos)); /* new pos = delta vector + pos */
 
 	/* set vob angular displacement
-	   note: v_ang_vel is a pseudovector. on fly calc moreso optimal */
+	   note: v_ang_vel will be pseudovector.  on fly calc moreso optimal */
 	#define TEMPSPEEDUP 25
 	p->ang_dpl += p->ang_spd * RENDER_CYC * TEMPSPEEDUP;
 	/* wraparound for 2 * M_PI, without this a glitch occurs on wrap */
@@ -462,6 +466,8 @@ proc_hmapf(hmapf_t *p, int lod)
 		draw_hmapf(p, lod);
 }
 
+/* vs. overload, release any hmaps with balance_filter over balance_criteria.
+   needs further implementation/considerations */
 void
 flow_over(btoggles_t *balance_criteria)
 {
@@ -499,14 +505,17 @@ free_dynamic(void)
 /* tag vobspace */
 /* ... */
 
-/* vob appears at loc
+/* vob in hmap referenced by p, appears at loc
    this will be moved to transform less wander */
 void
 nportf(hmapf_t *p, vf_t *loc)
 {
 	/* diag */
 	if(!p) {
-		__builtin_printf("attribs: cant nport NULL vob to loc...\n");
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Attempted nport of NULL vob\n"
+			"Nport destination was %f %f %f\n",
+			__FILE__, __LINE__, loc->x, loc->y, loc->z);
 		return;
 	}
 
@@ -517,8 +526,8 @@ nportf(hmapf_t *p, vf_t *loc)
 	wanderf(p, ((float)rand() * TINYRANDOM));
 }
 
-/* set vob to arbitrary but energy factored initial conditions
-   v_pos, v_vel, v_axi, ang_spd, ang_dpl, and mass are set
+/* set vob in hmap referenced by p to arbitrary but energy factored initial
+   conditions.  v_pos, v_vel, v_axi, ang_spd, ang_dpl, and mass are set
    vobspace is represented as 1 default renderer unit per m
    velocities are represented in m/s and r/s
    energy, e, will be represented in joule units, 1 ampere/s, or 1 neuton/m
@@ -572,10 +581,8 @@ wanderf(hmapf_t *p, float e)
 	/* normalize */
 	form_mag_vf(&(p->v_axi));
 	normz_vf(&(p->v_axi), &(p->v_axi));
-	/* set orientation */
+	/* set initial orientation */
 	cp_vf(&(p->v_axi), &(p->v_ori));
-	p->v_ori.x = -p->v_ori.x;
-	p->v_ori.y = -p->v_ori.y;
 
 	/* arbitrary signed rotation speed */
 	p->ang_spd = avg_tangentv_ke * ANG_AFS * SLOW1_10; /* r/s */

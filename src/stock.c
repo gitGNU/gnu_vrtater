@@ -6,6 +6,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "progscope.h"
 #include "vectors.h"
 #include "hmap.h"
@@ -48,8 +49,8 @@ int icosahedron_b_idx_bot[VRT_CAPC_FCOUNT][3] = {
 	{6, 11, 7}, {7, 11, 9}, {9, 11, 10}, {8, 10, 11}, {6, 8, 11}
 };
 
-/* from stock, create hmap for type icosahedron_b
-   draw_type is VRT_DRAWTYPE_TRIANGLES */
+/* enscribe an icosahedron_b VRT_DRAWTYPE_TRIANGLES hmap attached to session.
+   return null pointer if vobspace full */
 hmapf_t *
 hmapf_icosahedron_b(session_t *session)
 {
@@ -90,7 +91,13 @@ hmapf_icosahedron_b(session_t *session)
 	form_mag_vf(&(hmap->bounding.v_sz));
 
 	/* allocate for hmap's vf data(if any) */
-	vf_t *data_vf = (vf_t *) malloc(v_total * sizeof(vf_t));
+	vf_t *data_vf;
+	if((data_vf = (vf_t *) malloc(v_total * sizeof(vf_t))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for hmap %i\n",
+			__FILE__, __LINE__, hmap->index);
+		abort();
+	}
 	hmap->p_data_vf = data_vf; /* maintain p_data_vf in hmap */
 
 	/* fill in hmap data */
@@ -160,8 +167,8 @@ int cube_b_idx[VRT_CUBE_B_FCOUNT][3] = {
 	{2, 3, 6}, {6, 3, 7}, {2, 0, 3}, {3, 0, 1}, {2, 6, 0}, {0, 6, 4}
 };
 
-/* from stock, create hmap for type cube_b
-   draw_type is VRT_DRAWTYPE_TRIANGLES */
+/* enscribe a cube_b VRT_DRAWTYPE_TRIANGLES hmap attached to session.
+   return null pointer if vobspace full */
 hmapf_t *
 hmapf_cube_b(session_t *session, float l, float w, float h)
 {
@@ -204,7 +211,13 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 	form_mag_vf(&(hmap->bounding.v_sz));
 
 	/* allocate for hmap's vf data(if any) */
-	vf_t *data_vf = (vf_t *) malloc(v_total * sizeof(vf_t));
+	vf_t *data_vf;
+	if((data_vf = (vf_t *) malloc(v_total * sizeof(vf_t))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Could not malloc for hmap %i\n",
+			__FILE__, __LINE__, hmap->index);
+		abort();
+	}
 	hmap->p_data_vf = data_vf; /* maintain p_data_vf in hmap */
 
 	/* fill in hmap data */

@@ -5,6 +5,7 @@
 
 #include <X11/X.h>
 #include <GL/glx.h>
+#include <stdio.h>
 #include "progscope.h"
 #include "generator.h"
 
@@ -25,7 +26,9 @@ setup_glx(int argc, char **argv)
 
 	/* open connection to X server */
 	if((dpy = XOpenDisplay(NULL)) == NULL) {
-		__builtin_printf("could not open a connection to X server\n");
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Could not open a connection to X server\n",
+			__FILE__, __LINE__);
 		__builtin_exit(1);
 	}
 
@@ -33,7 +36,9 @@ setup_glx(int argc, char **argv)
 	int error;
 	int event;
 	if(!glXQueryExtension(dpy, &error, &event)) {
-		__builtin_printf("error %i, X server reported no glX support\n", error);
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error %i: X server has no support for GLX extension\n",
+			__FILE__, __LINE__, error);
 		__builtin_exit(1);
 	}
 
@@ -42,7 +47,9 @@ setup_glx(int argc, char **argv)
 	int sbv[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, None};
 	if((xvinf = glXChooseVisual(dpy, DefaultScreen(dpy), dbv)) == NULL) {
 		if((xvinf = glXChooseVisual(dpy, DefaultScreen(dpy), sbv)) == NULL) {
-			__builtin_printf("no double/single buffer visual choosable");
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: No visual(double nor single) choosable",
+				__FILE__, __LINE__);
 			__builtin_exit(1);
 		}
 		dbuff = LVAL_FALSE;
@@ -107,9 +114,11 @@ node(void)
 		while(XPending(dpy)) {
 			XNextEvent(dpy, &xevent);
 			switch(xevent.type) {
-			case KeyPress:
+
+				case KeyPress:
 				switch(XKeycodeToKeysym(dpy, xevent.xkey.keycode, 0)) {
-				case XK_Escape:
+
+					case XK_Escape:
 					return;
 				}
 				break;

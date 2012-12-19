@@ -4,6 +4,7 @@
 */
 
 #include <unistd.h>
+#include <stdio.h>
 #include "progscope.h"
 #include "hmap.h" /* !! */
 #include "vectors.h"
@@ -21,7 +22,11 @@ hmapf(session_t *psession)
 
 	/* attach, set hmap session name */
 	if((p = attach_hmapf()) == NULL) {
-		__builtin_printf("hmap(): already have HMAPS_MAX attached\n");
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: All hmaps are currently attached\n",
+			__FILE__, __LINE__);
+		/* dlg(VRT_VOBSPACE,
+			"Error: Attempted to exceed hmap limit\n"); */
 		return NULL;
 	}
 	/* append hmap index to session name */

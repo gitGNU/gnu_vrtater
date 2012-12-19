@@ -5,6 +5,7 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "progscope.h"
 #include "hmap.h"
 #include "generator.h" /* !! */
@@ -45,8 +46,9 @@ init_node(void)
 
 	/* get session '0'(primary 'in node' session name) */
 	if((lval = in_node_session(&session)) != SUCCESS) {
-		__builtin_printf( \
-			"generator: session failed to generate node\n");
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Attemped session failed to generate node\n",
+			__FILE__, __LINE__);
 		return lval;
 	}
 	__builtin_printf("generator: new session name %llu\n", session);
@@ -112,7 +114,7 @@ void
 close_vobspace(double when)
 {
 	/* last in node session 'session 0' closeing */
-	/* dlg(VRT_VOBSPACE, \
+	/* dlg(VRT_VOBSPACE,
 		"this node will be closing in" dlgprntime(when - timer(now));
 	   what = VRT_CLOSE;
 	   fork_child_timer_callback(when, what);

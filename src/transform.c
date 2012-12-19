@@ -5,6 +5,7 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "progscope.h"
 #include "hmap.h"
 #include "vectors.h"
@@ -19,9 +20,9 @@ hapticNormill(select_t *sel)
 }
 
 /*
-   transform path on vob intersection.
+   transform path on hmap vob intersection.
    where bound vol geom's intersected, calculate intersection of draw geom's
-   for 2 vob's.  adjust attribs of both accordingly
+   for 2 hmap vob's.  adjust attribs of both accordingly
 */
 int
 intersection(select_t *sel)
@@ -201,8 +202,12 @@ int
 alloc_dialog(select_t *sel)
 {
 	free((*sel->seta)->p_dialog);
-	(*sel->seta)->p_dialog = (int *) \
-		malloc((*sel->seta)->dialog_total * sizeof(int));
+	if(((*sel->seta)->p_dialog = (int *) malloc((*sel->seta)->dialog_total * sizeof(int))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Could not malloc for given dialog\n",
+			__FILE__, __LINE__);
+		abort();
+	}
 	return 0;
 }
 
@@ -244,7 +249,12 @@ copy_hmapf(select_t *sel)
 	b->attribs = a->attribs;
 	b->vf_total = a->vf_total;
 	free(b->p_data_vf);
-	b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t));
+        if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: could not malloc vertice data for hmap %i\n",
+			__FILE__, __LINE__, b->index);
+		abort();
+	}
 	v = a->p_data_vf;
 	w = b->p_data_vf;
 	for(i=0;i<a->vf_total;i++, v++) {
@@ -254,7 +264,12 @@ copy_hmapf(select_t *sel)
 		w->m = v->m;
 	}
 	free(b->p_dialog);
-	b->p_dialog = (int *) malloc(a->dialog_total * sizeof(int));
+        if((b->p_dialog = (int *) malloc(a->dialog_total * sizeof(int))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: could not malloc dialog data for hmap %i\n",
+			__FILE__, __LINE__, b->index);
+		abort();
+	}
 	d = a->p_dialog;
 	e = b->p_dialog;
 	for(j=0;j<a->dialog_total;j++)

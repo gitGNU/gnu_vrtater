@@ -90,7 +90,7 @@ draw_hmapf(hmapf_t *hmap, int lod)
 {
 	int i, j, vt;
 	vf_t *data_vf = hmap->p_data_vf;
-	vf_t av[3]; /* array with space for largest vector poly rep */
+	vf_t av[3]; /* array for largest polygonal representation */
 	vf_t cpy;
 	vf_t *v = &cpy;
 
@@ -114,16 +114,16 @@ draw_hmapf(hmapf_t *hmap, int lod)
 
 	/* draw on basis of draw format options */
 	switch(hmap->draw.geom) {
-	case VRT_DRAWGEOM_NONE:
-		break;
-	case VRT_DRAWGEOM_TRIANGLES:
-		/* supported draw format: VRT_DRAWGEOM_TRIANGLES */
 
+		case VRT_DRAWGEOM_NONE:
+		break;
+
+		case VRT_DRAWGEOM_TRIANGLES:
 		vt = hmap->vf_total / 3;
 		for(i=0;i<vt;i++) {
 			for(j=0;j<3;j++, data_vf++) {
 
-				/* rotation, normalized */
+				/* work with a unit vector representation */
 				cp_vf(data_vf, v);
 				normz_vf(v, v);
 
@@ -196,9 +196,11 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				}
 				/* ****************************************** */
 
-				/* continue with rotation */
+				/* rotate */
 				rxy_vf(v, hmap->ang_dpl);
 				rzx_vf(v, hmap->ang_dpl);
+
+				/* restore magnitude vs. unit vector rep. */
 				tele_mag_vf(v, data_vf->m);
 
 				/* transform
@@ -206,7 +208,8 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				(&av[j])->x = .1 * v->x + hmap->v_pos.x;
 				(&av[j])->y = .1 * v->y + hmap->v_pos.y;
 				(&av[j])->z = .1 * v->z + hmap->v_pos.z;
-				/* projection parameters */
+
+				/* projection settings */
 
 				/* for now, appearance */
 				if((hmap->index == 0) \
@@ -253,12 +256,14 @@ draw_hmapf(hmapf_t *hmap, int lod)
 			draw_gl_tri(&av[0], &av[1], &av[2]);
 		}
 		break;
-	case VRT_DRAWGEOM_LINES:
+
+		case VRT_DRAWGEOM_LINES:
 		for(i=0;i<hmap->vf_total;i++) {
 			;
 		}
 		break;
-	default:
+
+		default:
 		__builtin_printf("renderer: err, unsupported hmap geom.\n");
 		break;
 	}
