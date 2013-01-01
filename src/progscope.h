@@ -156,9 +156,9 @@ struct hmapf {
 	/* base quantities: distance meters(m), time seconds(s), mass (kg)
 	   direction radians(r)	*/
 	vf_t v_pos; /* position vector from node orgin to hmap orgin */
-	vf_t v_vel; /* direction of travel/positive velocity vector */
-	vf_t v_axi; /* arbitrary pole of rotational axis vs. hmap's [0,1,0] */
-	vf_t v_ori; /* relative rotational orientation vs. ang_dpl */
+	vf_t v_vel; /* direction of travel/velocity vector */
+	vf_t v_axi; /* pole bias along hmap vob rotational axis vs. vobspace */
+	vf_t v_pre; /* axis of mass distribution vs. v_axi precession */
 	float ang_spd; /* (r/s), angular speed about rotational axes */
 	float ang_dpl; /* (r), angular displacement about rotational axes */
 	massf_t mass;

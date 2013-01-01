@@ -15,9 +15,10 @@
 #define ryz_vf(v, r) ryz_gl_vf(v, r)
 #endif /* VRT_RENDERER_GL */
 
-void rxy_vrt_vf(vf_t *, float ang_dpl);
-void rzx_gl_vf(vf_t *, float ang_dpl);
-void ryz_gl_vf(vf_t *, float ang_dpl);
+vf_t *rxy_vrt_vf(vf_t *, float ang_dpl);
+vf_t *rzx_gl_vf(vf_t *, float ang_dpl);
+vf_t *ryz_gl_vf(vf_t *, float ang_dpl);
+vf_t *rotate_vf(vf_t *v, vf_t *axi, float ang_dpl);
 float deg_to_radf(float deg);
 
 #endif /* VRT_ROTATION_H */

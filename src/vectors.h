@@ -19,7 +19,7 @@ vf_t * cp_vf(vf_t *, vf_t *);
 vf_t * form_mag_vf(vf_t *);
 vf_t * tele_mag_vf(vf_t *, float m);
 vf_t * tele_magz_vf(vf_t *, float m);
-vf_t * factor_vf(vf_t *, float f);
+vf_t * factor_vf(vf_t *, vf_t *, float f);
 float epd_vf(vf_t *, vf_t *);
 vf_t * inv_vf(vf_t *, vf_t *);
 vf_t * norm_vf(vf_t *, vf_t *);

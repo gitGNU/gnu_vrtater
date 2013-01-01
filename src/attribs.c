@@ -97,10 +97,10 @@ init_vohspace(void)
 		p->v_axi.y = 0;
 		p->v_axi.z = 0;
 		p->v_axi.m = 0;
-		p->v_ori.x = 0;
-		p->v_ori.y = 0;
-		p->v_ori.z = 0;
-		p->v_ori.m = 0;
+		p->v_pre.x = 0;
+		p->v_pre.y = 0;
+		p->v_pre.z = 0;
+		p->v_pre.m = 0;
 		p->ang_spd = 0; /* radians/second */
 		p->ang_dpl = 0; /* radians */
 		p->mass.kg = 0;
@@ -160,10 +160,10 @@ detach_hmapf(hmapf_t *p)
 		p->v_axi.y = 0;
 		p->v_axi.z = 0;
 		p->v_axi.m = 0;
-		p->v_ori.x = 0;
-		p->v_ori.y = 0;
-		p->v_ori.z = 0;
-		p->v_ori.m = 0;
+		p->v_pre.x = 0;
+		p->v_pre.y = 0;
+		p->v_pre.z = 0;
+		p->v_pre.m = 0;
 		p->ang_spd = 0;
 		p->ang_dpl = 0;
 		p->mass.kg = 0;
@@ -451,7 +451,7 @@ proc_hmapf(hmapf_t *p, int lod)
 	/* if(bound_intersection());
 		intersection(); */
 	cp_vf(&(p->v_vel), q); /* take a copy of direction/velocity */
-	factor_vf(q, RENDER_CYC); /* create a delta vector given frequency */
+	factor_vf(q, q, RENDER_CYC); /* create a delta vector given frequency */
 	sum_vf(&(p->v_pos), q, &(p->v_pos)); /* new pos = delta vector + pos */
 
 	/* set vob angular displacement
@@ -543,7 +543,7 @@ wanderf(hmapf_t *p, float e)
 	float rnd, rnd1, rnd2, rnd3;
 	static float sign = 1.0;
 
-	/* random reciprocal part factors */
+	/* pseudo random reciprocal part factors */
 	rnd1 = (float)rand(); rnd2 = (float)rand(); rnd3 = rnd1 + rnd2;
 
 	/* for spherical regular solid vohs
@@ -568,21 +568,21 @@ wanderf(hmapf_t *p, float e)
 	form_mag_vf(&(p->v_vel));
 	tele_mag_vf(&(p->v_vel), avg_orginv_ke); /* m/s */
 
-	/* arbitrary axis of rotation */
-	p->v_axi.x = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	/* set arbitrary v_pre vector axis of mass distribution */
+	p->v_pre.x = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_axi.x = copysign(p->v_axi.x, sign);
-	p->v_axi.y = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	p->v_pre.x = copysign(p->v_pre.x, sign);
+	p->v_pre.y = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_axi.y = copysign(p->v_axi.y, sign);
-	p->v_axi.z = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	p->v_pre.y = copysign(p->v_pre.y, sign);
+	p->v_pre.z = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_axi.z = copysign(p->v_axi.z, sign);
+	p->v_pre.z = copysign(p->v_pre.z, sign);
 	/* normalize */
-	form_mag_vf(&(p->v_axi));
-	normz_vf(&(p->v_axi), &(p->v_axi));
-	/* set initial orientation */
-	cp_vf(&(p->v_axi), &(p->v_ori));
+	form_mag_vf(&(p->v_pre));
+	normz_vf(&(p->v_pre), &(p->v_pre));
+	/* set relative rotation/sense when v_axi is combined with ang_dpl */
+	cp_vf(&(p->v_pre), &(p->v_axi));
 
 	/* arbitrary signed rotation speed */
 	p->ang_spd = avg_tangentv_ke * ANG_AFS * SLOW1_10; /* r/s */

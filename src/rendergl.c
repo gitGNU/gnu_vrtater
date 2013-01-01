@@ -101,15 +101,16 @@ draw_hmapf(hmapf_t *hmap, int lod)
 	static float ang_dpl;
 	static float ang_spd;
 	static int match = 2;
-	/* create proto tracks for 2 vob's */
-	vf_t track1;
-	vf_t track2;
+	/* create proto tracks for hmap vob's */
+	static vf_t track1, track2, track3 = {-0.2, -0.2, -0.2, 0};
 	/* keep vertice count for initialization of track */
 	static int track1_vertice_count = 0;
 	static int track2_vertice_count = 0;
+	static int track3_vertice_count = 0;
 	/* track start positions */
 	set_vf(&track1, 0.57735026919, 0.57735026919, 0.57735026919, 1);
 	set_vf(&track2, -0.57735026919, -0.57735026919, -0.57735026919, 1);
+	form_mag_vf(&track3);
 	/* ************************************************** */
 
 	/* draw on basis of draw format options */
@@ -153,14 +154,12 @@ draw_hmapf(hmapf_t *hmap, int lod)
 						rxy_vf(&track1, hmap->ang_dpl);
 						rzx_vf(&track1, hmap->ang_dpl);
 						ryz_vf(&track1, hmap->ang_dpl);
-						factor_vf(&track1, 1); /* diameter of track circle */
+						factor_vf(&track1, &track1, 1); /* diameter of track circle */
 						/* place pos mode vob 1 on track 1 */
 						cp_vf(&track1, &(hmap->v_pos));
 					}
 					/* rotate vob 1  */
-					rxy_vf(v, hmap->ang_dpl);
-					rzx_vf(v, hmap->ang_dpl);
-					ryz_vf(v, hmap->ang_dpl);
+					rotate_vf(v, &(hmap->v_axi), hmap->ang_dpl);
 				}
 				/* for vob 2 */
 				if(hmap->index == 2) {
@@ -185,20 +184,16 @@ draw_hmapf(hmapf_t *hmap, int lod)
 						rxy_vf(&track2, hmap->ang_dpl);
 						rzx_vf(&track2, hmap->ang_dpl);
 						ryz_vf(&track2, hmap->ang_dpl);
-						factor_vf(&track2, 1); /* diameter of track circle */
+						factor_vf(&track2, &track2, 1); /* diameter of track circle */
 						/* place pos mode vob 2 on track 2 */
 						cp_vf(&track2, &(hmap->v_pos));
 					}
-					/* rotate vob 2  */
-					rxy_vf(v, hmap->ang_dpl);
-					rzx_vf(v, hmap->ang_dpl);
-					ryz_vf(v, hmap->ang_dpl);
+					rotate_vf(v, &(hmap->v_axi), hmap->ang_dpl);
 				}
 				/* ****************************************** */
 
 				/* rotate */
-				rxy_vf(v, hmap->ang_dpl);
-				rzx_vf(v, hmap->ang_dpl);
+				rotate_vf(v, &(hmap->v_axi), hmap->ang_dpl);
 
 				/* restore magnitude vs. unit vector rep. */
 				tele_mag_vf(v, data_vf->m);

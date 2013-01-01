@@ -6,7 +6,7 @@
 #include <math.h>
 #include "vectors.h" /* !! */
 
-/* set vector a */
+/* set and return refrence to vector a, enscribing components x, y, z, and m */
 vf_t *
 set_vf(vf_t *a, float x, float y, float z, float m)
 {
@@ -17,7 +17,7 @@ set_vf(vf_t *a, float x, float y, float z, float m)
 	return a;
 }
 
-/* copy vector a to b */
+/* copy vector a into vector b.  return refrence to vector b */
 vf_t *
 cp_vf(vf_t *a, vf_t *b)
 {
@@ -28,8 +28,8 @@ cp_vf(vf_t *a, vf_t *b)
 	return b;
 }
 
-/* set a complimentary magnitude via direction components
-   (x, y, z, any) -- (x, y, z, m') */
+/* set and return reference to vector a, with complimentary magnitude via
+   direction components.  (x, y, z, any) -- (x, y, z, m') */
 vf_t *
 form_mag_vf(vf_t *a)
 {
@@ -37,8 +37,8 @@ form_mag_vf(vf_t *a)
 	return a;
 }
 
-/* given desired magnitude m, set magnitude and scale direction components,
-   meanwhile maintaining direction. accepts for m any float including 0.
+/* given desired magnitude m, set and return reference to vector a with new m
+   and proportionally scaled direction.  if given m = 0, direction will be lost.
    fast version: for a valid result a->m is a valid and non zero magnitude */
 vf_t *
 tele_mag_vf(vf_t *a, float m)
@@ -50,9 +50,8 @@ tele_mag_vf(vf_t *a, float m)
 	return a;
 }
 
-/* given desired magnitude m, set magnitude and scale direction components
-   meanwhile maintaining direction. accepts for m any float including 0.
-   for a->m=0 and a->x=0 and a->y=0 and a->z=0, any or all are valid args */
+/* given desired magnitude m, set and return reference to vector a with new m
+   and proportionally scaled direction.  if given m = 0, m is set vs. x, y, z */
 vf_t *
 tele_magz_vf(vf_t *a, float m)
 {
@@ -73,19 +72,20 @@ tele_magz_vf(vf_t *a, float m)
 	return a;
 }
 
-/* factor_vf:	factors magnitude and direction components */
-/* scale a vector by given factor */
+/* calculate vector a, where scaled by given factor f.  set and return reference
+   to vector result in b */
 vf_t *
-factor_vf(vf_t *a, float f)
+factor_vf(vf_t *a, vf_t *b, float f)
 {
-	a->x *= f;
-	a->y *= f;
-	a->z *= f;
-	a->m *= f;
-	return a;
+	b->x = a->x * f;
+	b->y = a->y * f;
+	b->z = a->z * f;
+	b->m = a->m * f;
+	return b;
 }
 
-/* obtain inverse of a vector, set vector result in b */
+/* calculate the inverse value of vector a.  set and return reference to vector
+   result in b */
 vf_t *
 inv_vf(vf_t *a, vf_t *b)
 {
@@ -96,8 +96,9 @@ inv_vf(vf_t *a, vf_t *b)
 	return b;
 }
 
-/* normalize a vector(set to unit length 1). set result in b.
-   fast ver: assumes non 0 magnitude.  fed a 0, throws divide by zero error */
+/* calculate the normal vector for vector a.  set and return reference to result
+   in b.  fast ver: assumes non 0 magnitude.  fed a 0 magnitude, this throws a
+   divide by zero error */
 vf_t *
 norm_vf(vf_t *a, vf_t *b)
 {
@@ -108,8 +109,9 @@ norm_vf(vf_t *a, vf_t *b)
 	return b;
 }
 
-/* normalize a vector(set to unit length 1). 0 magnitude safe. if given vector
-   has 0 direction, result vector, b, is given 0 direction and 0 magnitude */
+/* calculate the normal vector for vector a.  set and return reference to result
+   in b.  0 magnitude safe.  if a has 0 direction, b gets 0 direction and
+   0 magnitude */
 vf_t *
 normz_vf(vf_t *a, vf_t *b)
 {
@@ -130,14 +132,15 @@ normz_vf(vf_t *a, vf_t *b)
 	return b;
 }
 
-/* obtain dot product of two vectors */
+/* return the dot product of vectors a and b */
 float
 dprod_vf(vf_t *a, vf_t *b)
 {
 	return(a->x * b->x + a->y * b->y + a->z * b->z);
 }
 
-/* obtain cross product of two vectors, set vector result in c */
+/* calculate the cross product of vectors a and b.  set and return refrence to
+   vector result in c */
 vf_t *
 cprod_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -148,7 +151,8 @@ cprod_vf(vf_t *a, vf_t *b, vf_t *c)
 	return c;
 }
 
-/* obtain inverse of cross product of two vectors, set vector result in c */
+/* calculate the inverse cross product of vectors a and b.  set and return
+   refrence to vector result in c */
 vf_t *
 icprod_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -159,7 +163,8 @@ icprod_vf(vf_t *a, vf_t *b, vf_t *c)
 	return c;
 }
 
-/* obtain sum of two vectors, set vector result in c */
+/* calculate the sum of vectors a and b.  set and return refrence to vector
+   result in c */
 vf_t *
 sum_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -170,14 +175,17 @@ sum_vf(vf_t *a, vf_t *b, vf_t *c)
 	return c;
 }
 
-/* return the sum of the magnitudes of two vectors */
+/* return the sum of the magnitudes of vectors a and b */
 float
 sum_mf(vf_t *a, vf_t *b)
 {
 	return(a->m + b->m);
 }
 
-/* obtain difference(endpoint dist) of two vectors, set vector result in c */
+/* calculate c, a vector representing the endpoint distance(difference) between
+   vectors a and b where their orgins need not be shared and where their length's
+   represent endpoint's vs. those orgins.  set and return reference to vector
+   result in c */
 vf_t *
 dif_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -188,14 +196,15 @@ dif_vf(vf_t *a, vf_t *b, vf_t *c)
 	return c;
 }
 
-/* return the difference of the magnitudes of two vectors */
+/* return the difference of the magnitudes of vectors a and b */
 float
 dif_mf(vf_t *a, vf_t *b)
 {
 	return(a->m - b->m);
 }
 
-/* obtain product of two vectors, set vector result in c */
+/* calculate the product of vector a, factored by vector b, deriving magnitude
+   accordingly.  set and return reference to vector result in c */
 vf_t *
 mult_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -206,14 +215,15 @@ mult_vf(vf_t *a, vf_t *b, vf_t *c)
 	return c;
 }
 
-/* return the product of the magnitudes of two vectors */
+/* return the product of the magnitudes of vectors a and b */
 float
 mult_mf(vf_t *a, vf_t *b)
 {
 	return(a->m * b->m);
 }
 
-/* obtain quotient of two vectors, set vector result in c */
+/* calculate the quotient of vector a divided by vector b, deriving magnitude
+   accordingly.  set and return reference to vector result in c */
 vf_t *
 div_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -224,7 +234,8 @@ div_vf(vf_t *a, vf_t *b, vf_t *c)
 	return c;
 }
 
-/* return the quotient of the magnitudes of two vectors */
+/* return the quotient of the magnitude of vector a divided by the magnitude
+   of vector b */
 float
 div_mf(vf_t *a, vf_t *b)
 {

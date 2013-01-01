@@ -108,10 +108,10 @@ hmapwrapf(select_t *sel)
 	*pf++ = h->v_axi.y;
 	*pf++ = h->v_axi.z;
 	*pf++ = h->v_axi.m;
-	*pf++ = h->v_ori.x;
-	*pf++ = h->v_ori.y;
-	*pf++ = h->v_ori.z;
-	*pf++ = h->v_ori.m;
+	*pf++ = h->v_pre.x;
+	*pf++ = h->v_pre.y;
+	*pf++ = h->v_pre.z;
+	*pf++ = h->v_pre.m;
 	*pf++ = h->ang_spd;
 	*pf++ = h->ang_dpl;
 	*pf++ = h->mass.kg;
@@ -166,7 +166,7 @@ hmapunwrapf(select_t *sel)
 	__builtin_printf("axi: %f %f %f %f\n", \
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
-	__builtin_printf("ori: %f %f %f %f\n", \
+	__builtin_printf("pre: %f %f %f %f\n", \
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
 	__builtin_printf("ang_spd: %f\n", (float)*fl++); in++;
@@ -231,10 +231,10 @@ copy_hmapf(select_t *sel)
 	b->v_axi.y = a->v_axi.y;
 	b->v_axi.z = a->v_axi.z;
 	b->v_axi.m = a->v_axi.m;
-	b->v_ori.x = a->v_ori.x;
-	b->v_ori.y = a->v_ori.y;
-	b->v_ori.z = a->v_ori.z;
-	b->v_ori.m = a->v_ori.m;
+	b->v_pre.x = a->v_pre.x;
+	b->v_pre.y = a->v_pre.y;
+	b->v_pre.z = a->v_pre.z;
+	b->v_pre.m = a->v_pre.m;
 	b->ang_spd = a->ang_spd;
 	b->ang_dpl = a->ang_dpl;
 	b->mass.kg = a->mass.kg;
