@@ -1,5 +1,5 @@
 /* vrtater.c: peer to peers 'virtual' 'reality' software.  in pre-alpha.
-   Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
+   Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,8 +23,46 @@
 #include "generator.h"
 #include "tug.h"
 
+void version(void);
+void usage(void);
+
 extern unsigned int vrt_hmaps_max;
 static int verbose_flag;
+static int readable_flag;
+
+void
+version(void)
+{
+	__builtin_printf("\n"
+		"vrtater 0.3\n"
+		"Copyright (C) 2012, 2013 J. A. Green\n"
+		"License GPLv3+: GNU GPL version 3 or later "
+		"<http://gnu.org/licenses/gpl.html>\n"
+		"This is free software: you are free to change "
+		"and redistribute it.\n"
+		"There is NO WARRANTY, to the extent permitted by law.\n\n");
+}
+
+void
+usage(void)
+{
+	__builtin_printf("\n"
+		"usage: vrtater [-?h] [-d[level]] [-f on-node-name] "
+		"[-i[in-node-name]]\n\n"
+		"--brief                Run with beief console messages\n"
+		"--diag         -d      Apply tug diagnostic mode /w opt level\n"
+		"--find-node    -f      Start with a remote node search\n"
+		"--help         -?      Print this usage message\n"
+		"--in-node      -i      Start with default or given in-node\n"
+		"--informal     -h      Print output in human readable form\n"
+		"--verbose              Run with verbose console messages\n"
+		"--version              Output disclaimers and versions\n\n"
+		"Report bugs to: green8@sdf-eu.org\n"
+		"pre-alpha development: "
+		"<http://savannah.nongnu.org/projects/vrtater/>\n"
+		"General help using GNU software: "
+		"<http://www.gnu.org/gethelp/>\n\n");
+}
 
 int
 main(int argc, char **argv)
@@ -33,67 +71,85 @@ main(int argc, char **argv)
 	int c;
 	while(1) {
 		static struct option long_options[] = {
-			/* flag setting options */
 			{"verbose", no_argument, &verbose_flag, 1},
 			{"brief", no_argument, &verbose_flag, 0},
-			/* flagless options */
-			{"non-flag-opt1", no_argument, 0, 0},
-			{"non-flag-opt2", required_argument, 0, 0},
-			/* indexed options */
-			{"in-node", required_argument, 0, 'i'},
+			{"version", no_argument, 0, 0},
 			{"find-node", required_argument, 0, 'f'},
-			/* /w optional argument(requires -o=val or --opt=val) */
+			{"in-node", optional_argument, 0, 'i'},
 			{"diag", optional_argument, 0, 'd'},
+			{"informal", no_argument, 0, 'h'},
+			{"help", no_argument, 0, '?'},
 			{0, 0, 0, 0}
 		};
 		int option_index = 0;
-		c = getopt_long(argc, argv, "i:f:d::", long_options, &option_index);
+		c = getopt_long(argc, argv, "f:i::d::h?", long_options,
+			 &option_index);
 		if(c == -1)
 			break;
 		switch(c) {
 
 			case 0:
 			if(long_options[option_index].flag != 0) {
-				__builtin_printf("setting --%s\n",
-					long_options[option_index].name);
-				break;
+				if(verbose_flag) {
+					__builtin_printf("setting --%s\n",
+						long_options[option_index].name);
+					break;
+				} else {
+					__builtin_printf("setting --%s\n",
+						long_options[option_index].name);
+					break;
+				}
 			}
-			__builtin_printf("tend to flagless long-only option %s",
-				long_options[option_index].name);
-			if(optarg)
-				__builtin_printf(" with %s as arg", optarg);
-			__builtin_printf("\n");
-			break;
-
-			case 'i':
-			if(optarg)
-				__builtin_printf("Setting in-node to %s\n", optarg);
+			version();
+			exit(0);
 			break;
 
 			case 'f':
 			if(optarg)
-				__builtin_printf("Searching for node%s\n", optarg);
+				__builtin_printf("Searching for node %s\n",
+					optarg);
+			else {
+				__builtin_printf("foo\n");
+				__builtin_fprintf(stderr, "vrtater: Error: "
+					"syntax -f, --find-node, requires "
+					" a node search string.\n");
+				abort();
+			}
+			break;
+
+			case 'i':
+			if(optarg)
+				__builtin_printf("Setting in-node to %s "
+					"configuration\n", optarg);
+			else
+				__builtin_printf("Setting in-node to default "
+					"configuration\n");
 			break;
 
 			case 'd':
 			if(optarg)
-				__builtin_printf("Setting diagnostic mode %s\n", optarg);
+				__builtin_printf("Setting diagnostic mode %s\n"
+					, optarg);
 			else
 				__builtin_printf("Setting diagnostic mode\n");
 			break;
+
+			case 'h':
+			readable_flag = 1;
+			__builtin_printf("setting --%s mode(readable_flag)\n",
+				long_options[option_index].name);
+			break;
+
+			case '?':
+			usage();
+			exit(0);
 
 			default:
 			abort();
 		}
 	}
-	/* non-option args */
-	if(optind < argc) {
-		__builtin_printf("non-option ARGV-elements: ");
-		while(optind < argc)
-			__builtin_printf("%s ", argv[optind++]);
-		putchar('\n');
-	}
 
+	/* vrtater */
 	setup_node(argc, argv);
 	init_node(); /* your local node */
 	init_tug_io();

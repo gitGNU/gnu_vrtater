@@ -1,0 +1,343 @@
+\input texinfo	@c -*-texinfo
+@c %**start of header
+@setfilename vrtater.info
+@c automake vars: these will later be in version.texi and maintained by automake
+@set VERSION 0.3.8 pre-alpha
+@set UPDATED January 2013
+@c other vars
+@set DEVELOP @uref{http://savannah.nongnu.org/projects/vrtater/}
+@c end vars
+@settitle vrtater @value{VERSION}
+@c %**end of header
+@copying
+This manual is for vrtater (version @value{VERSION}, @value{UPDATED}),
+GNU GPL free software, providing peer to peers 'virtual' 'reality'.
+
+Copyright (C) 2013 J. A. Green
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections.  A copy of the license is included in the section
+entitled ``GNU Free Documentation License''.
+@end quotation
+@end copying
+
+@dircategory Texinfo documantation system
+@direntry
+* vrtater: (vrtater)Invoking vrtater.
+* vrtater: (vrtater)Installing vrtater.
+* vrtater: (vrtater)Vector calls.
+* vrtater: (vrtater)Hmap Selection Buffer.
+* vrtater: (vrtater)Hmap Transforms.
+@end direntry
+
+@titlepage
+@title vrtater, GNU GPL Peer to Peers VR Manual
+@subtitle for version @value{VERSION}, @value{UPDATED}
+@author Jimmy Green (@email{green8@sdf-eu.org})
+@page
+@vskip 0pt plus lfilll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top vrtater Peer to Peers VR
+
+vrtater is GNU GPL free software, and as such, the freedom to share fully in it's
+current and future benefits is preserved for anyone who uses or adds to it.
+With current supporting libraries heretofore mentioned, it provides a route
+towards a realized peer to peers 'virtual' 'reality' capability.
+
+Written in C, and still in pre-alpha state, it produces much of the required
+mechanism for interacting, through 'virtual' 'objects'(vobs) /w haptic/other
+qualities, between any connected vobspace nodes over a given network.  Mechanism 
+for creation and transformation, of hmap vobs, and other vobs, will also be
+provided.  Interfacing to system bus IO devices, will also be provided.
+
+The capability for interaction of vobs on a node will be as fully as possible
+based on dialog and configuration maintained in that node.
+
+For IO and feedback, vrtater is written to be generic and inclusive for any GNU
+or GNU GPL freindly libraries mandated.  Currently, interfacing through
+@file{X.h} (see: @uref{http://www.x.org/}) is being provided.  Provided also is
+the rendering of vobs supported by @file{gl.h} and @file{glx.h} (see:
+@uref{http://mesa3d.org/}).
+
+For more information on development of vrtater see: @value{DEVELOP}, and the
+README provided with the source, which explains best what is going on therein.
+@sp 1
+@insertcopying
+@end ifnottex
+
+@menu
+* Invoking vrtater::
+* Installing vrtater:: 
+* Calls to vectors.c::
+* Hmap Selection Buffer::
+* Hmap Transforms::
+* GNU Free Documentation License::
+* Index::
+@end menu
+
+@node Invoking vrtater
+@chapter Invoking vrtater
+
+@pindex vrtater
+@cindex Information on invoking vrtater
+
+@menu
+* Synopsis::
+* Options::
+@end menu
+
+@node Synopsis
+@section Synopsis of vrtater command line options
+
+vrtater calls GNU @code{getopt_long()} to parse it's command line options
+therefore any single letter short options(example: @code{-f}), have a long
+option(example: @code{--find-node}) form making them easier to remember/read.
+Also note that optional parameters to command line arguments that take them, for
+example @code{-d} with an optional parameter of @code{0}, must be of the
+option=parameter form input as @code{-d=0} or @code{--diag=0}.
+
+@node Options
+@section vrtater Options
+
+@table @option
+
+@item --brief
+
+Where applicable output console messages in breif format.  This is the default.
+
+@item --diag[=@var{level}]
+@itemx -d[=@var{level}]
+
+Run tug diagnostic, optionally at given level.  This is not implemented yet.
+see: tug.c for more.
+
+@item --find-node @var{file}
+@itemx -f @var{file}
+
+Start @command{vrtater} generating the currently preconfigured in-node vobspace
+and search for a remote node to connect to once therein.  The required argument
+is in the form of an on-node vobspace @file{filename}.  examples may be retreived
+by running vrtater -h --on-node-sessions(not yet implemented).
+
+@item --help
+@itemx -?
+
+Output vrtater command line usage message.
+
+@item --in-node[=@var{file}]
+@itemx -i[=@var{file}]
+
+Start @command{vrtater} generating preconfigured in-node vobspace.  This is the
+default.  A different preconfigured in-node vobspace may be selected by passing
+an optional argument naming the predefined in-node vobspace file @file{filename}.
+
+@item --informal
+@itemx -h
+
+Output any applicable console messages in human readable form.
+
+@item --verbose
+
+Where applicable output console messages in verbose format.
+
+@item --version
+
+Output vrtater disclaimers and versions.
+
+@end table
+
+@node Installing vrtater
+@chapter Installing vrtater
+
+@pindex vrtater
+@cindex Information on installing vrtater
+
+At the moment vrtater is in Pre-Alpha and has no installation features.
+You can however download and compile it, as it is GNU GPL
+free software.  You should have no problems doing that with @command{gcc} if you
+can already compile programs that include @file{glx.h}.  see: (@value{DEVELOP})
+for more info.
+
+@node Calls to vectors.c
+@chapter Calls to vectors.c
+
+@pindex vrtater
+@cindex Vector calls HOWTO, Reference for calling vectors.c
+
+@multitable @columnfractions .25 .35 .4
+@headitem What @tab Code @tab Description
+@item for example
+@tab @code{vf_t a, b, c;}
+@tab of vf_t vector/coord struct
+@item note
+@tab
+@tab all these functions return
+@item
+@tab
+@tab vf_t *result unless specified
+@item set
+@tab @code{set_vf(&a, x, y, z, m);}
+@tab a becomes set to given args
+@item ...or...
+@tab @code{set_vf(&a, x, y, z, 0);}
+@tab then if desired form_mag_vf(&a)
+@item copy
+@tab @code{cp_vf(&a, &b);}
+@tab b becomes a copy of a
+@item calcmagnitude
+@tab @code{form_mag_vf(&a);}
+@tab calculates from (x, y, z, any)
+@item
+@tab
+@tab for new (x, y, z, m')
+@item length
+@tab @code{length = (&a)->m;}
+@tab 'length' (given direction and m)
+@item magnifydir
+@tab @code{tele_mag_vf(&a, m');}
+@tab scales well formed(correct m)
+@item
+@tab
+@tab vector(x, y, z, m) to (x', y', z', m')
+@item magnifydirz
+@tab @code{tele_magz_vf(&a, m');}
+@tab scales: calc's magnitude if none
+@item
+@tab
+@tab given (x, y, z, ?) to (x', y', z', m')
+@item
+@tab
+@tab where (0,0,0,0) returns null (0,0,0,1)
+@item factor
+@tab @code{factor_vf(&a, &b, factor);}
+@tab b becomes scaled(as lens)
+@item invert
+@tab @code{inv_vf(&a, &b);}
+@tab b becomes inverted a
+@item normalize
+@tab @code{norm_vf(&a, &b);}
+@tab expects non-zero magnitude or a divide
+@item
+@tab
+@tab by zero error occurs
+@item
+@tab
+@tab b becomes vector normal of a
+@item normalizez
+@tab @code{normz_vf(&a, &b);}
+@tab adjusts/calc's magnitude if zero given
+@item
+@tab
+@tab b becomes vector normal of a
+@item
+@tab
+@tab !!has predictable result _if_ given
+@item
+@tab
+@tab magnitude is not dependant on external
+@item
+@tab
+@tab input.
+@item dotproduct
+@tab @code{dprod_vf(&a, &b);}
+@tab returns dot product result as float
+@item crossproduct
+@tab @code{cprod_vf(&a, &b, &c);}
+@tab c becomes cross product
+@item -crossproduct
+@tab @code{icprod_vf(&a, &b, &c);}
+@tab c becomes inverted cross product
+@item +
+@tab @code{sum_vf(&a, &b, &c);}
+@tab c becomes sum of a and b
+@item summagnitudes
+@tab @code{sum_mf(&a, &b);}
+@tab returns sum result as float
+@item -
+@tab @code{dif_vf(&a, &b, &c);}
+@tab c becomes difference of a and b
+@item difmagnitudes
+@tab @code{dif_mf(&a, &b);}
+@tab returns difference result as float
+@item *
+@tab @code{mult_vf(&a, &b, &c);}
+@tab c becomes a scaled by b
+@item mltmagnitudes
+@tab @code{mult_mf(&a, &b);}
+@tab returns product result as float
+@item /
+@tab @code{div_vf(&a, &b, &c);}
+@tab c becomes quotient of a over b
+@item divmagnitudes
+@tab @code{div_mf(&a, &b);}
+@tab returns float quotient (&a)->m/(&b)->m
+@end multitable
+
+@multitable @columnfractions .25 .35 .4
+@headitem Examples @tab Code @tab Description
+@item +=
+@tab @code{sum_vf(&a, &b, &a)}
+@tab note: as above, last vf_t *arg is &result
+@item
+@tab
+@tab save for those functions returning float
+@item -=
+@tab @code{dif_vf(&a, &b, &a)}
+@tab *=, /=, work likewise
+@item *2
+@tab @code{sum_vf(&a, &a, &a)}
+@tab same approach works for all of the above
+@end multitable
+
+@example
+@code{/* Example: axis-angle rotation */}
+@code{vf_t}
+@code{*rotate_vf(vf_t *v, vf_t *axi, float dpl )}
+@code{@{}
+	@code{vf_t b2, b1, v_new, temp;}
+	@code{cprod_vf(v, axi, &b2);}
+	@code{cprod_vf(axi, &b2, &b1);}
+	@code{dif_vf(v, &b1, &v_new);}
+	@code{factor_vf(&b1, &temp, cos(dpl));}
+	@code{sum_vf(&v_new, &temp, &v_new);}
+	@code{factor_vf(&b2, &temp, sin(dpl));}
+	@code{return(sum_vf(&v_new, &temp, v));}
+@code{@}}
+@end example
+
+@node Hmap Selection Buffer
+@chapter Hmap Selection Buffer
+
+@pindex vrtater
+@cindex Reference for using Hmap Selection Buffer
+
+Reference for using Hmap Selection Buffer
+
+@node Hmap Transforms
+@chapter Hmap Transforms
+
+@pindex vrtater
+@cindex Documentation of Available Hmap Transforms
+
+Documentation of Available Hmap Transforms
+
+@node GNU Free Documentation License
+@appendix GNU Free Documentation License
+
+@include fdl-1.3.texi
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye

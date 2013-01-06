@@ -1,5 +1,5 @@
 /* ifnodeglx.c: node interface for vrtater.
-   Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
+   Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 

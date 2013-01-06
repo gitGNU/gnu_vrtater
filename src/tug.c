@@ -1,11 +1,14 @@
 /* tug.c: tend to any extra pertainant system bus i/o for implicit node.
-   Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
+   Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
 #include "progscope.h"
 #include "generator.h"
 #include "transform.h"
+
+/* note: diagnostic modes may be available and required if suitable connected
+   tug is present.  These tug features will eventually be supported herein. */
 
 /* add transform recipie qualifiers below to match transform.c */
 enum {

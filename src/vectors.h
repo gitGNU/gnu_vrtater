@@ -1,5 +1,5 @@
 /* vectors.h
-   Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
+   Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
@@ -20,7 +20,6 @@ vf_t * form_mag_vf(vf_t *);
 vf_t * tele_mag_vf(vf_t *, float m);
 vf_t * tele_magz_vf(vf_t *, float m);
 vf_t * factor_vf(vf_t *, vf_t *, float f);
-float epd_vf(vf_t *, vf_t *);
 vf_t * inv_vf(vf_t *, vf_t *);
 vf_t * norm_vf(vf_t *, vf_t *);
 vf_t * normz_vf(vf_t *, vf_t *);

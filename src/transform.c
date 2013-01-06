@@ -1,5 +1,5 @@
 /* transform.c: hmap transforms.
-   Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
+   Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
@@ -68,8 +68,8 @@ recycler(select_t *sel)
 }
 
 /*
-   put hmap in selection buf to vobfile
-   for now assume written to file/network
+   write hmap in selection buffer to network or file, as an hmap vob file
+   for now assume file/network is meta_u a_file_net_io[10000]
 */
 meta_u a_file_net_io[10000]; /* for now */
 void
@@ -136,8 +136,9 @@ hmapwrapf(select_t *sel)
 }
 
 /*
-   meta_u a_file_net_io[10000] assume file/network written to hmap
-   for now just print from file
+   read in an hmap vob file from file or network
+   for now assume file/network is meta_u a_file_net_io[10000]
+   for now just print it
 */
 int
 hmapunwrapf(select_t *sel)
@@ -196,6 +197,7 @@ hmapunwrapf(select_t *sel)
 }
 
 /*
+   resize hmap dialog allocation for entry of dialog theretofore
    preset dialog_total in &sel_a[0] to new value before calling
 */
 int
@@ -212,6 +214,7 @@ alloc_dialog(select_t *sel)
 }
 
 /*
+   make a copy of an hmap in hmap vobspace
    hmap copy made less name/index retained by recieving hmap
 */
 void

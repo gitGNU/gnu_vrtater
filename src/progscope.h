@@ -1,5 +1,5 @@
 /* progscope.h
-   Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
+   Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
@@ -22,7 +22,7 @@ union meta_unit_u {
 };
 typedef union meta_unit_u meta_u;
 
-/* session.c: 
+/* session.c:
    defines, for now these are set for testing */
 #define VRT_SCALE_SESSIONS_REQ 1 /* depends on system resources */
 /* set these to taste */
