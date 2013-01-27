@@ -17,6 +17,6 @@ void sort_proc_hmaps(void);
 void free_dynamic(void);
 void nportf(hmapf_t *, vf_t *);
 
-hmapf_t a_hmaps[VRT_HMAPS_MAX];
+hmapf_t *a_hmaps;
 
 #endif /* VRT_ATTRIBS_H */

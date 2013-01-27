@@ -6,6 +6,7 @@ CC = gcc
 COPTS = -Wall -pedantic -std=gnu99 -fno-builtin
 
 LIBS = -lGL -lGLU -lXi -lXmu -lXext -lX11 -lm
+INCLUDE =
 
 BIN = vrtater
 MAIN = vrtater

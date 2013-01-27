@@ -82,6 +82,7 @@ setup_glx(int argc, char **argv)
 void
 setup_node(int argc, char **argv)
 {
+	init_generator();
 	setup_glx(argc, argv);
 }
 

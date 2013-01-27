@@ -4,15 +4,37 @@
 */
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "progscope.h"
 #include "hmap.h" /* !! */
 #include "vectors.h"
 #include "attribs.h"
 
+unsigned int vrt_hmaps_max; /* external */
+
+/* selection buffer */
+hmapf_t *selectf_a; /* external */
+hmapf_t *selectf_b; /* external */
+
 /* hmapf selection buffers: definition for extern */
-hmapf_t *selectf_a[VRT_HMAPS_MAX];
-hmapf_t *selectf_b[VRT_HMAPS_MAX];
+void
+init_hmaps(void)
+{
+__builtin_printf("initializing selection\n");
+	if((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for selectf_a\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+	if((selectf_b = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for selectf_b\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+}
 
 /* attach an empty hmap to given session */
 hmapf_t *

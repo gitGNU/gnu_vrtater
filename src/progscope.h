@@ -179,7 +179,7 @@ struct hmapf {
 typedef struct hmapf hmapf_t;
 /* select_t(for use through hmap selection buffer)
    example sel buf entry for a single float type hmap:
-   select_t sel = { 0, 0, &sel_a[0], 0, NULL };
+   select_t sel = { 0, 0, (hmapf_t **)selectf_a, 0, NULL };
 */
 struct select {
 	btoggles_t specbits;

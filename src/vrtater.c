@@ -149,9 +149,12 @@ main(int argc, char **argv)
 		}
 	}
 
+	/* default */
+	vrt_hmaps_max = 20;
+
 	/* vrtater */
 	setup_node(argc, argv);
-	init_node(); /* your local node */
+	init_node(); /* generate in-node */
 	init_tug_io();
 	node(); /* is a state machine */
 	close_node();

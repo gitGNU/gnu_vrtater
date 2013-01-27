@@ -27,7 +27,10 @@ hapticNormill(select_t *sel)
 int
 intersection(select_t *sel)
 {
-	/* ... */
+	/* this really would like some hashing. for now tho, it will be simple
+	   and require the caller's tending: given 2 hmaps, in sel a and b
+	   respectively, determine bound intersection.  if intersecting, set
+	   new trajectories for both */
 	/* hmapf_t **a, **b;
 	   btoggles_t t;
 	   a = sel->seta; b = sel->setb;

@@ -298,22 +298,6 @@ for more info.
 @tab same approach works for all of the above
 @end multitable
 
-@example
-@code{/* Example: axis-angle rotation */}
-@code{vf_t}
-@code{*rotate_vf(vf_t *v, vf_t *axi, float dpl )}
-@code{@{}
-	@code{vf_t b2, b1, v_new, temp;}
-	@code{cprod_vf(v, axi, &b2);}
-	@code{cprod_vf(axi, &b2, &b1);}
-	@code{dif_vf(v, &b1, &v_new);}
-	@code{factor_vf(&b1, &temp, cos(dpl));}
-	@code{sum_vf(&v_new, &temp, &v_new);}
-	@code{factor_vf(&b2, &temp, sin(dpl));}
-	@code{return(sum_vf(&v_new, &temp, v));}
-@code{@}}
-@end example
-
 @node Hmap Selection Buffer
 @chapter Hmap Selection Buffer
 

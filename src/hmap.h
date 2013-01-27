@@ -13,9 +13,10 @@ enum {
 };
 
 /* hmapf selection buffers */
-extern hmapf_t *selectf_a[];
-extern hmapf_t *selectf_b[];
+extern hmapf_t *selectf_a;
+extern hmapf_t *selectf_b;
 
+void init_hmaps(void);
 hmapf_t *hmapf(session_t *);
 void add_tri_to_hmapf(vf_t *, vf_t **);
 void add_vf_to_hmap(vf_t *, vf_t **);

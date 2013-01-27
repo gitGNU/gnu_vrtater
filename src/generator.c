@@ -19,9 +19,12 @@
 #include "stock.h"
 
 gen_opts_t genopts;
+unsigned int vrt_hmaps_max; /* external */
+hmapf_t *ap_hmapf_dialog; /* for incoming vobs with dialog */
 
-/* for incoming vobs with dialog */
-hmapf_t *ap_hmapf_dialog[VRT_HMAPS_MAX];
+/* selection buffer */
+hmapf_t *selectf_a; /* external */
+hmapf_t *selectf_b; /* external */
 
 /*test*/
 void cphmaptest(void);
@@ -37,6 +40,18 @@ vf_t view_roll; /* spin and depth */
 session_t session;
 
 /* startup configuration */
+void
+init_generator(void)
+{
+	init_hmaps();
+	if((ap_hmapf_dialog = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for ap_hmapf_dialog\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+}
+
 int
 init_node(void)
 {
@@ -93,9 +108,12 @@ regenerate_scene(int *quit)
 	   pass all in node and in node partial hmaps to dialog if
 	   VRT_MASK_HMAP_MODELING set
 	   for now */
+
+	/* test set of one empty dialog element */
 	static int recurrant = 0;
-	selectf_a[0] = p_hmapf(15); /* test set of one empty dialog element */
-	select_t s = { 0, 1, selectf_a, 0, NULL };
+	hmapf_t **p = (hmapf_t **)selectf_a;
+	*p = p_hmapf(15);
+	select_t s = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
 	if(!recurrant++)
 		dialogf(&s, &genopts);
 
@@ -132,24 +150,35 @@ callback_close_vobspace(void)
 }
 
 void
+close_generator(void)
+{
+	free(selectf_a);
+	free(selectf_b);
+	free(ap_hmapf_dialog);
+}
+
+void
 close_node(void)
 {
 	/* datsync() */
 	free_dynamic();
+	close_generator();
 }
 
 void
 cphmaptest(void)
 {
+	hmapf_t **p;
+
 	/* test copy_hmap() */
 	static int foo = 100;
 	__builtin_printf("%i\n", foo);
 	if(!foo--) {
-		hmapf_t *p = p_hmapf(10);
-		hmapf_t *q = p_hmapf(1);
-		selectf_a[0] = p;
-		selectf_b[0] = q;
-		select_t t = { 0, 0, selectf_a, 0, selectf_b };
+		p = (hmapf_t **)selectf_a;
+		*p = p_hmapf(10);
+		p = (hmapf_t **)selectf_b;
+		*p = p_hmapf(1);
+		select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b};
 		copy_hmapf(&t);
 	}
 }
@@ -157,11 +186,10 @@ cphmaptest(void)
 void
 hmapwrap_unwraptst(void)
 {
-
-	hmapf_t *p = p_hmapf(0);
-	selectf_a[0] = p;
-	selectf_a[1] = NULL;
-	select_t s = { VRT_MASK_NULL_TERMINATED, 0, selectf_a, 0, NULL };
+	hmapf_t **p = (hmapf_t **)selectf_a;
+	*(p++) = p_hmapf(0);
+	*p = NULL;
+	select_t s = { VRT_MASK_NULL_TERMINATED, 0, (hmapf_t **)selectf_a, 0, NULL};
 	hmapwrapf(&s); /* from selection buf to file */
 	hmapunwrapf(&s); /* from file to vobspace or selection buf */
 }

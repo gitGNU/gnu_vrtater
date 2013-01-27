@@ -30,18 +30,20 @@
 #define SLOW1_100 .01
 #define RENDER_CYC 0.041667
 
+unsigned int vrt_hmaps_max; /* external */
+
 /* hmap memory, sorting */
-static hmapf_t *ap_hmap_near[VRT_HMAPS_MAX];
-static hmapf_t *ap_hmap_perif[VRT_HMAPS_MAX];
-static hmapf_t *ap_hmap_far[VRT_HMAPS_MAX];
-static hmapf_t **pp_lr_n;
-static hmapf_t **pp_rl_n;
-static hmapf_t **pp_lr_p;
-static hmapf_t **pp_rl_p;
-static hmapf_t **pp_lr_f;
-static hmapf_t **pp_rl_f;
-static int dlr_n, dlr_p, dlr_f;
-static unsigned int passes;
+hmapf_t *ap_hmap_near;
+hmapf_t *ap_hmap_perif;
+hmapf_t *ap_hmap_far;
+hmapf_t **pp_lr_n;
+hmapf_t **pp_rl_n;
+hmapf_t **pp_lr_p;
+hmapf_t **pp_rl_p;
+hmapf_t **pp_lr_f;
+hmapf_t **pp_rl_f;
+int dlr_n, dlr_p, dlr_f;
+unsigned int passes;
 
 void proc_hmapf(hmapf_t *, int lodval);
 void flow_over(btoggles_t *balance_criteria);
@@ -52,21 +54,48 @@ void
 init_vohspace(void)
 {
 	int i;
-	hmapf_t *p = a_hmaps;
-	hmapf_t **pap_hmap_n = ap_hmap_near;
+	hmapf_t *p, **pap_hmap_n;
+
+	if((a_hmaps = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for a_hmaps\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+	if((ap_hmap_near = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for ap_hmap_near\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+	if((ap_hmap_perif = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for ap_hmap_perif\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+	if((ap_hmap_far = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for ap_hmap_far\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+
+	p = &a_hmaps[0];
+	pap_hmap_n = (hmapf_t **)&ap_hmap_near[0];
 
 	/* point out of bounds when buffer empty */
-	pp_lr_n = ap_hmap_near;
+	pp_lr_n = (hmapf_t **) &ap_hmap_near[0];
 	pp_lr_n--;
-	pp_rl_n = &ap_hmap_near[VRT_HMAPS_MAX - 1];
+	pp_rl_n = (hmapf_t **) &ap_hmap_near[vrt_hmaps_max - 1];
 	pp_rl_n++;
-	pp_lr_p = ap_hmap_perif;
+	pp_lr_p = (hmapf_t **) &ap_hmap_perif[0];
 	pp_lr_p--;
-	pp_rl_p = &ap_hmap_perif[VRT_HMAPS_MAX - 1];
+	pp_rl_p = (hmapf_t **) &ap_hmap_perif[vrt_hmaps_max - 1];
 	pp_rl_p++;
-	pp_lr_f = ap_hmap_far;
+	pp_lr_f = (hmapf_t **) &ap_hmap_far[0];
 	pp_lr_f--;
-	pp_rl_f = &ap_hmap_far[VRT_HMAPS_MAX - 1];
+	pp_rl_f = (hmapf_t **) &ap_hmap_far[vrt_hmaps_max - 1];
 	pp_rl_f++;
 
 	passes = -1;
@@ -74,16 +103,12 @@ init_vohspace(void)
 	dlr_p = 1;
 	dlr_f = 1;
 
-	/* put VRT_HMAPS_MAX hmap pointers in near buf */
-	for(i=0;i<VRT_HMAPS_MAX;i++) {
-		++pp_lr_n;
+	/* put vrt_hmaps_max hmap pointers in near buf */
+	for(i=0;i<vrt_hmaps_max;i++, ++pp_lr_n, pap_hmap_n++)
 		*pap_hmap_n = p++;
-		pap_hmap_n++;
-	}
-
 	/* set hmaps to null default */
 	p = a_hmaps;
-	for(i=0;i<VRT_HMAPS_MAX;i++, p++) {
+	for(i=0;i<vrt_hmaps_max;i++, p++) {
 		p->name = (session_t)0;
 		p->v_pos.x = 0;
 		p->v_pos.y = 0;
@@ -129,7 +154,7 @@ attach_hmapf(void)
 	int i;
 	hmapf_t *p = a_hmaps;
 
-	for(i=0;i<VRT_HMAPS_MAX;i++,p++) {
+	for(i=0;i<vrt_hmaps_max;i++,p++) {
 		if(p->p_data_vf == NULL) {
 			p->index = i; /* caller index */
 			p = &a_hmaps[i];
@@ -144,7 +169,7 @@ void
 detach_hmapf(hmapf_t *p)
 {
 	hmapf_t *sb = &a_hmaps[0];
-	hmapf_t *eb = &a_hmaps[VRT_HMAPS_MAX];
+	hmapf_t *eb = &a_hmaps[vrt_hmaps_max];
 
 	if((p >= sb) && (p <= eb)) {
 		p->name = (session_t)0;
@@ -205,12 +230,12 @@ sort_proc_hmaps(void)
 	passes++;
 
 	/* fixed pointers to array ends */
-	hmapf_t **pp_b_n = &ap_hmap_near[0];
-	hmapf_t **pp_e_n = &ap_hmap_near[VRT_HMAPS_MAX - 1];
-	hmapf_t **pp_b_p = &ap_hmap_perif[0];
-	hmapf_t **pp_e_p = &ap_hmap_perif[VRT_HMAPS_MAX - 1];
-	hmapf_t **pp_b_f = &ap_hmap_far[0];
-	hmapf_t **pp_e_f = &ap_hmap_far[VRT_HMAPS_MAX - 1];
+	hmapf_t **pp_b_n = (hmapf_t **) &ap_hmap_near[0];
+	hmapf_t **pp_e_n = (hmapf_t **) &ap_hmap_near[vrt_hmaps_max - 1];
+	hmapf_t **pp_b_p = (hmapf_t **) &ap_hmap_perif[0];
+	hmapf_t **pp_e_p = (hmapf_t **) &ap_hmap_perif[vrt_hmaps_max - 1];
+	hmapf_t **pp_b_f = (hmapf_t **) &ap_hmap_far[0];
+	hmapf_t **pp_e_f = (hmapf_t **) &ap_hmap_far[vrt_hmaps_max - 1];
 
 	/* sort for near, perif, far */
 
@@ -225,7 +250,6 @@ sort_proc_hmaps(void)
 
 		/* sort */
 		for(i=0;i<count;i++) {
-
 			if((*pp_lr_n)->v_pos.m <= VRT_NEAR_THRESH) {
 				proc_hmapf(*pp_lr_n, LOD_NEAR);
 				*(--pp_rl_n) = *(pp_lr_n--); /* move in near */
@@ -474,7 +498,7 @@ flow_over(btoggles_t *balance_criteria)
 	int i;
 	hmapf_t *p = &a_hmaps[0];
 
-	for(i=0;i<VRT_HMAPS_MAX;i++,p++) {
+	for(i=0;i<vrt_hmaps_max;i++,p++) {
 		if( \
 		(p->attribs.bits & VRT_MASK_FLOW_OVER) & \
 		(p->attribs.balance_filter &= *balance_criteria)) \
@@ -488,12 +512,16 @@ void
 free_dynamic(void)
 {
 	int i;
-	for(i=0;i<VRT_HMAPS_MAX;i++) {
+	for(i=0;i<vrt_hmaps_max;i++) {
 		free((&a_hmaps[i])->p_data_vf);
 		(&a_hmaps[i])->p_data_vf = NULL;
 		free((&a_hmaps[i])->p_dialog);
 		(&a_hmaps[i])->p_dialog = NULL;
 	}
+	free(a_hmaps);
+	free(ap_hmap_near);
+	free(ap_hmap_perif);
+	free(ap_hmap_far);
 }
 
 /* echo_in_node_partial_vobs() as processed */
