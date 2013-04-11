@@ -12,6 +12,7 @@
 /* progscope essentials, see below for another list of these */
 #define VRT_HMAPS_MAX 20
 #define VRT_UNDO_DEPTH 20
+#define VRT_RENDER_CYC 0.041667
 #define VRT_X_SUPPORT
 #define VRT_RENDERER_GL
 /* meta_u */

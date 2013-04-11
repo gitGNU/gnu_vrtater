@@ -154,7 +154,7 @@ main(int argc, char **argv)
 
 	/* vrtater */
 	setup_node(argc, argv);
-	init_node(); /* generate in-node */
+	generate_node();
 	init_tug_io();
 	node(); /* is a state machine */
 	close_node();

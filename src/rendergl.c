@@ -131,7 +131,7 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				/* for diagnostic, focus on the following vobs,
 				   path others out of frame */
 				if((hmap->index != 1) && (hmap->index != 2))
-					tele_mag_vf(&(hmap->v_vel), hmap->v_vel.m + .00001);
+					tele_magz_vf(&(hmap->v_vel), hmap->v_vel.m + .00001);
 				/* for vob 1 */
 				if(hmap->index == 1) {
 					/* track xy */

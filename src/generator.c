@@ -53,7 +53,7 @@ init_generator(void)
 }
 
 int
-init_node(void)
+generate_node(void)
 {
 	int lval;
 

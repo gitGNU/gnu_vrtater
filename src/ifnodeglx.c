@@ -6,16 +6,21 @@
 #include <X11/X.h>
 #include <GL/glx.h>
 #include <stdio.h>
+#include <math.h>
 #include "progscope.h"
+#include "ifnodeglx.h" /* !! */
 #include "generator.h"
+#include "hmap.h"
 
 void setup_glx(int argc, char **argv);
 void shutdown_glx(void);
 
-Display *dpy = NULL;
-XVisualInfo *xvinf = NULL;
-Window xwin;
-GLXContext glxcontext;
+Display *dpy0 = NULL;
+ifdpy_t ifdpy0;
+hmapf_t *fov0; /* external */
+XVisualInfo *xvinf0 = NULL;
+Window xwin0;
+GLXContext glxcontext0;
 int dbuff = LVAL_TRUE; /* force flush for single buffer'd visual */
 
 /* setup for given display and rendering libs */
@@ -25,7 +30,7 @@ setup_glx(int argc, char **argv)
 	/* gl X rendering */
 
 	/* open connection to X server */
-	if((dpy = XOpenDisplay(NULL)) == NULL) {
+	if((dpy0 = XOpenDisplay(NULL)) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not open a connection to X server\n",
 			__FILE__, __LINE__);
@@ -35,7 +40,7 @@ setup_glx(int argc, char **argv)
 	/* determine glX support */
 	int error;
 	int event;
-	if(!glXQueryExtension(dpy, &error, &event)) {
+	if(!glXQueryExtension(dpy0, &error, &event)) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error %i: X server has no support for GLX extension\n",
 			__FILE__, __LINE__, error);
@@ -45,8 +50,8 @@ setup_glx(int argc, char **argv)
 	/* choose visual by matching available params */
 	int dbv[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
 	int sbv[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, None};
-	if((xvinf = glXChooseVisual(dpy, DefaultScreen(dpy), dbv)) == NULL) {
-		if((xvinf = glXChooseVisual(dpy, DefaultScreen(dpy), sbv)) == NULL) {
+	if((xvinf0 = glXChooseVisual(dpy0, DefaultScreen(dpy0), dbv)) == NULL) {
+		if((xvinf0 = glXChooseVisual(dpy0, DefaultScreen(dpy0), sbv)) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
 				"Error: No visual(double nor single) choosable",
 				__FILE__, __LINE__);
@@ -57,7 +62,7 @@ setup_glx(int argc, char **argv)
 
 	/* create X colormap */
 	Colormap cmap;
-	cmap=XCreateColormap(dpy, RootWindow(dpy, xvinf->screen), xvinf->visual, AllocNone);
+	cmap=XCreateColormap(dpy0, RootWindow(dpy0, xvinf0->screen), xvinf0->visual, AllocNone);
 
 	/* setup Xwindow attributes */
 	XSetWindowAttributes xwinattr;
@@ -65,18 +70,18 @@ setup_glx(int argc, char **argv)
 	xwinattr.event_mask = KeyPressMask;
 
 	/* create an Xwindow with visual and attributes */
-	xwin=XCreateWindow(dpy, RootWindow(dpy, xvinf->screen), 0, 0, 800, 800, 0, xvinf->depth, InputOutput, xvinf->visual, CWColormap|CWEventMask, &xwinattr);
+	xwin0=XCreateWindow(dpy0, RootWindow(dpy0, xvinf0->screen), 0, 0, 800, 800, 0, xvinf0->depth, InputOutput, xvinf0->visual, CWColormap|CWEventMask, &xwinattr);
 
 	/* set Xwindow properties */
-	XSetStandardProperties(dpy, xwin, "vrtater", "vrtater", None, argv, argc, NULL);
+	XSetStandardProperties(dpy0, xwin0, "vrtater", "vrtater", None, argv, argc, NULL);
 
 	/* set gl X rendering context */
-	if((glxcontext = glXCreateContext(dpy, xvinf, NULL, GL_TRUE)) == NULL)
+	if((glxcontext0 = glXCreateContext(dpy0, xvinf0, NULL, GL_TRUE)) == NULL)
  		__builtin_exit(1);
 
 	/* make Xwindow current and map it */
-	glXMakeCurrent(dpy, xwin, glxcontext);
-	XMapWindow(dpy, xwin);
+	glXMakeCurrent(dpy0, xwin0, glxcontext0);
+	XMapWindow(dpy0, xwin0);
 }
 
 void
@@ -89,10 +94,10 @@ setup_node(int argc, char **argv)
 void
 shutdown_glx(void)
 {
-	if(glxcontext != NULL) {
-		glXMakeCurrent(dpy, None, NULL);
-		glXDestroyContext(dpy, glxcontext);
-		glxcontext = NULL;
+	if(glxcontext0 != NULL) {
+		glXMakeCurrent(dpy0, None, NULL);
+		glXDestroyContext(dpy0, glxcontext0);
+		glxcontext0 = NULL;
 	}
 }
 
@@ -110,18 +115,75 @@ node(void)
 	XEvent xevent;
 	int quit = 0;
 
+	/* dpy0->indexfov, for now
+	   use hmap 0 by nullifying wander apon it
+	   set oa and fp to position camera */
+	fov0 = (hmapf_t *) p_hmapf(0);
+	fov0->ang_spd = 0; /* zero roll */
+	set_vf(&(fov0->v_vel), 0, 0, 0, 0); /* zero track */
+	set_vf(&(fov0->v_axi), 0, 0, -1.0, 1); /* oa */
+	set_vf(&(fov0->v_pos), 0, 0, 1, 1); /* @ fp */
+
 	/* interface node */
 	while(!quit) {
-		while(XPending(dpy)) {
-			XNextEvent(dpy, &xevent);
+		while(XPending(dpy0)) {
+			XNextEvent(dpy0, &xevent);
 			switch(xevent.type) {
 
 				case KeyPress:
-				switch(XKeycodeToKeysym(dpy, xevent.xkey.keycode, 0)) {
+				switch(XKeycodeToKeysym(dpy0, xevent.xkey.keycode, 0)) {
 
 					case XK_Escape:
 					return;
+					case XK_a:
+						(&ifdpy0)->keyroll += .017453;
+						if((&ifdpy0)->keyroll > M_PI)
+							(&ifdpy0)->keyroll = -M_PI; /* max perceiveable */
+					break;
+					case XK_d:
+						(&ifdpy0)->keyroll -= .017453;
+						if((&ifdpy0)->keyroll < -M_PI)
+							(&ifdpy0)->keyroll = M_PI;
+					break;
+					case XK_w:
+						(&ifdpy0)->keyvfore -= VRT_RENDER_CYC; /* (+/-)1m/(keyboard)s^2 */
+					break;
+					case XK_s:
+						(&ifdpy0)->keyvfore += VRT_RENDER_CYC;
+					break;
+					case XK_k:
+						(&ifdpy0)->keypan += .017453;
+						if((&ifdpy0)->keypan > M_PI)
+							(&ifdpy0)->keypan = -M_PI;
+					break;
+					case XK_semicolon:
+						(&ifdpy0)->keypan -= .017453;
+						if((&ifdpy0)->keypan < -M_PI)
+							(&ifdpy0)->keypan = M_PI;
+					break;
+					case XK_o:
+						(&ifdpy0)->keytilt += .017453;
+						if((&ifdpy0)->keytilt > M_PI)
+							(&ifdpy0)->keytilt = -M_PI;
+					break;
+					case XK_l:
+						(&ifdpy0)->keytilt -= .017453;
+						if((&ifdpy0)->keytilt < -M_PI)
+							(&ifdpy0)->keytilt = M_PI;
+					break;
+					case XK_space:
+					break;
+					case XK_Tab:
+					break;
+					case XK_backslash:
+					break;
 				}
+				break;
+				case ButtonPress:
+				break;
+				case ButtonRelease:
+				break;
+				case MotionNotify:
 				break;
 			}
 		}
@@ -132,9 +194,11 @@ node(void)
 		/* generate next frame  */
 		regenerate_scene(&quit);
 
-		/* render */
+		__builtin_printf("\troll %f : pan %f : tilt %f : vfore %f\n\n", (&ifdpy0)->keyroll, (&ifdpy0)->keypan, (&ifdpy0)->keytilt, (&ifdpy0)->keyvfore);
+
+		/* render to dpy0 */
 		if(dbuff)
-			glXSwapBuffers(dpy, xwin);
+			glXSwapBuffers(dpy0, xwin0);
 		else
 			glFlush();
 	}

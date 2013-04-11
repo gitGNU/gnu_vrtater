@@ -28,7 +28,6 @@
 #define TINYRANDOM 0.000000001
 #define SLOW1_10 .1
 #define SLOW1_100 .01
-#define RENDER_CYC 0.041667
 
 unsigned int vrt_hmaps_max; /* external */
 
@@ -475,13 +474,12 @@ proc_hmapf(hmapf_t *p, int lod)
 	/* if(bound_intersection());
 		intersection(); */
 	cp_vf(&(p->v_vel), q); /* take a copy of direction/velocity */
-	factor_vf(q, q, RENDER_CYC); /* create a delta vector given frequency */
+	factor_vf(q, q, VRT_RENDER_CYC); /* create a delta vector given freq */
 	sum_vf(&(p->v_pos), q, &(p->v_pos)); /* new pos = delta vector + pos */
-
 	/* set vob angular displacement
 	   note: v_ang_vel will be pseudovector.  on fly calc moreso optimal */
 	#define TEMPSPEEDUP 25
-	p->ang_dpl += p->ang_spd * RENDER_CYC * TEMPSPEEDUP;
+	p->ang_dpl += p->ang_spd * VRT_RENDER_CYC * TEMPSPEEDUP;
 	/* wraparound for 2 * M_PI, without this a glitch occurs on wrap */
 	if(fabs(p->ang_dpl) >= 2 * M_PI)
 		p->ang_dpl = fmodf(p->ang_dpl, 2 * M_PI);
