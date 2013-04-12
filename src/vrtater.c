@@ -20,8 +20,6 @@
 #include <getopt.h>
 #include "progscope.h"
 #include "ifnodeglx.h"
-#include "generator.h"
-#include "tug.h"
 
 void version(void);
 void usage(void);
@@ -153,10 +151,5 @@ main(int argc, char **argv)
 	vrt_hmaps_max = 20;
 
 	/* vrtater */
-	setup_node(argc, argv);
-	generate_node();
-	init_tug_io();
-	node(); /* is a state machine */
-	close_node();
-	shutdown_node();
+	node(argc, argv); /* is a state machine */
 }

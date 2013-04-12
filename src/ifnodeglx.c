@@ -9,8 +9,10 @@
 #include <math.h>
 #include "progscope.h"
 #include "ifnodeglx.h" /* !! */
-#include "generator.h"
 #include "hmap.h"
+#include "generator.h"
+#include "rendergl.h"
+#include "tug.h"
 
 void setup_glx(int argc, char **argv);
 void shutdown_glx(void);
@@ -85,13 +87,6 @@ setup_glx(int argc, char **argv)
 }
 
 void
-setup_node(int argc, char **argv)
-{
-	init_generator();
-	setup_glx(argc, argv);
-}
-
-void
 shutdown_glx(void)
 {
 	if(glxcontext0 != NULL) {
@@ -101,19 +96,15 @@ shutdown_glx(void)
 	}
 }
 
-void
-shutdown_node(void)
-{
-	shutdown_glx();
-}
-
 /* state machine */
 void
-node(void)
+node(int argc, char **argv)
 {
 
-	XEvent xevent;
-	int quit = 0;
+	/* setup node */
+	setup_glx(argc, argv);
+	generate_node();
+	init_tug_io();
 
 	/* dpy0->indexfov, for now
 	   use hmap 0 by nullifying wander apon it
@@ -123,6 +114,9 @@ node(void)
 	set_vf(&(fov0->v_vel), 0, 0, 0, 0); /* zero track */
 	set_vf(&(fov0->v_axi), 0, 0, -1.0, 1); /* oa */
 	set_vf(&(fov0->v_pos), 0, 0, 1, 1); /* @ fp */
+
+	XEvent xevent;
+	int quit = 0;
 
 	/* interface node */
 	while(!quit) {
@@ -193,6 +187,7 @@ node(void)
 
 		/* generate next frame  */
 		regenerate_scene(&quit);
+		render_voglspace();
 
 		__builtin_printf("\troll %f : pan %f : tilt %f : vfore %f\n\n", (&ifdpy0)->keyroll, (&ifdpy0)->keypan, (&ifdpy0)->keytilt, (&ifdpy0)->keyvfore);
 
@@ -202,4 +197,8 @@ node(void)
 		else
 			glFlush();
 	}
+
+	/* shutdown node */
+	close_node();
+	shutdown_glx();
 }

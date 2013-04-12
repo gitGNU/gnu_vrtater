@@ -263,3 +263,10 @@ draw_hmapf(hmapf_t *hmap, int lod)
 		break;
 	}
 }
+
+/* called immediately before buffer is drawn to all dpy's */
+void
+render_voglspace(void)
+{
+	;
+}

@@ -142,10 +142,14 @@ enum { /* hmap attribs.bits */
 #define VRT_MASK_RENDER_FOLLOWS (1 << VRT_ORDINAL_RENDER_FOLLOWS)
 	VRT_ORDINAL_FIXED_FORM, /* requests no deformation */
 #define VRT_MASK_FIXED_FORM (1 << VRT_ORDINAL_FIXED_FORM)
-	VRT_ORDINAL_DIALOG,
-#define VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
+	VRT_ORDINAL_DIALOG, /* need or xtra cyc vs. dialog_total in generator */
+#define	VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
 	VRT_ORDINAL_BUFFER, /* stack in vobspace /w attribute indicator */
 #define VRT_MASK_BUFFER (1 << VRT_ORDINAL_BUFFER)
+	VRT_ORDINAL_VERTICE_MODS, /* unaffix this locally when sending */
+#define VRT_MASK_VERTICE_MODS (1 << VRT_ORDINAL_VERTICE_MODS)
+	VRT_ORDINAL_DIALOG_MODS, /* unaffix this locally when sending */
+#define VRT_MASK_DIALOG_MODS (1 << VRT_ORDINAL_DIALOG_MODS)
 };
 
 /* hmap.c:

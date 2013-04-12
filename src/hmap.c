@@ -17,11 +17,10 @@ unsigned int vrt_hmaps_max; /* external */
 hmapf_t *selectf_a; /* external */
 hmapf_t *selectf_b; /* external */
 
-/* hmapf selection buffers: definition for extern */
 void
 init_hmaps(void)
 {
-__builtin_printf("initializing selection\n");
+	/* allocate hmapf selection buffers */
 	if((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for selectf_a\n",

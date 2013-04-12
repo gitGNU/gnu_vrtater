@@ -20,7 +20,6 @@
 
 gen_opts_t genopts;
 unsigned int vrt_hmaps_max; /* external */
-hmapf_t *ap_hmapf_dialog; /* for incoming vobs with dialog */
 
 /* selection buffer */
 hmapf_t *selectf_a; /* external */
@@ -39,24 +38,14 @@ vf_t view_roll; /* spin and depth */
 /* current session */
 session_t session;
 
-/* startup configuration */
-void
-init_generator(void)
-{
-	init_hmaps();
-	if((ap_hmapf_dialog = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
-			"Error: Could not malloc for ap_hmapf_dialog\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-}
-
 int
 generate_node(void)
 {
 	int lval;
 
+	/* init generator.  allocates selection buffers */
+	init_hmaps();
+	/* init attribs.  hmap arrays, pointers thereto */
 	init_vohspace();
 
 	/* get session '0'(primary 'in node' session name) */
@@ -68,7 +57,10 @@ generate_node(void)
 	}
 	__builtin_printf("generator: new session name %llu\n", session);
 
+	/* put configured set of hmaps into vobspace */
 	generate_vobspace();
+
+	/* renderer is statefull based on hmaps input */
 	init_renderer();
 
 	return 0;
@@ -103,13 +95,17 @@ regenerate_scene(int *quit)
 {
 	set_main_vobfov(&view_pos, &view_dir, &view_roll);
 
-	/* cycle network
-	   pass on node hmaps with modified dialog to dialogf()
+	/* cycle network */
+	session_sync();
+	/* collect_off_node_vobs() */
+	/* ... */
+
+	/* pass on node hmaps with modified dialog to dialogf()
 	   pass all in node and in node partial hmaps to dialog if
 	   VRT_MASK_HMAP_MODELING set
-	   for now */
-
-	/* test set of one empty dialog element */
+	   for now
+	   test set of one empty dialog element
+	   example here pretends inbound hmap 15 has dialog.  calls dialogf() */
 	static int recurrant = 0;
 	hmapf_t **p = (hmapf_t **)selectf_a;
 	*p = p_hmapf(15);
@@ -117,9 +113,6 @@ regenerate_scene(int *quit)
 	if(!recurrant++)
 		dialogf(&s, &genopts);
 
-	session_sync();
-	/* collect_off_node_vobs() */
-	/* ... */
 	/* sort hmaps and cue them for drawing */
 	sort_proc_hmaps();
 	/* given gnu timer lib giving back cycles fork_child_timer_callback()
@@ -154,7 +147,6 @@ close_generator(void)
 {
 	free(selectf_a);
 	free(selectf_b);
-	free(ap_hmapf_dialog);
 }
 
 void

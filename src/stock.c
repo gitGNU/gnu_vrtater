@@ -142,7 +142,7 @@ hmapf_icosahedron_b(session_t *session)
 	if(v_total != v_count)
 		__builtin_printf("hmap(): err, vertice compile mismatch\n");
 
-	/* add dialog data(if any) to hmap */
+	/* add/allocate for dialog data(if any) */
 	/* ... */
 
 	return hmap;
@@ -240,7 +240,7 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 	if(v_total != v_count)
 		__builtin_printf("hmap(): err, vertice compile mismatch\n");
 
-	/* add dialog data(if any) to hmap */
+	/* add/allocate for dialog data(if any) */
 	/* ... */
 
 	return hmap;

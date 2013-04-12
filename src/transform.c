@@ -73,6 +73,7 @@ recycler(select_t *sel)
 /*
    write hmap in selection buffer to network or file, as an hmap vob file
    for now assume file/network is meta_u a_file_net_io[10000]
+   later actually do the file write or and pass it over the network
 */
 meta_u a_file_net_io[10000]; /* for now */
 void
@@ -142,6 +143,7 @@ hmapwrapf(select_t *sel)
    read in an hmap vob file from file or network
    for now assume file/network is meta_u a_file_net_io[10000]
    for now just print it
+   later write it to an hmap, allocating for vf_t's and dialog
 */
 int
 hmapunwrapf(select_t *sel)

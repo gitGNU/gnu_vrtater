@@ -15,8 +15,6 @@ struct interface_display {
 };
 typedef struct interface_display ifdpy_t;
 
-void setup_node(int argc, char **argv);
-void node(void);
-void shutdown_node(void);
+void node(int argc, char **argv);
 
 #endif /* VRT_IFNODEGLX_H */

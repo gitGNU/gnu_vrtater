@@ -6,7 +6,6 @@
 #ifndef VRT_GENERATOR_H
 #define VRT_GENERATOR_H
 
-void init_generator(void);
 int generate_node(void);
 void generate_vobspace(void);
 void regenerate_scene(int *);
