@@ -48,6 +48,10 @@ void proc_hmapf(hmapf_t *, int lodval);
 void flow_over(btoggles_t *balance_criteria);
 void wanderf(hmapf_t *vob, float e);
 
+/* selection buffer */
+hmapf_t *selectf_a; /* external */
+hmapf_t *selectf_b; /* external */
+
 /* set up hmap arrays, pointers thereto, nullify their attribs */
 void
 init_vohspace(void)
@@ -505,9 +509,13 @@ flow_over(btoggles_t *balance_criteria)
 	/* then in positional round these are recycled */
 }
 
-/* free all dynamic memory assigned to hmaps */
+/* free all dynamic memory associated with vohspace and selection buffer.
+   note: for resizing potential vohspace while maintaining sessions, a
+   selection buffer could be used to hold all hmaps while resizing the
+   primary hmap and pointer memory, then the hmaps could be swapped back
+   when resizing the selection buffers. */
 void
-free_dynamic(void)
+free_vohspace_memory(void)
 {
 	int i;
 	for(i=0;i<vrt_hmaps_max;i++) {
@@ -520,6 +528,8 @@ free_dynamic(void)
 	free(ap_hmap_near);
 	free(ap_hmap_perif);
 	free(ap_hmap_far);
+	free(selectf_a);
+	free(selectf_b);
 }
 
 /* echo_in_node_partial_vobs() as processed */

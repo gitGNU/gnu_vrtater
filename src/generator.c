@@ -25,6 +25,8 @@ unsigned int vrt_hmaps_max; /* external */
 hmapf_t *selectf_a; /* external */
 hmapf_t *selectf_b; /* external */
 
+void generate_vohspace(void);
+
 /*test*/
 void cphmaptest(void);
 void hmapwrap_unwraptst(void);
@@ -43,8 +45,8 @@ generate_node(void)
 {
 	int lval;
 
-	/* init generator.  allocates selection buffers */
-	init_hmaps();
+	/* init generator */
+	init_selection_buffers();
 	/* init attribs.  hmap arrays, pointers thereto */
 	init_vohspace();
 
@@ -58,7 +60,7 @@ generate_node(void)
 	__builtin_printf("generator: new session name %llu\n", session);
 
 	/* put configured set of hmaps into vobspace */
-	generate_vobspace();
+	generate_vohspace();
 
 	/* renderer is statefull based on hmaps input */
 	init_renderer();
@@ -67,7 +69,7 @@ generate_node(void)
 }
 
 void
-generate_vobspace(void)
+generate_vohspace(void)
 {
 	/* for now */
 	int i;
@@ -130,6 +132,7 @@ close_vobspace(double when)
 	   what = VRT_CLOSE;
 	   fork_child_timer_callback(when, what);
 	*/
+	;
 }
 
 void
@@ -143,18 +146,10 @@ callback_close_vobspace(void)
 }
 
 void
-close_generator(void)
-{
-	free(selectf_a);
-	free(selectf_b);
-}
-
-void
 close_node(void)
 {
-	/* datsync() */
-	free_dynamic();
-	close_generator();
+	/* later support dynamic resize with this function after datsync() */
+	free_vohspace_memory();
 }
 
 void

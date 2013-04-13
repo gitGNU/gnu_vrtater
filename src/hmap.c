@@ -18,9 +18,10 @@ hmapf_t *selectf_a; /* external */
 hmapf_t *selectf_b; /* external */
 
 void
-init_hmaps(void)
+init_selection_buffers(void)
 {
-	/* allocate hmapf selection buffers */
+	/* allocate hmapf selection buffers
+	   note: dont talk about double number calls :-| */
 	if((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for selectf_a\n",

@@ -128,7 +128,8 @@ node(int argc, char **argv)
 				switch(XKeycodeToKeysym(dpy0, xevent.xkey.keycode, 0)) {
 
 					case XK_Escape:
-					return;
+						quit = LVAL_TRUE;
+					break;
 					case XK_a:
 						(&ifdpy0)->keyroll += .017453;
 						if((&ifdpy0)->keyroll > M_PI)
@@ -196,9 +197,14 @@ node(int argc, char **argv)
 			glXSwapBuffers(dpy0, xwin0);
 		else
 			glFlush();
+
+		/* assertion?: always load identity matrix at start of new frame
+		   initial call is in init_renderer() */
+		glLoadIdentity();
 	}
 
 	/* shutdown node */
-	close_node();
+	close_vobspace(0); /* now for now */
+	close_node(); /* move to callback_close_vobspace() after implemented */
 	shutdown_glx();
 }

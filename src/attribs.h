@@ -14,7 +14,7 @@ hmapf_t *attach_hmapf(void);
 #define detach_hmap(hmap) detach_hmapf() /* for now */
 void detach_hmapf(hmapf_t *);
 void sort_proc_hmaps(void);
-void free_dynamic(void);
+void free_vohspace_memory(void);
 void nportf(hmapf_t *, vf_t *);
 
 hmapf_t *a_hmaps;

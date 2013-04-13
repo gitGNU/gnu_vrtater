@@ -21,6 +21,7 @@ init_renderer(void)
 	glEnable(GL_LIGHTING);
 	glEnable(GL_COLOR_MATERIAL);
 	glDisable(GL_CULL_FACE);
+	glLoadIdentity();
 }
 
 /* draw a triangle with 3 supplied vf_t's */
@@ -83,7 +84,7 @@ set_main_vobfov(vf_t *view_pos, vf_t *view_dir, vf_t *view_roll)
 	glColor3f(.1,.5,0);
 }
 
-/* per hmap per frame in frequency:
+/* called per hmap per frame in frequency:
    vs. DRAWGEOM, draw hmaps where format supported */
 void
 draw_hmapf(hmapf_t *hmap, int lod)
