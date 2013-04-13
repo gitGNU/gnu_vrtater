@@ -10,9 +10,12 @@
 #include <stdio.h>
 #include "attribs.h" /* !! */
 #include "hmap.h"
-#include "rendergl.h"
 #include "vectors.h"
 #include "rotation.h"
+
+#ifdef VRT_RENDERER_GL
+#include "rendergl.h"
+#endif /* VRT_RENDER_GL */
 
 /* lod envelopes */
 #define VRT_SORT_PERIF_RATIO 8
@@ -509,11 +512,7 @@ flow_over(btoggles_t *balance_criteria)
 	/* then in positional round these are recycled */
 }
 
-/* free all dynamic memory associated with vohspace and selection buffer.
-   note: for resizing potential vohspace while maintaining sessions, a
-   selection buffer could be used to hold all hmaps while resizing the
-   primary hmap and pointer memory, then the hmaps could be swapped back
-   when resizing the selection buffers. */
+/* free all dynamic memory associated with vohspace and selection buffer */
 void
 free_vohspace_memory(void)
 {

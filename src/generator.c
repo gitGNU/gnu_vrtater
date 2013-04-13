@@ -11,12 +11,15 @@
 #include "generator.h" /* !! */
 #include "vectors.h"
 #include "rotation.h"
-#include "rendergl.h"
 #include "transform.h"
 #include "attribs.h"
 #include "session.h"
 #include "dialogX11.h"
 #include "stock.h"
+
+#ifdef VRT_RENDERER_GL
+#include "rendergl.h"
+#endif /* VRT_RENDER_GL */
 
 gen_opts_t genopts;
 unsigned int vrt_hmaps_max; /* external */
@@ -80,14 +83,14 @@ generate_vohspace(void)
 	/* hmaps from file */
 	/* test(); */
 
-	/* from stock */
+	/* from stock.  any too many for vrt_hmaps_max will simply fail */
 	for(i=0;i<1;i++)
 		if((p = hmapf_icosahedron_b(&session)))
 			nportf(p, &ptl);
 	for(i=0;i<2;i++)
 		if((p = hmapf_cube_b(&session, .1, .1, .1)))
 			nportf(p, sum_vf(&t, &ptl, &ptl));
-	for(i=0;i<17;i++)
+	for(i=0;i<18;i++) /* ! */
 		if((p = hmapf_icosahedron_b(&session)))
 			nportf(p, sum_vf(&t, &ptl, &ptl));
 }
@@ -114,6 +117,10 @@ regenerate_scene(int *quit)
 	select_t s = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
 	if(!recurrant++)
 		dialogf(&s, &genopts);
+	else /* ! */
+		resize_node(40, 0);
+	if(recurrant == 2)
+		resize_node(39, 0);
 
 	/* sort hmaps and cue them for drawing */
 	sort_proc_hmaps();
@@ -148,8 +155,33 @@ callback_close_vobspace(void)
 void
 close_node(void)
 {
-	/* later support dynamic resize with this function after datsync() */
 	free_vohspace_memory();
+}
+
+/* resize vohspace hmap memory (while maintaining connections: todo) */
+int
+resize_node(int size, int keep_connected)
+{
+	/* for now keep_connected unsupported
+	   allow for increasing of hmap memory only, for now */
+	if(size < vrt_hmaps_max) {
+		__builtin_fprintf(stderr,  "vrtater: "
+			"Error: Reducing hmap memory currently unsupported\n");
+		return(-1);
+	} else {
+		if(keep_connected)
+			/* for now unsupported.  will later implement resizing
+			   of potential vohspace while maintaining sessions
+			   using a dynamic allocation for contents of a_hmaps */
+			;
+		else {
+			close_node();
+			sleep(5);
+			vrt_hmaps_max = size;
+			generate_node();
+		}
+		return(0);
+	}
 }
 
 void

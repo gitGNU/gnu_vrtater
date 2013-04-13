@@ -19,7 +19,10 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include "progscope.h"
+
+#ifdef VRT_X_SUPPORT
 #include "ifnodeglx.h"
+#endif /* VRT_X_SUPPORT */
 
 void version(void);
 void usage(void);

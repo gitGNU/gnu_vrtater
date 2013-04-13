@@ -12,6 +12,7 @@
 
 void draw_gl_tri(vf_t *, vf_t *, vf_t *);
 
+/* note: keep this re-entrant for regenerating node */
 void
 init_renderer(void)
 {

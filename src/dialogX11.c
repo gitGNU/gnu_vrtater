@@ -10,6 +10,10 @@
 #include "hmap.h"
 #include "transform.h"
 
+#ifdef VRT_RENDERER_GL
+#include "rendergl.h"
+#endif /* VRT_RENDER_GL */
+
 int connect_partialspace(session_t *);
 int *dialog_with_local_user(void);
 void proc_remote_dialog(int *);

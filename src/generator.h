@@ -10,6 +10,7 @@ int generate_node(void);
 void regenerate_scene(int *);
 void close_vobspace(double time_till_closed);
 void close_node(void);
+int resize_node(int, int);
 /* generator supported calls for tug input */
 void generator_hapticNormill(void);
 void generator_intersection(void);

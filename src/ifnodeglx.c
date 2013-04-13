@@ -204,7 +204,7 @@ node(int argc, char **argv)
 	}
 
 	/* shutdown node */
-	close_vobspace(0); /* now for now */
-	close_node(); /* move to callback_close_vobspace() after implemented */
+	close_vobspace(0); /* _now_ for now */
+	close_node(); /* !!move to callback_close_vobspace() */
 	shutdown_glx();
 }
