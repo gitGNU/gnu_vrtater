@@ -90,15 +90,18 @@ generate_vohspace(void)
 	for(i=0;i<2;i++)
 		if((p = hmapf_cube_b(&session, .1, .1, .1)))
 			nportf(p, sum_vf(&t, &ptl, &ptl));
-	for(i=0;i<18;i++) /* ! */
+	for(i=0;i<6;i++)
 		if((p = hmapf_icosahedron_b(&session)))
+			nportf(p, sum_vf(&t, &ptl, &ptl));
+	for(i=0;i<11;i++)
+		if((p = hmapf_cube_b(&session, .78, .78, .78)))
 			nportf(p, sum_vf(&t, &ptl, &ptl));
 }
 
 void
 regenerate_scene(int *quit)
 {
-	set_main_vobfov(&view_pos, &view_dir, &view_roll);
+	set_main_vohfov(&view_pos, &view_dir, &view_roll);
 
 	/* cycle network */
 	session_sync();
@@ -117,15 +120,11 @@ regenerate_scene(int *quit)
 	select_t s = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
 	if(!recurrant++)
 		dialogf(&s, &genopts);
-	else /* ! */
-		resize_node(40, 0);
-	if(recurrant == 2)
-		resize_node(39, 0);
 
 	/* sort hmaps and cue them for drawing */
 	sort_proc_hmaps();
 	/* given gnu timer lib giving back cycles fork_child_timer_callback()
-	   for now: */
+	   for now */
 	usleep(20000);
 }
 
@@ -176,7 +175,6 @@ resize_node(int size, int keep_connected)
 			;
 		else {
 			close_node();
-			sleep(5);
 			vrt_hmaps_max = size;
 			generate_node();
 		}

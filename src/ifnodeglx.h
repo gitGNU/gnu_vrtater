@@ -9,7 +9,7 @@
 struct interface_display {
 	int indexfov; /* hmap dpy_ is attached to */
 	float keyroll;
-	float keyvfore; /* accelerate summing v_axi * vfore into v_vel' */
+	float keyvfwd; /* accelerate summing v_axi * vfwd into v_vel' */
 	float keypan;
 	float keytilt;
 };

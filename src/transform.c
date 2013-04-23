@@ -112,6 +112,10 @@ hmapwrapf(select_t *sel)
 	*pf++ = h->v_axi.y;
 	*pf++ = h->v_axi.z;
 	*pf++ = h->v_axi.m;
+	*pf++ = h->v_rel.x;
+	*pf++ = h->v_rel.y;
+	*pf++ = h->v_rel.z;
+	*pf++ = h->v_rel.m;
 	*pf++ = h->v_pre.x;
 	*pf++ = h->v_pre.y;
 	*pf++ = h->v_pre.z;
@@ -239,6 +243,10 @@ copy_hmapf(select_t *sel)
 	b->v_axi.y = a->v_axi.y;
 	b->v_axi.z = a->v_axi.z;
 	b->v_axi.m = a->v_axi.m;
+	b->v_rel.x = a->v_rel.x;
+	b->v_rel.y = a->v_rel.y;
+	b->v_rel.z = a->v_rel.z;
+	b->v_rel.m = a->v_rel.m;
 	b->v_pre.x = a->v_pre.x;
 	b->v_pre.y = a->v_pre.y;
 	b->v_pre.z = a->v_pre.z;

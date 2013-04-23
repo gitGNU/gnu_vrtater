@@ -22,7 +22,26 @@ init_renderer(void)
 	glEnable(GL_LIGHTING);
 	glEnable(GL_COLOR_MATERIAL);
 	glDisable(GL_CULL_FACE);
+
+	/* frustum */
+	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
+	/* left, right, bottom, top, near, far */
+	glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0);
+
+	/* diag */
+	//glMatrixMode( GL_PROJECTION );
+	//glLoadIdentity();
+	//glRotatef(5.0, 1.0, 0.0, 0.0);
+	glRotatef(10.0, 0.0, 1.0, 0.0);
+	//glRotatef(5.0, 0.0, 0.0, 1.0);
+	glTranslatef(0, 0, -2.5);
+	//glMatrixMode( GL_MODELVIEW );
+	//glLoadIdentity();
+
+	/* assume modeling transforms */
+	glMatrixMode(GL_MODELVIEW);
+	//glLoadIdentity();
 }
 
 /* draw a triangle with 3 supplied vf_t's */
@@ -68,7 +87,7 @@ draw_gl_tri(vf_t *a, vf_t *b, vf_t *c)
 
 /* always called first per frame */
 void
-set_main_vobfov(vf_t *view_pos, vf_t *view_dir, vf_t *view_roll)
+set_main_vohfov(vf_t *view_pos, vf_t *view_dir, vf_t *view_roll)
 {
 	set_vf(view_pos, 0.0f, 1.0f, 2.0f, 2.236068f);
 	set_vf(view_dir, 0.0f, -1.0f, -1.0f, 1.414213f);
@@ -247,6 +266,16 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				} else {
 					/* all else */
 					GRN();
+				}
+
+				/* diag */
+				if((hmap->index > 2) && (hmap->index < 15)) {
+					if(hmap->index == 3)
+						ORN();	
+					if(hmap->index == 4)
+						BLU();	
+					if(hmap->index == 5)
+						VLT();	
 				}
 			}
 			/* gl */

@@ -24,7 +24,6 @@
 #define VRT_PERIF_THRESH 100000.0f
 
 /* positioning, time, mass, factors, for now, also some to ease things */
-#define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
 #define SQRT_3 1.732050807
 #define RANDOM_OFFSET 123456789
 #define SMALLRANDOM 0.0000001
@@ -128,6 +127,10 @@ init_vohspace(void)
 		p->v_axi.y = 0;
 		p->v_axi.z = 0;
 		p->v_axi.m = 0;
+		p->v_rel.x = 0;
+		p->v_rel.y = 0;
+		p->v_rel.z = 0;
+		p->v_rel.m = 0;
 		p->v_pre.x = 0;
 		p->v_pre.y = 0;
 		p->v_pre.z = 0;
@@ -191,6 +194,10 @@ detach_hmapf(hmapf_t *p)
 		p->v_axi.y = 0;
 		p->v_axi.z = 0;
 		p->v_axi.m = 0;
+		p->v_rel.x = 0;
+		p->v_rel.y = 0;
+		p->v_rel.z = 0;
+		p->v_rel.m = 0;
 		p->v_pre.x = 0;
 		p->v_pre.y = 0;
 		p->v_pre.z = 0;

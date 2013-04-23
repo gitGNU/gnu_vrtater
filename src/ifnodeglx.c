@@ -5,6 +5,7 @@
 
 #include <X11/X.h>
 #include <GL/glx.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "progscope.h"
@@ -12,13 +13,14 @@
 #include "hmap.h"
 #include "generator.h"
 #include "rendergl.h"
+#include "rotation.h"
 #include "tug.h"
 
 void setup_glx(int argc, char **argv);
 void shutdown_glx(void);
 
 Display *dpy0 = NULL;
-ifdpy_t ifdpy0;
+ifdpy_t ifd0, *ifdpy0 = &ifd0;
 hmapf_t *fov0; /* external */
 XVisualInfo *xvinf0 = NULL;
 Window xwin0;
@@ -96,6 +98,9 @@ shutdown_glx(void)
 	}
 }
 
+/* diagnostic */
+hmapf_t *diag, *diag2, *diag3;
+
 /* state machine */
 void
 node(int argc, char **argv)
@@ -106,19 +111,41 @@ node(int argc, char **argv)
 	generate_node();
 	init_tug_io();
 
-	/* dpy0->indexfov, for now
-	   use hmap 0 by nullifying wander apon it
-	   set oa and fp to position camera */
+	/* hmap with fov for dpy0
+	   diag: orgin of relative basis vectors */
 	fov0 = (hmapf_t *) p_hmapf(0);
 	fov0->ang_spd = 0; /* zero roll */
 	set_vf(&(fov0->v_vel), 0, 0, 0, 0); /* zero track */
-	set_vf(&(fov0->v_axi), 0, 0, -1.0, 1); /* oa */
-	set_vf(&(fov0->v_pos), 0, 0, 1, 1); /* @ fp */
+	set_vf(&(fov0->v_axi), 0, 0, -1.0, 1); /* oa, zoom */
+	set_vf(&(fov0->v_rel), 0, 1, 0, 1); /* up */
+	set_vf(&(fov0->v_pos), 0, 0, 0, 0); /* @ fp */
+
+	/* diag: endpoints of relative basis vectors */
+	diag = (hmapf_t *) p_hmapf(3);
+	diag->ang_spd = 0;
+	set_vf(&(diag->v_vel), 0, 0, 0, 0);
+	set_vf(&(diag->v_axi), 0, 0, -1.0, 1);
+	set_vf(&(diag->v_pos), 0, 0, 0, 0);
+
+	diag2 = (hmapf_t *) p_hmapf(4);
+	diag2->ang_spd = 0;
+	set_vf(&(diag2->v_vel), 0, 0, 0, 0);
+	set_vf(&(diag2->v_axi), 0, 0, -1.0, 1);
+	set_vf(&(diag2->v_pos), 0, 0, 0, 0);
+
+	diag3 = (hmapf_t *) p_hmapf(5);
+	diag3->ang_spd = 0;
+	set_vf(&(diag3->v_vel), 0, 0, 0, 0);
+	set_vf(&(diag3->v_axi), 0, 0, -1.0, 1);
+	set_vf(&(diag3->v_pos), 0, 0, 0, 0);
 
 	XEvent xevent;
 	int quit = 0;
 
-	/* interface node */
+	/* interface node
+	   all events since last frame are summed, the new frame is drawn.
+	   note: VRT_RENDER_CYC, or current vrt_render_cycle can be used to
+	   adjust scaling for rotational constants individually */
 	while(!quit) {
 		while(XPending(dpy0)) {
 			XNextEvent(dpy0, &xevent);
@@ -131,42 +158,47 @@ node(int argc, char **argv)
 						quit = LVAL_TRUE;
 					break;
 					case XK_a:
-						(&ifdpy0)->keyroll += .017453;
-						if((&ifdpy0)->keyroll > M_PI)
-							(&ifdpy0)->keyroll = -M_PI; /* max perceiveable */
+						ifdpy0->keyroll += .017453;
+						if(ifdpy0->keyroll > M_PI)
+							ifdpy0->keyroll = -M_PI; /* max perceiveable */
 					break;
 					case XK_d:
-						(&ifdpy0)->keyroll -= .017453;
-						if((&ifdpy0)->keyroll < -M_PI)
-							(&ifdpy0)->keyroll = M_PI;
+						ifdpy0->keyroll -= .017453;
+						if(ifdpy0->keyroll < -M_PI)
+							ifdpy0->keyroll = M_PI;
 					break;
 					case XK_w:
-						(&ifdpy0)->keyvfore -= VRT_RENDER_CYC; /* (+/-)1m/(keyboard)s^2 */
+						/* /w ANG_AFS /reg-s u sphere */
+						ifdpy0->keyvfwd -= .010281;
 					break;
 					case XK_s:
-						(&ifdpy0)->keyvfore += VRT_RENDER_CYC;
+						ifdpy0->keyvfwd += .010281;
 					break;
 					case XK_k:
-						(&ifdpy0)->keypan += .017453;
-						if((&ifdpy0)->keypan > M_PI)
-							(&ifdpy0)->keypan = -M_PI;
+						ifdpy0->keypan -= .017453;
+						if(ifdpy0->keypan < -M_PI)
+							ifdpy0->keypan = M_PI;
 					break;
 					case XK_semicolon:
-						(&ifdpy0)->keypan -= .017453;
-						if((&ifdpy0)->keypan < -M_PI)
-							(&ifdpy0)->keypan = M_PI;
+						ifdpy0->keypan += .017453;
+						if(ifdpy0->keypan > M_PI)
+							ifdpy0->keypan = -M_PI;
 					break;
 					case XK_o:
-						(&ifdpy0)->keytilt += .017453;
-						if((&ifdpy0)->keytilt > M_PI)
-							(&ifdpy0)->keytilt = -M_PI;
+						ifdpy0->keytilt += .017453;
+						if(ifdpy0->keytilt > M_PI)
+							ifdpy0->keytilt = -M_PI;
 					break;
 					case XK_l:
-						(&ifdpy0)->keytilt -= .017453;
-						if((&ifdpy0)->keytilt < -M_PI)
-							(&ifdpy0)->keytilt = M_PI;
+						ifdpy0->keytilt -= .017453;
+						if(ifdpy0->keytilt < -M_PI)
+							ifdpy0->keytilt = M_PI;
 					break;
 					case XK_space:
+						ifdpy0->keyroll *= 0.8;
+						ifdpy0->keyvfwd *= 0.8;
+						ifdpy0->keypan *= 0.8;
+						ifdpy0->keytilt *= 0.8;
 					break;
 					case XK_Tab:
 					break;
@@ -190,16 +222,54 @@ node(int argc, char **argv)
 		regenerate_scene(&quit);
 		render_voglspace();
 
-		__builtin_printf("\troll %f : pan %f : tilt %f : vfore %f\n\n", (&ifdpy0)->keyroll, (&ifdpy0)->keypan, (&ifdpy0)->keytilt, (&ifdpy0)->keyvfore);
+		/* per display per frame, as per interface, set field of view
+		   including: focal plane vectors v_rel and side, optical axis
+		   vector v_axi, and roll, a combination of v_rel and side. */
 
-		/* render to dpy0 */
+		vf_t side;
+
+		/* use rel to generate side vector */
+		cprod_vf(&(fov0->v_axi), &(fov0->v_rel), &side);
+		normz_vf(&side, &side);
+
+		/* move camera for ifdpy0 */
+		rotate_vf(&(fov0->v_rel), &(fov0->v_axi), ifdpy0->keyroll);
+		rotate_vf(&side, &(fov0->v_axi), ifdpy0->keyroll);
+		rotate_vf(&side, &(fov0->v_rel), ifdpy0->keypan);
+		rotate_vf(&(fov0->v_axi), &(fov0->v_rel), ifdpy0->keypan);
+		rotate_vf(&(fov0->v_axi), &side, ifdpy0->keytilt);
+		rotate_vf(&(fov0->v_rel), &side, ifdpy0->keytilt);
+
+		 /* bulk normalize to save cycles */
+		normz_vf(&side, &side);
+		normz_vf(&(fov0->v_axi), &(fov0->v_axi));
+		normz_vf(&(fov0->v_rel), &(fov0->v_rel));
+
+		/* diag */
+		cp_vf(&side, &(diag->v_pos));
+		cp_vf(&(fov0->v_rel), &(diag2->v_pos));
+		cp_vf(&(fov0->v_axi), &(diag3->v_pos));
+		__builtin_printf("   side: x %f y %f z %f m %f\n",
+			diag->v_pos.x, diag->v_pos.y,
+			diag->v_pos.z, diag->v_pos.m);
+		__builtin_printf("  v_rel: x %f y %f z %f m %f\n",
+			diag2->v_pos.x, diag2->v_pos.y,
+			diag2->v_pos.z, diag2->v_pos.m);
+		__builtin_printf("  v_axi: x %f y %f z %f m %f\n",
+			diag3->v_pos.x, diag3->v_pos.y,
+			diag3->v_pos.z, diag3->v_pos.m);
+
+		__builtin_printf("roll %f : pan %f : tilt %f : vfwd %f\n\n\n",
+			ifdpy0->keyroll, ifdpy0->keypan,
+			ifdpy0->keytilt, ifdpy0->keyvfwd);
+
+		/* draw to dpy0 */
 		if(dbuff)
 			glXSwapBuffers(dpy0, xwin0);
 		else
 			glFlush();
 
-		/* assertion?: always load identity matrix at start of new frame
-		   initial call is in init_renderer() */
+		/* start of new frame */
 		glLoadIdentity();
 	}
 

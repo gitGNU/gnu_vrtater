@@ -12,7 +12,8 @@
 /* progscope essentials, see below for another list of these */
 #define VRT_HMAPS_MAX 20
 #define VRT_UNDO_DEPTH 20
-#define VRT_RENDER_CYC 0.041667
+#define VRT_RENDER_CYC 0.041667 /* this should be an external variable */
+#define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
 #define VRT_X_SUPPORT
 #define VRT_RENDERER_GL
 /* meta_u */
@@ -70,11 +71,11 @@ typedef struct prev_caller_sessions prev_caller_sessions_t;
 /* render*.c:
    test palette */
 #ifdef VRT_RENDERER_GL
-#define VLT() glColor3f(.8,  4, .1)
+#define ORN() glColor3f(3, .9, 0)
 #define BLU() glColor3f( 0,  0, .9)
 #define GRN() glColor3f(.1, .9,  0)
 #define YEL() glColor3f(.9, .8,  0)
-#define ORN() glColor3f(.8, .3,  0)
+#define VLT() glColor3f(.7, .2,  1)
 #define RED() glColor3f(.9,  0,  0)
 #endif /* VRT_RENDERER_GL */
 #ifdef VRT_RENDERER_OTHER
@@ -163,6 +164,7 @@ struct hmapf {
 	vf_t v_pos; /* position vector from node orgin to hmap orgin */
 	vf_t v_vel; /* direction of travel/velocity vector */
 	vf_t v_axi; /* pole bias along hmap vob rotational axis vs. vobspace */
+	vf_t v_rel; /* optional use relative frame of reference */
 	vf_t v_pre; /* axis of mass distribution vs. v_axi precession */
 	float ang_spd; /* (r/s), angular speed about rotational axes */
 	float ang_dpl; /* (r), angular displacement about rotational axes */
