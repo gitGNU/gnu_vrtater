@@ -37,39 +37,41 @@ form_mag_vf(vf_t *a)
 	return a;
 }
 
-/* given desired magnitude m, set and return reference to vector a with new m
-   and proportionally scaled direction.  if given m = 0, direction will be lost.
-   fast version: for a valid result a->m is a valid and non zero magnitude */
+/* given vector a and desired magnitude m, set and return reference to vector
+   result in b with desired m and proportionally scaled direction.  if given
+   m = 0, direction will be lost.  fast version: for a valid result a->m is a
+   valid and non zero magnitude */
 vf_t *
-tele_mag_vf(vf_t *a, float m)
+tele_mag_vf(vf_t *a, vf_t *b, float m)
 {
-	a->x = (a->x / a->m) * m;
-	a->y = (a->y / a->m) * m;
-	a->z = (a->z / a->m) * m;
-	a->m = m;
-	return a;
+	b->x = (a->x / a->m) * m;
+	b->y = (a->y / a->m) * m;
+	b->z = (a->z / a->m) * m;
+	b->m = m;
+	return b;
 }
 
-/* given desired magnitude m, set and return reference to vector a with new m
-   and proportionally scaled direction.  if given m = 0, m is set vs. x, y, z */
+/* given vector a and desired magnitude m, set and return reference to vector
+   result in b with desired m and proportionally scaled direction.  if a->m = 0,
+   a->m is set vs. vector direction components */
 vf_t *
-tele_magz_vf(vf_t *a, float m)
+tele_magz_vf(vf_t *a, vf_t *b, float m)
 {
 	if(a->m) {
-		a->x = (a->x / a->m) * m;
-		a->y = (a->y / a->m) * m;
-		a->z = (a->z / a->m) * m;
-		a->m = m;
+		b->x = (a->x / a->m) * m;
+		b->y = (a->y / a->m) * m;
+		b->z = (a->z / a->m) * m;
+		b->m = m;
 	} else {
-		/* zero magnitude given; try to produce a magnitude */
+		/* a->m has zero magnitude; try to produce a magnitude */
 		if((a->m = sqrtf(a->x * a->x + a->y * a->y + a->z * a->z))) {
-			a->x = (a->x / a->m) * m;
-			a->y = (a->y / a->m) * m;
-			a->z = (a->z / a->m) * m;
-			a->m = m;
+			b->x = (a->x / a->m) * m;
+			b->y = (a->y / a->m) * m;
+			b->z = (a->z / a->m) * m;
+			b->m = m;
 		}
 	}
-	return a;
+	return b;
 }
 
 /* calculate vector a, where scaled by given factor f.  set and return reference
@@ -109,9 +111,8 @@ norm_vf(vf_t *a, vf_t *b)
 	return b;
 }
 
-/* calculate the normal vector for vector a.  set and return reference to result
-   in b.  0 magnitude safe.  if a has 0 direction, b gets 0 direction and
-   0 magnitude */
+/* calculate the normal vector for vector a.  set and return reference to vector
+   result in b.  if a has 0 direction, b gets 0 direction and 0 magnitude */
 vf_t *
 normz_vf(vf_t *a, vf_t *b)
 {
@@ -151,18 +152,6 @@ cprod_vf(vf_t *a, vf_t *b, vf_t *c)
 	return c;
 }
 
-/* calculate the inverse cross product of vectors a and b.  set and return
-   refrence to vector result in c */
-vf_t *
-icprod_vf(vf_t *a, vf_t *b, vf_t *c)
-{
-	c->x = -(a->y * b->z - a->z * b->y);
-	c->y = -(a->z * b->x - a->x * b->z);
-	c->z = -(a->x * b->y - a->y * b->x);
-	c->m = sqrtf(c->x * c->x + c->y * c->y + c->z * c->z);
-	return c;
-}
-
 /* calculate the sum of vectors a and b.  set and return refrence to vector
    result in c */
 vf_t *
@@ -182,10 +171,10 @@ sum_mf(vf_t *a, vf_t *b)
 	return(a->m + b->m);
 }
 
-/* calculate c, a vector representing the endpoint distance(difference) between
-   vectors a and b where their orgins need not be shared and where their length's
-   represent endpoint's vs. those orgins.  set and return reference to vector
-   result in c */
+/* calculate for c, a vector reference representing the endpoint distance
+   (difference) between vectors a and b where their orgins need not be shared
+   and where their length's represent endpoint's vs. those orgins.  set and
+   return reference to vector result in c */
 vf_t *
 dif_vf(vf_t *a, vf_t *b, vf_t *c)
 {

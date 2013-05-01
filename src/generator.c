@@ -77,7 +77,7 @@ generate_vohspace(void)
 	/* for now */
 	int i;
 	hmapf_t *p;
-	vf_t t; (&t)->x=.03; (&t)->y=.03; (&t)->z=.03;
+	vf_t t; (&t)->x=.0; (&t)->y=.01; (&t)->z=-.03;
 	vf_t ptl; cp_vf(&t, &ptl);
 
 	/* hmaps from file */

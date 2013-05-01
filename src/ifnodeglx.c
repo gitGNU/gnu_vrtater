@@ -27,6 +27,15 @@ Window xwin0;
 GLXContext glxcontext0;
 int dbuff = LVAL_TRUE; /* force flush for single buffer'd visual */
 
+vf_t glroo; /* gl renderer orgin offset.  external */
+
+/* interface factors, for now */
+float accel_adv; /* advantage */
+float accel_ofs; /* offset */
+
+/* diagnostic */
+hmapf_t *diag, *diag2, *diag3, *diag4, *diag5, *diag6;
+
 /* setup for given display and rendering libs */
 void
 setup_glx(int argc, char **argv)
@@ -98,9 +107,6 @@ shutdown_glx(void)
 	}
 }
 
-/* diagnostic */
-hmapf_t *diag, *diag2, *diag3;
-
 /* state machine */
 void
 node(int argc, char **argv)
@@ -111,16 +117,20 @@ node(int argc, char **argv)
 	generate_node();
 	init_tug_io();
 
-	/* hmap with fov for dpy0
-	   diag: orgin of relative basis vectors */
-	fov0 = (hmapf_t *) p_hmapf(0);
-	fov0->ang_spd = 0; /* zero roll */
-	set_vf(&(fov0->v_vel), 0, 0, 0, 0); /* zero track */
-	set_vf(&(fov0->v_axi), 0, 0, -1.0, 1); /* oa, zoom */
-	set_vf(&(fov0->v_rel), 0, 1, 0, 1); /* up */
-	set_vf(&(fov0->v_pos), 0, 0, 0, 0); /* @ fp */
+	/* interface factors, for now */
+	accel_adv = .1;
+	accel_ofs = .5;
 
-	/* diag: endpoints of relative basis vectors */
+	/* hmap with fov for dpy0 */
+	fov0 = (hmapf_t *) p_hmapf(0);
+	fov0->ang_spd = 0; /* for now not used for fov hmap */
+	fov0->ang_dpl = 0; /* for now not used for fov hmap */
+	set_vf(&(fov0->v_vel), 0, 0, 0, 0);
+	set_vf(&(fov0->v_axi), 0, 0, -1, 1); /* oa */
+	set_vf(&(fov0->v_rel), 0, 1, 0, 1); /* up locally */
+	set_vf(&(fov0->v_pos), 0, 0, 0, 0); /* @fp */
+
+	/* diag: endpoints of relative basis vectors vs. node orgin */
 	diag = (hmapf_t *) p_hmapf(3);
 	diag->ang_spd = 0;
 	set_vf(&(diag->v_vel), 0, 0, 0, 0);
@@ -139,13 +149,30 @@ node(int argc, char **argv)
 	set_vf(&(diag3->v_axi), 0, 0, -1.0, 1);
 	set_vf(&(diag3->v_pos), 0, 0, 0, 0);
 
+	/* diag: std basis */
+	diag4 = (hmapf_t *) p_hmapf(6);
+	diag4->ang_spd = 0;
+	set_vf(&(diag4->v_vel), 0, 0, 0, 0);
+	set_vf(&(diag4->v_axi), 0, 0, -1.0, 1);
+	set_vf(&(diag4->v_pos), 0, 0, 0, 0);
+
+	diag5 = (hmapf_t *) p_hmapf(7);
+	diag5->ang_spd = 0;
+	set_vf(&(diag5->v_vel), 0, 0, 0, 0);
+	set_vf(&(diag5->v_axi), 0, 0, -1.0, 1);
+	set_vf(&(diag5->v_pos), 0, 0, 0, 0);
+
+	diag6 = (hmapf_t *) p_hmapf(8);
+	diag6->ang_spd = 0;
+	set_vf(&(diag6->v_vel), 0, 0, 0, 0);
+	set_vf(&(diag6->v_axi), 0, 0, -1.0, 1);
+	set_vf(&(diag6->v_pos), 0, 0, 0, 0);
+
 	XEvent xevent;
 	int quit = 0;
 
 	/* interface node
-	   all events since last frame are summed, the new frame is drawn.
-	   note: VRT_RENDER_CYC, or current vrt_render_cycle can be used to
-	   adjust scaling for rotational constants individually */
+	   all events since last frame are summed, the new frame is drawn */
 	while(!quit) {
 		while(XPending(dpy0)) {
 			XNextEvent(dpy0, &xevent);
@@ -158,47 +185,47 @@ node(int argc, char **argv)
 						quit = LVAL_TRUE;
 					break;
 					case XK_a:
-						ifdpy0->keyroll += .017453;
-						if(ifdpy0->keyroll > M_PI)
-							ifdpy0->keyroll = -M_PI; /* max perceiveable */
-					break;
-					case XK_d:
-						ifdpy0->keyroll -= .017453;
-						if(ifdpy0->keyroll < -M_PI)
-							ifdpy0->keyroll = M_PI;
-					break;
-					case XK_w:
-						/* /w ANG_AFS /reg-s u sphere */
-						ifdpy0->keyvfwd -= .010281;
-					break;
-					case XK_s:
-						ifdpy0->keyvfwd += .010281;
-					break;
-					case XK_k:
-						ifdpy0->keypan -= .017453;
-						if(ifdpy0->keypan < -M_PI)
-							ifdpy0->keypan = M_PI;
-					break;
-					case XK_semicolon:
-						ifdpy0->keypan += .017453;
+						ifdpy0->keypan += .017453 * accel_adv;
 						if(ifdpy0->keypan > M_PI)
 							ifdpy0->keypan = -M_PI;
 					break;
-					case XK_o:
-						ifdpy0->keytilt += .017453;
-						if(ifdpy0->keytilt > M_PI)
-							ifdpy0->keytilt = -M_PI;
+					case XK_d:
+						ifdpy0->keypan -= .017453 * accel_adv;
+						if(ifdpy0->keypan < -M_PI)
+							ifdpy0->keypan = M_PI;
 					break;
-					case XK_l:
-						ifdpy0->keytilt -= .017453;
+					case XK_w:
+						/* /w ANG_AFS /reg-s u sphere */
+						ifdpy0->keyvfwd += .011281 * accel_adv;
+					break;
+					case XK_s:
+						ifdpy0->keyvfwd -= .011281 * accel_adv;
+					break;
+					case XK_k:
+						ifdpy0->keyroll += .017453 * accel_adv;
+						if(ifdpy0->keyroll > M_PI)
+							ifdpy0->keyroll = -M_PI;
+					break;
+					case XK_semicolon:
+						ifdpy0->keyroll -= .017453 * accel_adv;
+						if(ifdpy0->keyroll < -M_PI)
+							ifdpy0->keyroll = M_PI;
+					break;
+					case XK_o:
+						ifdpy0->keytilt -= .017453 * accel_adv;
 						if(ifdpy0->keytilt < -M_PI)
 							ifdpy0->keytilt = M_PI;
 					break;
+					case XK_l:
+						ifdpy0->keytilt += .017453 * accel_adv;
+						if(ifdpy0->keytilt > M_PI)
+							ifdpy0->keytilt = -M_PI;
+					break;
 					case XK_space:
-						ifdpy0->keyroll *= 0.8;
-						ifdpy0->keyvfwd *= 0.8;
-						ifdpy0->keypan *= 0.8;
-						ifdpy0->keytilt *= 0.8;
+						ifdpy0->keyroll *= 0.9;
+						ifdpy0->keyvfwd *= 0.85;
+						ifdpy0->keypan *= 0.75;
+						ifdpy0->keytilt *= 0.75;
 					break;
 					case XK_Tab:
 					break;
@@ -215,53 +242,97 @@ node(int argc, char **argv)
 			}
 		}
 
-		/* adjust vobspace per any tug input  */
-		/* ... */
+		/* adjust interfaced hmaps per any node input
+		   for now sum friction into velocity for interfaced hmaps.
+		   this will bring hmap accel to 0 over time */
+		tele_magz_vf(&(fov0->v_vel), &(fov0->v_vel),
+			fov0->v_vel.m * accel_ofs);
 
-		/* generate next frame  */
+		/* accelerate, summing d/t/t with d/t for forward/back */
+                vf_t acc;
+                tele_magz_vf(&(fov0->v_axi), &acc, ifdpy0->keyvfwd);
+                sum_vf(&acc, &(fov0->v_vel), &(fov0->v_vel));
+
+		/* set orgin offset for gl renderer */
+		cp_vf(&(fov0->v_pos), &glroo);
+
+		/* generate next frame's worth of hmaps
+		   regenerate scene modifies hmap position vs. v_vel, and
+		   soon position and orientation through intersection. */
 		regenerate_scene(&quit);
-		render_voglspace();
 
-		/* per display per frame, as per interface, set field of view
-		   including: focal plane vectors v_rel and side, optical axis
-		   vector v_axi, and roll, a combination of v_rel and side. */
+		/* further adjust interfaced hmaps while representing node
+		   output.  per display(dpy) per frame, set the field of view
+		   (fov) per the hmap's holding any.  a focal plane is
+		   represented by vectors v_rel and side, and an optical axis
+		   by vector v_axi.  roll is represented by a combination of
+		   v_rel and side. v_pos is represented when applied to a matrix
+		   translation of the fov along the optical axis.
+		   note: the scene is generated already.  hmap positions remain
+		   valid.  new hmap orientations here set are applicable
+		   immediately, however not drawn till next frame. */
 
+		/* calculate a basis vector for tilt */
 		vf_t side;
-
-		/* use rel to generate side vector */
 		cprod_vf(&(fov0->v_axi), &(fov0->v_rel), &side);
 		normz_vf(&side, &side);
 
-		/* move camera for ifdpy0 */
+		/* roll rel and side around axial */
 		rotate_vf(&(fov0->v_rel), &(fov0->v_axi), ifdpy0->keyroll);
 		rotate_vf(&side, &(fov0->v_axi), ifdpy0->keyroll);
-		rotate_vf(&side, &(fov0->v_rel), ifdpy0->keypan);
-		rotate_vf(&(fov0->v_axi), &(fov0->v_rel), ifdpy0->keypan);
-		rotate_vf(&(fov0->v_axi), &side, ifdpy0->keytilt);
-		rotate_vf(&(fov0->v_rel), &side, ifdpy0->keytilt);
+		glRotatef(ifdpy0->keyroll * 180 / M_PI,
+			fov0->v_axi.x, fov0->v_axi.y, fov0->v_axi.z);
 
-		 /* bulk normalize to save cycles */
-		normz_vf(&side, &side);
+		/* pan side and axial around rel */
+		rotate_vf(&side, &(fov0->v_rel), -ifdpy0->keypan);
+		rotate_vf(&(fov0->v_axi), &(fov0->v_rel), -ifdpy0->keypan);
+		glRotatef(-ifdpy0->keypan * 180 / M_PI,
+			fov0->v_rel.x, fov0->v_rel.y, fov0->v_rel.z);
+
+		/* tilt axial and rel around side */
+		rotate_vf(&(fov0->v_axi), &side, -ifdpy0->keytilt);
+		rotate_vf(&(fov0->v_rel), &side, -ifdpy0->keytilt);
+		glRotatef(-ifdpy0->keytilt * 180 / M_PI,
+			side.x, side.y, side.z);
+
+		/* base's are maintained in their normalized form */
 		normz_vf(&(fov0->v_axi), &(fov0->v_axi));
 		normz_vf(&(fov0->v_rel), &(fov0->v_rel));
 
-		/* diag */
-		cp_vf(&side, &(diag->v_pos));
-		cp_vf(&(fov0->v_rel), &(diag2->v_pos));
-		cp_vf(&(fov0->v_axi), &(diag3->v_pos));
-		__builtin_printf("   side: x %f y %f z %f m %f\n",
-			diag->v_pos.x, diag->v_pos.y,
-			diag->v_pos.z, diag->v_pos.m);
-		__builtin_printf("  v_rel: x %f y %f z %f m %f\n",
-			diag2->v_pos.x, diag2->v_pos.y,
-			diag2->v_pos.z, diag2->v_pos.m);
-		__builtin_printf("  v_axi: x %f y %f z %f m %f\n",
-			diag3->v_pos.x, diag3->v_pos.y,
-			diag3->v_pos.z, diag3->v_pos.m);
 
-		__builtin_printf("roll %f : pan %f : tilt %f : vfwd %f\n\n\n",
+		/* diag
+		   express abs rotations with hmaps */
+		//cp_vf(&side, &(diag->v_pos));
+		//cp_vf(&(fov0->v_rel), &(diag2->v_pos));
+		//cp_vf(&(fov0->v_axi), &(diag3->v_pos));
+		/* indicators */
+		vf_t i = {.05,   0,   0, .05};
+		vf_t j = {  0, .05,   0, .05};
+		vf_t k = {  0,   0, .05, .05};
+		cp_vf(&i, &(diag4->v_pos));
+		cp_vf(&j, &(diag5->v_pos));
+		cp_vf(&k, &(diag6->v_pos));
+		/* diag term output */
+		__builtin_printf("fov0\n");
+		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",
+			fov0->v_pos.x, fov0->v_pos.y,
+			fov0->v_pos.z, fov0->v_pos.m);
+		__builtin_printf("  v_vel: x %f y %f z %f m %f\n",
+			fov0->v_vel.x, fov0->v_vel.y,
+			fov0->v_vel.z, fov0->v_vel.m);
+		__builtin_printf("    acc: x %f y %f z %f m %f\n",
+			acc.x, acc.y, acc.z, acc.m);
+		__builtin_printf("kbd\n");
+		__builtin_printf("   roll(k/;) %f  pan(a/d) %f tilt(o/l) %f\n"
+			"   vfwd(w/s) %f decel(space)\n\n",
 			ifdpy0->keyroll, ifdpy0->keypan,
 			ifdpy0->keytilt, ifdpy0->keyvfwd);
+
+
+		/* renderer renders apon, inside of, and outside of hmaps */
+		glPushMatrix();
+		render_voglspace();
+		glPopMatrix();
 
 		/* draw to dpy0 */
 		if(dbuff)
@@ -269,12 +340,14 @@ node(int argc, char **argv)
 		else
 			glFlush();
 
-		/* start of new frame */
-		glLoadIdentity();
+		/* start of new frame.  not clearing identity matrix.  will
+		   let it stack.  a function to periodically align hmap's
+		   will follow at some point, clearing the identity matrix */
+		glMatrixMode(GL_MODELVIEW);
 	}
 
 	/* shutdown node */
-	close_vobspace(0); /* _now_ for now */
-	close_node(); /* !!move to callback_close_vobspace() */
+	close_vobspace(0); /* now, for now */
+	close_node(); /* note: move to callback_close_vobspace() */
 	shutdown_glx();
 }

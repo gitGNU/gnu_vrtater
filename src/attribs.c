@@ -608,7 +608,7 @@ wanderf(hmapf_t *p, float e)
 	p->v_vel.z = copysign(p->v_vel.z, sign);
 	/* set appropriate magnitude */
 	form_mag_vf(&(p->v_vel));
-	tele_mag_vf(&(p->v_vel), avg_orginv_ke); /* m/s */
+	tele_mag_vf(&(p->v_vel), &(p->v_vel), avg_orginv_ke); /* m/s */
 
 	/* set arbitrary v_pre vector axis of mass distribution */
 	p->v_pre.x = rnd = ((rnd + (float)rand()) * SMALLRANDOM);

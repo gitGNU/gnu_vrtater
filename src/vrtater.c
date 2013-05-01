@@ -150,7 +150,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* default */
+	/* read defaults */
 	vrt_hmaps_max = 20;
 
 	/* vrtater */

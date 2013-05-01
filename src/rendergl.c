@@ -10,6 +10,8 @@
 #include "vectors.h"
 #include "rotation.h"
 
+vf_t glroo; /* gl renderer orgin offset.  external */
+
 void draw_gl_tri(vf_t *, vf_t *, vf_t *);
 
 /* note: keep this re-entrant for regenerating node */
@@ -27,56 +29,39 @@ init_renderer(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	/* left, right, bottom, top, near, far */
-	glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0);
-
-	/* diag */
-	//glMatrixMode( GL_PROJECTION );
-	//glLoadIdentity();
-	//glRotatef(5.0, 1.0, 0.0, 0.0);
-	glRotatef(10.0, 0.0, 1.0, 0.0);
-	//glRotatef(5.0, 0.0, 0.0, 1.0);
-	glTranslatef(0, 0, -2.5);
-	//glMatrixMode( GL_MODELVIEW );
-	//glLoadIdentity();
+//	glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0);
+	glFrustum(-.1, .1, -.1, .1, .1, 100.0);
 
 	/* assume modeling transforms */
 	glMatrixMode(GL_MODELVIEW);
-	//glLoadIdentity();
+	glLoadIdentity();
 }
 
 /* draw a triangle with 3 supplied vf_t's */
 void
 draw_gl_tri(vf_t *a, vf_t *b, vf_t *c)
 {
-	vf_t v, *p;
-	GLfloat glv[3][3], gln[3], *q, *r, *s;
+	vf_t nv;
+	float *q, *r, *s, *n;
+	GLfloat glv[3][3], gln[3];
+	int i;
 
-	p = &v;
-	/* get surface normal */
-	icprod_vf(a, b, p); /* polarity */
-	/* normalize */
-	normz_vf(p, p);
+	/* surface normal */
+	cprod_vf(c, b, &nv);
+	normz_vf(&nv, &nv);
 
-	/* format for glVertex */
-	q = &glv[0][0];
-	r = &glv[1][0];
-	s = &glv[2][0];
-	*(q++) = (GLfloat)a->x;
-	*(q++) = (GLfloat)a->y;
-	*(q++) = (GLfloat)a->z;
-	*(r++) = (GLfloat)b->x;
-	*(r++) = (GLfloat)b->y;
-	*(r++) = (GLfloat)b->z;
-	*(s++) = (GLfloat)c->x;
-	*(s++) = (GLfloat)c->y;
-	*(s++) = (GLfloat)c->z;
+	n = &((&nv)->x);
+	q = &(a->x);
+	r = &(b->x);
+	s = &(c->x);
 
-	/* format for glNormal */
-	gln[0] = (GLfloat)p->x;
-	gln[1] = (GLfloat)p->y;
-	gln[2] = (GLfloat)p->z;
+	for(i=0; i<3; i++) {
+		glv[0][i] = (GLfloat)*q++;
+		glv[1][i] = (GLfloat)*r++;
+		glv[2][i] = (GLfloat)*s++;
+		gln[i] = (GLfloat)*n++;
+	}
 
-	/* gl */
 	glNormal3fv(gln);
 	glBegin(GL_TRIANGLES);
 		glVertex3fv(&glv[0][0]);
@@ -134,6 +119,13 @@ draw_hmapf(hmapf_t *hmap, int lod)
 	form_mag_vf(&track3);
 	/* ************************************************** */
 
+	/* them's who run this node percieves at display the field of view of
+	   vobspace from glroo.  this is an offset from the vobspace orgin
+	   representing where them's are seeing vobs from.  with the following
+	   matrix translation, the gl renderer automatically places vobs in
+	   the correct place vs. percieved vobspace */
+	glTranslatef(-(&glroo)->x, -(&glroo)->y, -(&glroo)->z);
+
 	/* draw on basis of draw format options */
 	switch(hmap->draw.geom) {
 
@@ -141,6 +133,7 @@ draw_hmapf(hmapf_t *hmap, int lod)
 		break;
 
 		case VRT_DRAWGEOM_TRIANGLES:
+		/* 3 vf_t's(vertices) per triangle */
 		vt = hmap->vf_total / 3;
 		for(i=0;i<vt;i++) {
 			for(j=0;j<3;j++, data_vf++) {
@@ -149,10 +142,9 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				cp_vf(data_vf, v);
 				normz_vf(v, v);
 
-				/* for diagnostic, focus on the following vobs,
-				   path others out of frame */
-				if((hmap->index != 1) && (hmap->index != 2))
-					tele_magz_vf(&(hmap->v_vel), hmap->v_vel.m + .00001);
+				/* diag */
+				if((hmap->index >= 0) && (hmap->index <= 2))
+					tele_magz_vf(&(hmap->v_vel), &(hmap->v_vel), hmap->v_vel.m);
 				/* for vob 1 */
 				if(hmap->index == 1) {
 					/* track xy */
@@ -172,9 +164,9 @@ draw_hmapf(hmapf_t *hmap, int lod)
 							ang_spd = hmap->ang_spd;
 							ang_dpl = hmap->ang_dpl;
 						}
-						rxy_vf(&track1, hmap->ang_dpl);
-						rzx_vf(&track1, hmap->ang_dpl);
-						ryz_vf(&track1, hmap->ang_dpl);
+						//rxy_vf(&track1, hmap->ang_dpl);
+						//rzx_vf(&track1, hmap->ang_dpl);
+						//ryz_vf(&track1, hmap->ang_dpl);
 						factor_vf(&track1, &track1, 1); /* diameter of track circle */
 						/* place pos mode vob 1 on track 1 */
 						cp_vf(&track1, &(hmap->v_pos));
@@ -202,9 +194,9 @@ draw_hmapf(hmapf_t *hmap, int lod)
 							ang_spd = hmap->ang_spd;
 							ang_dpl = hmap->ang_dpl;
 						}
-						rxy_vf(&track2, hmap->ang_dpl);
-						rzx_vf(&track2, hmap->ang_dpl);
-						ryz_vf(&track2, hmap->ang_dpl);
+						//rxy_vf(&track2, hmap->ang_dpl);
+						//rzx_vf(&track2, hmap->ang_dpl);
+						//ryz_vf(&track2, hmap->ang_dpl);
 						factor_vf(&track2, &track2, 1); /* diameter of track circle */
 						/* place pos mode vob 2 on track 2 */
 						cp_vf(&track2, &(hmap->v_pos));
@@ -217,15 +209,16 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				rotate_vf(v, &(hmap->v_axi), hmap->ang_dpl);
 
 				/* restore magnitude vs. unit vector rep. */
-				tele_mag_vf(v, data_vf->m);
+				tele_mag_vf(v, v, data_vf->m);
 
-				/* transform
-				   for now scale down. no frustrum yet */
-				(&av[j])->x = .1 * v->x + hmap->v_pos.x;
-				(&av[j])->y = .1 * v->y + hmap->v_pos.y;
-				(&av[j])->z = .1 * v->z + hmap->v_pos.z;
+				/* for now scale down */
+				(&av[j])->x = .02 * v->x + hmap->v_pos.x;
+				(&av[j])->y = .02 * v->y + hmap->v_pos.y;
+				(&av[j])->z = .02 * v->z + hmap->v_pos.z;
 
-				/* projection settings */
+				/* projection settings
+				   as these are done per dpy, how will multiple
+				   dpy's be drawn */
 
 				/* for now, appearance */
 				if((hmap->index == 0) \
@@ -293,11 +286,18 @@ draw_hmapf(hmapf_t *hmap, int lod)
 		__builtin_printf("renderer: err, unsupported hmap geom.\n");
 		break;
 	}
+	glTranslatef((&glroo)->x, (&glroo)->y, (&glroo)->z);
 }
 
-/* called immediately before buffer is drawn to all dpy's */
+/* called immediately before buffer is drawn to all dpy's,  here is nested one
+   stacklevel in apon the modelview matrix of where there might be at least
+   32, a function to render apon, within, and about hmaps */
 void
 render_voglspace(void)
 {
+	/* set gl renderer offset orgin */
+	glTranslatef(-(&glroo)->x, -(&glroo)->y, -(&glroo)->z);
+	/* ... */
 	;
+	glTranslatef((&glroo)->x, (&glroo)->y, (&glroo)->z);
 }
