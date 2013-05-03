@@ -8,10 +8,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 #include "progscope.h"
 #include "ifnodeglx.h" /* !! */
 #include "hmap.h"
 #include "generator.h"
+#include "dialogX11.h"
 #include "rendergl.h"
 #include "rotation.h"
 #include "tug.h"
@@ -32,6 +34,12 @@ vf_t glroo; /* gl renderer orgin offset.  external */
 /* interface factors, for now */
 float accel_adv; /* advantage */
 float accel_ofs; /* offset */
+
+/* fps */
+time_t start, stop;
+int run, frames, rsfreq, reads, infcount;
+float fps;
+float vrt_render_cyc; /* external */
 
 /* diagnostic */
 hmapf_t *diag, *diag2, *diag3, *diag4, *diag5, *diag6;
@@ -117,6 +125,15 @@ node(int argc, char **argv)
 	generate_node();
 	init_tug_io();
 
+	/* fps */
+	fps = 28.6; /* guess */
+	vrt_render_cyc = .034965;
+	frames = 0;
+	run = 0;
+	rsfreq = 1000;
+	infcount = 0;
+	reads = 0;
+
 	/* interface factors, for now */
 	accel_adv = .1;
 	accel_ofs = .5;
@@ -194,12 +211,15 @@ node(int argc, char **argv)
 						if(ifdpy0->keypan < -M_PI)
 							ifdpy0->keypan = M_PI;
 					break;
-					case XK_w:
-						/* /w ANG_AFS /reg-s u sphere */
-						ifdpy0->keyvfwd += .011281 * accel_adv;
+					case XK_l:
+						ifdpy0->keytilt += .017453 * accel_adv;
+						if(ifdpy0->keytilt > M_PI)
+							ifdpy0->keytilt = -M_PI;
 					break;
-					case XK_s:
-						ifdpy0->keyvfwd -= .011281 * accel_adv;
+					case XK_o:
+						ifdpy0->keytilt -= .017453 * accel_adv;
+						if(ifdpy0->keytilt < -M_PI)
+							ifdpy0->keytilt = M_PI;
 					break;
 					case XK_k:
 						ifdpy0->keyroll += .017453 * accel_adv;
@@ -211,21 +231,32 @@ node(int argc, char **argv)
 						if(ifdpy0->keyroll < -M_PI)
 							ifdpy0->keyroll = M_PI;
 					break;
-					case XK_o:
-						ifdpy0->keytilt -= .017453 * accel_adv;
-						if(ifdpy0->keytilt < -M_PI)
-							ifdpy0->keytilt = M_PI;
+					case XK_w:
+						/* /w ANG_AFS /reg-s u sphere */
+						ifdpy0->keyvfwd += .011281 * accel_adv;
 					break;
-					case XK_l:
-						ifdpy0->keytilt += .017453 * accel_adv;
-						if(ifdpy0->keytilt > M_PI)
-							ifdpy0->keytilt = -M_PI;
+					case XK_s:
+						ifdpy0->keyvfwd -= .011281 * accel_adv;
+					break;
+					case XK_c:
+						ifdpy0->keyvside += .008281 * accel_adv;
+					break;
+					case XK_z:
+						ifdpy0->keyvside -= .008281 * accel_adv;
+					break;
+					case XK_p:
+						ifdpy0->keyvvrt += .008281 * accel_adv;
+					break;
+					case XK_comma:
+						ifdpy0->keyvvrt -= .008281 * accel_adv;
 					break;
 					case XK_space:
+						ifdpy0->keypan *= 0.65;
+						ifdpy0->keytilt *= 0.75;
 						ifdpy0->keyroll *= 0.9;
 						ifdpy0->keyvfwd *= 0.85;
-						ifdpy0->keypan *= 0.75;
-						ifdpy0->keytilt *= 0.75;
+						ifdpy0->keyvside *= 0.85;
+						ifdpy0->keyvvrt *= 0.85;
 					break;
 					case XK_Tab:
 					break;
@@ -248,10 +279,15 @@ node(int argc, char **argv)
 		tele_magz_vf(&(fov0->v_vel), &(fov0->v_vel),
 			fov0->v_vel.m * accel_ofs);
 
-		/* accelerate, summing d/t/t with d/t for forward/back */
-                vf_t acc;
+		/* accelerate, summing d/t/t with d/t for (+/-)fwd, side */
+                vf_t acc, acc2, acc3;
                 tele_magz_vf(&(fov0->v_axi), &acc, ifdpy0->keyvfwd);
                 sum_vf(&acc, &(fov0->v_vel), &(fov0->v_vel));
+		cprod_vf(&(fov0->v_axi), &(fov0->v_rel), &acc2);
+                tele_magz_vf(&acc2, &acc2, ifdpy0->keyvside);
+                sum_vf(&(fov0->v_vel), &acc2, &(fov0->v_vel));
+                tele_magz_vf(&(fov0->v_rel), &acc3, ifdpy0->keyvvrt);
+                sum_vf(&(fov0->v_vel), &acc3, &(fov0->v_vel));
 
 		/* set orgin offset for gl renderer */
 		cp_vf(&(fov0->v_pos), &glroo);
@@ -313,6 +349,8 @@ node(int argc, char **argv)
 		cp_vf(&j, &(diag5->v_pos));
 		cp_vf(&k, &(diag6->v_pos));
 		/* diag term output */
+#define MESS
+#ifdef MESS
 		__builtin_printf("fov0\n");
 		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",
 			fov0->v_pos.x, fov0->v_pos.y,
@@ -320,14 +358,39 @@ node(int argc, char **argv)
 		__builtin_printf("  v_vel: x %f y %f z %f m %f\n",
 			fov0->v_vel.x, fov0->v_vel.y,
 			fov0->v_vel.z, fov0->v_vel.m);
-		__builtin_printf("    acc: x %f y %f z %f m %f\n",
+		__builtin_printf("   vfwd: x %f y %f z %f m %f\n",
 			acc.x, acc.y, acc.z, acc.m);
+		__builtin_printf("  vside: x %f y %f z %f m %f\n",
+			acc2.x, acc2.y, acc2.z, acc2.m);
+		__builtin_printf("   vvrt: x %f y %f z %f m %f\n",
+			acc3.x, acc3.y, acc3.z, acc3.m);
 		__builtin_printf("kbd\n");
 		__builtin_printf("   roll(k/;) %f  pan(a/d) %f tilt(o/l) %f\n"
-			"   vfwd(w/s) %f decel(space)\n\n",
-			ifdpy0->keyroll, ifdpy0->keypan,
-			ifdpy0->keytilt, ifdpy0->keyvfwd);
+			"   vfwd(w/s) %f vvrt(p/,) %f decel(space)\n",
+			ifdpy0->keyroll, ifdpy0->keypan, ifdpy0->keytilt,
+			ifdpy0->keyvfwd, ifdpy0->keyvvrt);
+		__builtin_printf("time\n    fps: %f cyc: %f reads: %i/%i\n\n",
+			1 / vrt_render_cyc, vrt_render_cyc,
+			reads, reads + infcount);
+#endif /* MESS */
 
+		/* fps */
+		if(!(frames++ % rsfreq)) {
+			if(!run++) {
+				start = time(NULL);
+			} else {
+				run -= 2;
+				stop = time(NULL);
+				fps = (float)frames / (float)(stop - start);
+				if(!isinf(fps)) {
+					vrt_render_cyc = 1 / fps;
+					reads++;
+				} else {
+					infcount++;
+				}
+				frames = 0; /* reset */
+			}
+		}
 
 		/* renderer renders apon, inside of, and outside of hmaps */
 		glPushMatrix();

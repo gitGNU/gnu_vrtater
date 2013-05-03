@@ -83,18 +83,18 @@ generate_vohspace(void)
 	/* hmaps from file */
 	/* test(); */
 
-	/* from stock.  any too many for vrt_hmaps_max will simply fail */
+	/* from stock */
 	for(i=0;i<1;i++)
-		if((p = hmapf_icosahedron_b(&session)))
+		if((p = hmapf_icosahedron_b(&session, .02)))
 			nportf(p, &ptl);
 	for(i=0;i<2;i++)
-		if((p = hmapf_cube_b(&session, .1, .1, .1)))
+		if((p = hmapf_cube_b(&session, .03, .03, .03)))
 			nportf(p, sum_vf(&t, &ptl, &ptl));
 	for(i=0;i<6;i++)
-		if((p = hmapf_icosahedron_b(&session)))
+		if((p = hmapf_icosahedron_b(&session, .02)))
 			nportf(p, sum_vf(&t, &ptl, &ptl));
 	for(i=0;i<11;i++)
-		if((p = hmapf_cube_b(&session, .78, .78, .78)))
+		if((p = hmapf_cube_b(&session, .01, .01, .01)))
 			nportf(p, sum_vf(&t, &ptl, &ptl));
 }
 
@@ -108,24 +108,27 @@ regenerate_scene(int *quit)
 	/* collect_off_node_vobs() */
 	/* ... */
 
-	/* pass on node hmaps with modified dialog to dialogf()
-	   pass all in node and in node partial hmaps to dialog if
-	   VRT_MASK_HMAP_MODELING set
-	   for now
-	   test set of one empty dialog element
-	   example here pretends inbound hmap 15 has dialog.  calls dialogf() */
-	static int recurrant = 0;
+	/* pass on node hmaps with modified dialog to dialogf().  pass all in
+	   node and in node partial hmaps to dialog if VRT_MASK_HMAP_MODELING
+	   set */
+	/* ... */
+
+	/* for now, test set of one empty dialog element.  example here pretends
+	   inbound hmap 15 has dialog.  calls dialogf() */
 	hmapf_t **p = (hmapf_t **)selectf_a;
 	*p = p_hmapf(15);
 	select_t s = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
+
+	static int recurrant = 0;
 	if(!recurrant++)
 		dialogf(&s, &genopts);
 
 	/* sort hmaps and cue them for drawing */
 	sort_proc_hmaps();
+
 	/* given gnu timer lib giving back cycles fork_child_timer_callback()
 	   for now */
-	usleep(20000);
+	usleep(33400); /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
 }
 
 /* a called function has set gen_opts, or was set herein via caller */

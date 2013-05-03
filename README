@@ -51,6 +51,6 @@ session.c will retreive and maintain connections between nodes per ui request,
 and provide authenticity and encryption if desired.
 
 vectors.c and rotation.c provide basic spacial calculation.
-ifnode*.c receives system input while incrementing state, writing frames, and
+ifnode**.c receives system input while incrementing state, writing frames, and
 tending to presentation of display buffer.
 tug.c maintains miscelanious system bus io devices.

@@ -32,6 +32,7 @@
 #define SLOW1_100 .01
 
 unsigned int vrt_hmaps_max; /* external */
+float vrt_render_cyc; /* external */
 
 /* hmap memory, sorting */
 hmapf_t *ap_hmap_near;
@@ -48,7 +49,8 @@ unsigned int passes;
 
 void proc_hmapf(hmapf_t *, int lodval);
 void flow_over(btoggles_t *balance_criteria);
-void wanderf(hmapf_t *vob, float e);
+float estimate_radiusf(hmapf_t *);
+void wanderf(hmapf_t *hmap, float e, float m, float r);
 
 /* selection buffer */
 hmapf_t *selectf_a; /* external */
@@ -488,12 +490,11 @@ proc_hmapf(hmapf_t *p, int lod)
 	/* if(bound_intersection());
 		intersection(); */
 	cp_vf(&(p->v_vel), q); /* take a copy of direction/velocity */
-	factor_vf(q, q, VRT_RENDER_CYC); /* create a delta vector given freq */
+	factor_vf(q, q, vrt_render_cyc); /* create a delta vector given freq */
 	sum_vf(&(p->v_pos), q, &(p->v_pos)); /* new pos = delta vector + pos */
 	/* set vob angular displacement
 	   note: v_ang_vel will be pseudovector.  on fly calc moreso optimal */
-	#define TEMPSPEEDUP 25
-	p->ang_dpl += p->ang_spd * VRT_RENDER_CYC * TEMPSPEEDUP;
+	p->ang_dpl += p->ang_spd * vrt_render_cyc;
 	/* wraparound for 2 * M_PI, without this a glitch occurs on wrap */
 	if(fabs(p->ang_dpl) >= 2 * M_PI)
 		p->ang_dpl = fmodf(p->ang_dpl, 2 * M_PI);
@@ -552,6 +553,8 @@ free_vohspace_memory(void)
 void
 nportf(hmapf_t *p, vf_t *loc)
 {
+	float r;
+
 	/* diag */
 	if(!p) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
@@ -561,21 +564,50 @@ nportf(hmapf_t *p, vf_t *loc)
 		return;
 	}
 
+	/* nport */
 	cp_vf(loc, &(p->v_pos));
 	form_mag_vf(&(p->v_pos));
+
+	/* arrival */
 	p->mass.kg = 1.0;
-	/* let vob wander with an represented kinetic energy of e newtons */
-	wanderf(p, ((float)rand() * TINYRANDOM));
+	r = estimate_radiusf(p);
+	/* for now */
+	wanderf(p, ((float)rand() * TINYRANDOM), p->mass.kg, r);
+}
+
+/* guestimate for hmap p, a proportion vs. where it were if not a sphere */
+float
+estimate_radiusf(hmapf_t *p)
+{
+	float r;
+	switch(p->bounding.geom) {
+		case VRT_BOUND_NONE:
+			r = 0;
+		break;
+		case VRT_BOUND_SPHERE:
+			r = p->bounding.v_sz.x;
+		break;
+		case VRT_BOUND_CYL:
+			r = 0;
+		break;
+		case VRT_BOUND_RCUBOID:
+			r = M_SQRT1_2 * sqrt(
+				p->bounding.v_sz.x * p->bounding.v_sz.x +
+				p->bounding.v_sz.y * p->bounding.v_sz.y +
+				p->bounding.v_sz.z * p->bounding.v_sz.z);
+		break;
+		case VRT_BOUND_CUBE:
+			r = 0;
+		break;
+	}
+	return r;
 }
 
 /* set vob in hmap referenced by p to arbitrary but energy factored initial
-   conditions.  v_pos, v_vel, v_axi, ang_spd, ang_dpl, and mass are set
-   vobspace is represented as 1 default renderer unit per m
-   velocities are represented in m/s and r/s
-   energy, e, will be represented in joule units, 1 ampere/s, or 1 neuton/m
-   this will be moved to transform.  e can be there derived and redistributed */
+   conditions vs. given energy e.  v_vel, v_axi, v_pre, ang_spd, and ang_dpl,
+   are set vs. given determinate or estimated radius r and given mass m */
 void
-wanderf(hmapf_t *p, float e)
+wanderf(hmapf_t *p, float e, float m, float r)
 {
 	float kinetic_energy;
 	float avg_absorbed_ke;
@@ -585,12 +617,17 @@ wanderf(hmapf_t *p, float e)
 	float rnd, rnd1, rnd2, rnd3;
 	static float sign = 1.0;
 
+	/* note: vobspace is represented as 1 default renderer unit per m.
+	   e, will be represented in joule units, 1 ampere/s, or 1 neuton/m.
+	   this function will be moved to transform.  e can be there derived
+	   and redistributed as can r */
+
 	/* pseudo random reciprocal part factors */
 	rnd1 = (float)rand(); rnd2 = (float)rand(); rnd3 = rnd1 + rnd2;
 
 	/* for spherical regular solid vohs
 	   distribute input energy */
-	kinetic_energy = fabs(e) / p->mass.kg; /* kinetic energy per mass */
+	kinetic_energy = fabs(e) / m; /* kinetic energy per mass */
 	avg_absorbed_ke = avg_reflected_ke = kinetic_energy / 2;
 	avg_orginv_ke = avg_absorbed_ke * M_SQRT1_2 * (rnd1 / rnd3);
 	avg_tangentv_ke = avg_absorbed_ke * (1 - M_SQRT1_2) * (rnd2 / rnd3);
@@ -606,11 +643,12 @@ wanderf(hmapf_t *p, float e)
 	p->v_vel.z = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_vel.z = copysign(p->v_vel.z, sign);
-	/* set appropriate magnitude */
-	form_mag_vf(&(p->v_vel));
+	normz_vf(&(p->v_vel), &(p->v_vel));
+
+	/* velocity thereapon */
 	tele_mag_vf(&(p->v_vel), &(p->v_vel), avg_orginv_ke); /* m/s */
 
-	/* set arbitrary v_pre vector axis of mass distribution */
+	/* arbitrary v_pre vector axis of mass distribution */
 	p->v_pre.x = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_pre.x = copysign(p->v_pre.x, sign);
@@ -620,15 +658,16 @@ wanderf(hmapf_t *p, float e)
 	p->v_pre.z = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_pre.z = copysign(p->v_pre.z, sign);
-	/* normalize */
-	form_mag_vf(&(p->v_pre));
 	normz_vf(&(p->v_pre), &(p->v_pre));
-	/* set relative rotation/sense when v_axi is combined with ang_dpl */
+
+	/* arbitrary v_axi and thus relative rotation/sense when v_axi is
+	   combined with ang_dpl.  for now v_pre is unused, so use that */
 	cp_vf(&(p->v_pre), &(p->v_axi));
 
-	/* arbitrary signed rotation speed */
-	p->ang_spd = avg_tangentv_ke * ANG_AFS * SLOW1_10; /* r/s */
-	rnd = ((rnd + (float)rand()) / 2);
+	/* arbitrary signed rotation speed and initial displacement */
+	p->ang_spd = ANG_AFS * avg_tangentv_ke / r; /* r/s */
+	rnd = (rnd + (float)rand()) / 2;
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->ang_spd = copysign(p->ang_spd, sign);
+	p->ang_dpl = rnd + (float)rand();
 }

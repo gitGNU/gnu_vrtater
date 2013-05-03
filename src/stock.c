@@ -20,7 +20,7 @@
 #define ENDH 0.525731112119 /* height of ends */
 #define ISL 0.948537775762 /* inside layer */
 #define ISL2 0.474268887881 /* inside layer / 2 */
-#define ICOSAHEDRON_B_TIGHT_BOUND 1
+#define ICOSAHEDRON_B_BOUND0 1
 float af_icosahedron_b[12][3] = {
 				{0, ISL2+ENDH, 0}, /* 0 */
 
@@ -49,10 +49,10 @@ int icosahedron_b_idx_bot[VRT_CAPC_FCOUNT][3] = {
 	{6, 11, 7}, {7, 11, 9}, {9, 11, 10}, {8, 10, 11}, {6, 8, 11}
 };
 
-/* enscribe an icosahedron_b VRT_DRAWTYPE_TRIANGLES hmap attached to session.
-   return null pointer if vobspace full */
+/* enscribe an icosahedron_b VRT_DRAWTYPE_TRIANGLES hmap attached to session,
+   with a radius of r.  return null pointer if vobspace full */
 hmapf_t *
-hmapf_icosahedron_b(session_t *session)
+hmapf_icosahedron_b(session_t *session, float r)
 {
 	int i, j;
 
@@ -87,7 +87,7 @@ hmapf_icosahedron_b(session_t *session)
 
 	/* set bounding */
 	hmap->bounding.geom = VRT_BOUND_SPHERE;
-	hmap->bounding.v_sz.x = ICOSAHEDRON_B_TIGHT_BOUND;
+	hmap->bounding.v_sz.x = ICOSAHEDRON_B_BOUND0 * r;
 	form_mag_vf(&(hmap->bounding.v_sz));
 
 	/* allocate for hmap's vf data(if any) */
@@ -108,9 +108,9 @@ hmapf_icosahedron_b(session_t *session)
 	/* top cap */
 	for(i=0; i<VRT_CAPC_FCOUNT; i++) {
 		for(j=0, t=av; j<3; j++, t++, v_count++) {
-			t->x = af_icosahedron_b[ icosahedron_b_idx_top[i][j] ] [0];
-			t->y = af_icosahedron_b[ icosahedron_b_idx_top[i][j] ] [1];
-			t->z = af_icosahedron_b[ icosahedron_b_idx_top[i][j] ] [2];
+			t->x = af_icosahedron_b[ icosahedron_b_idx_top[i][j] ] [0] * r;
+			t->y = af_icosahedron_b[ icosahedron_b_idx_top[i][j] ] [1] * r;
+			t->z = af_icosahedron_b[ icosahedron_b_idx_top[i][j] ] [2] * r;
 			form_mag_vf(t);
 		}
 		add_tri_to_hmapf(av, ppd);
@@ -119,9 +119,9 @@ hmapf_icosahedron_b(session_t *session)
 	/* mid section */
 	for(i=0; i<VRT_ICOSAHEDRON_B_CFCOUNT; i++) {
 		for(j=0, t=av; j<3; j++, t++, v_count++) {
-			t->x = af_icosahedron_b[ icosahedron_b_idx_mid[i][j] ] [0];
-			t->y = af_icosahedron_b[ icosahedron_b_idx_mid[i][j] ] [1];
-			t->z = af_icosahedron_b[ icosahedron_b_idx_mid[i][j] ] [2];
+			t->x = af_icosahedron_b[ icosahedron_b_idx_mid[i][j] ] [0] * r;
+			t->y = af_icosahedron_b[ icosahedron_b_idx_mid[i][j] ] [1] * r;
+			t->z = af_icosahedron_b[ icosahedron_b_idx_mid[i][j] ] [2] * r;
 			form_mag_vf(t);
 		}
 		add_tri_to_hmapf(av, ppd);
@@ -130,9 +130,9 @@ hmapf_icosahedron_b(session_t *session)
 	/* bottom cap */
 	for(i=0;i<VRT_CAPC_FCOUNT; i++) {
 		for(j=0, t=av; j<3; j++, t++, v_count++) {
-			t->x = af_icosahedron_b[ icosahedron_b_idx_bot[i][j] ] [0];
-			t->y = af_icosahedron_b[ icosahedron_b_idx_bot[i][j] ] [1];
-			t->z = af_icosahedron_b[ icosahedron_b_idx_bot[i][j] ] [2];
+			t->x = af_icosahedron_b[ icosahedron_b_idx_bot[i][j] ] [0] * r;
+			t->y = af_icosahedron_b[ icosahedron_b_idx_bot[i][j] ] [1] * r;
+			t->z = af_icosahedron_b[ icosahedron_b_idx_bot[i][j] ] [2] * r;
 			form_mag_vf(t);
 		}
 		add_tri_to_hmapf(av, ppd);
@@ -150,7 +150,7 @@ hmapf_icosahedron_b(session_t *session)
 
 /* hmap cubeoid: (vrtater layout)
    QDR_SZ derived from opposite corners at distance 2 */
-#define CUBE_B_TIGHT_BOUND 0.57735026919
+#define CUBE_B_BOUND0 0.57735026919
 #define QDR_SZ 0.57735026919
 float af_cube_b[8][3] = {
 	{-QDR_SZ, QDR_SZ, -QDR_SZ}, /* 0 */ {QDR_SZ, QDR_SZ, -QDR_SZ}, /* 1 */
@@ -167,8 +167,8 @@ int cube_b_idx[VRT_CUBE_B_FCOUNT][3] = {
 	{2, 3, 6}, {6, 3, 7}, {2, 0, 3}, {3, 0, 1}, {2, 6, 0}, {0, 6, 4}
 };
 
-/* enscribe a cube_b VRT_DRAWTYPE_TRIANGLES hmap attached to session.
-   return null pointer if vobspace full */
+/* enscribe a cube_b VRT_DRAWTYPE_TRIANGLES hmap attached to session, with
+   length, width, and height given.  return null pointer if vobspace full */
 hmapf_t *
 hmapf_cube_b(session_t *session, float l, float w, float h)
 {
@@ -205,9 +205,9 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 
 	/* set bounding */
 	hmap->bounding.geom = VRT_BOUND_RCUBOID;
-	hmap->bounding.v_sz.x = CUBE_B_TIGHT_BOUND * w / 2 + LOOSE_BOUND1_100;
-	hmap->bounding.v_sz.y = CUBE_B_TIGHT_BOUND * h / 2 + LOOSE_BOUND1_100;
-	hmap->bounding.v_sz.z = CUBE_B_TIGHT_BOUND * l / 2 + LOOSE_BOUND1_100;
+	hmap->bounding.v_sz.x = CUBE_B_BOUND0 * w / 2;
+	hmap->bounding.v_sz.y = CUBE_B_BOUND0 * h / 2;
+	hmap->bounding.v_sz.z = CUBE_B_BOUND0 * l / 2;
 	form_mag_vf(&(hmap->bounding.v_sz));
 
 	/* allocate for hmap's vf data(if any) */
@@ -228,9 +228,9 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 	/* cube_b */
 	for(i=0; i<VRT_CUBE_B_FCOUNT; i++) {
 		for(j=0, t=av; j<3; j++, t++, v_count++) {
-			t->x = af_cube_b[ cube_b_idx[i][j] ] [0];
-			t->y = af_cube_b[ cube_b_idx[i][j] ] [1];
-			t->z = af_cube_b[ cube_b_idx[i][j] ] [2];
+			t->x = af_cube_b[ cube_b_idx[i][j] ] [0] * l;
+			t->y = af_cube_b[ cube_b_idx[i][j] ] [1] * w;
+			t->z = af_cube_b[ cube_b_idx[i][j] ] [2] * h;
 			form_mag_vf(t);
 		}
 		add_tri_to_hmapf(av, ppd);

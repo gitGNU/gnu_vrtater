@@ -8,12 +8,16 @@
 
 struct interface_display {
 	int indexfov; /* hmap dpy_ is attached to */
-	float keyroll;
-	float keyvfwd; /* accelerate summing v_axi * vfwd into v_vel' */
 	float keypan;
 	float keytilt;
+	float keyroll;
+	float keyvfwd; /* accelerate summing v_axi * vfwd into v_vel' */
+	float keyvside; /* "" "" cprod(v_axi, v_rel) * vside into v_vel' */
+	float keyvvrt; /* "" "" v_rel * vside into v_vel' */
 };
 typedef struct interface_display ifdpy_t;
+  
+extern float vrt_render_cyc;
 
 void node(int argc, char **argv);
 

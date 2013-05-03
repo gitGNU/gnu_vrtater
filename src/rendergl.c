@@ -29,7 +29,6 @@ init_renderer(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	/* left, right, bottom, top, near, far */
-//	glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0);
 	glFrustum(-.1, .1, -.1, .1, .1, 100.0);
 
 	/* assume modeling transforms */
@@ -103,21 +102,10 @@ draw_hmapf(hmapf_t *hmap, int lod)
 	/* if kbase set, magnify rendered vs. node hugeorgin */
 	/* ... */
 
-	/* for now a diagnostic, match velocities for 2 vob's */
-	static float ang_dpl;
-	static float ang_spd;
-	static int match = 2;
-	/* create proto tracks for hmap vob's */
-	static vf_t track1, track2, track3 = {-0.2, -0.2, -0.2, 0};
-	/* keep vertice count for initialization of track */
-	static int track1_vertice_count = 0;
-	static int track2_vertice_count = 0;
-	static int track3_vertice_count = 0;
-	/* track start positions */
-	set_vf(&track1, 0.57735026919, 0.57735026919, 0.57735026919, 1);
-	set_vf(&track2, -0.57735026919, -0.57735026919, -0.57735026919, 1);
-	form_mag_vf(&track3);
-	/* ************************************************** */
+	/* diag markers */
+	static vf_t m1, m2;
+	set_vf(&m1, 0.57735026919, 0.57735026919, 0.57735026919, 1);
+	set_vf(&m2, -0.57735026919, -0.57735026919, -0.57735026919, 1);
 
 	/* them's who run this node percieves at display the field of view of
 	   vobspace from glroo.  this is an offset from the vobspace orgin
@@ -142,68 +130,11 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				cp_vf(data_vf, v);
 				normz_vf(v, v);
 
-				/* diag */
-				if((hmap->index >= 0) && (hmap->index <= 2))
-					tele_magz_vf(&(hmap->v_vel), &(hmap->v_vel), hmap->v_vel.m);
-				/* for vob 1 */
-				if(hmap->index == 1) {
-					/* track xy */
-					if(track1_vertice_count == 36)
-						track1_vertice_count = 0;
-					if(track1_vertice_count++ == 0) {
-						/* turn off velocity(set position mode) */
-						hmap->v_vel.m = 0;
-						hmap->v_pos.x = 0;
-						hmap->v_pos.y = 0;
-						hmap->v_pos.z = 0;
-						/* match vobs 1 and 2(for now) */
-						if(--match == 0) {
-							hmap->ang_spd = ang_spd;
-							hmap->ang_dpl = ang_dpl;
-						} else {
-							ang_spd = hmap->ang_spd;
-							ang_dpl = hmap->ang_dpl;
-						}
-						//rxy_vf(&track1, hmap->ang_dpl);
-						//rzx_vf(&track1, hmap->ang_dpl);
-						//ryz_vf(&track1, hmap->ang_dpl);
-						factor_vf(&track1, &track1, 1); /* diameter of track circle */
-						/* place pos mode vob 1 on track 1 */
-						cp_vf(&track1, &(hmap->v_pos));
-					}
-					/* rotate vob 1  */
-					rotate_vf(v, &(hmap->v_axi), hmap->ang_dpl);
-				}
-				/* for vob 2 */
-				if(hmap->index == 2) {
-
-					/* track yz */
-					if(track2_vertice_count == 36)
-						track2_vertice_count = 0;
-					if(track2_vertice_count++ == 0) {
-						/* position mode */
-						hmap->v_vel.m = 0;
-						hmap->v_pos.x = 0;
-						hmap->v_pos.y = 0;
-						hmap->v_pos.z = 0;
-						/* match vobs 1 and 2(for now) */
-						if(--match == 0) {
-							hmap->ang_spd = ang_spd;
-							hmap->ang_dpl = ang_dpl;
-						} else {
-							ang_spd = hmap->ang_spd;
-							ang_dpl = hmap->ang_dpl;
-						}
-						//rxy_vf(&track2, hmap->ang_dpl);
-						//rzx_vf(&track2, hmap->ang_dpl);
-						//ryz_vf(&track2, hmap->ang_dpl);
-						factor_vf(&track2, &track2, 1); /* diameter of track circle */
-						/* place pos mode vob 2 on track 2 */
-						cp_vf(&track2, &(hmap->v_pos));
-					}
-					rotate_vf(v, &(hmap->v_axi), hmap->ang_dpl);
-				}
-				/* ****************************************** */
+				/* diag markers */
+				if(hmap->index == 1)
+					cp_vf(&m1, &(hmap->v_pos));
+				if(hmap->index == 2)
+					cp_vf(&m2, &(hmap->v_pos));
 
 				/* rotate */
 				rotate_vf(v, &(hmap->v_axi), hmap->ang_dpl);
@@ -211,16 +142,12 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				/* restore magnitude vs. unit vector rep. */
 				tele_mag_vf(v, v, data_vf->m);
 
-				/* for now scale down */
-				(&av[j])->x = .02 * v->x + hmap->v_pos.x;
-				(&av[j])->y = .02 * v->y + hmap->v_pos.y;
-				(&av[j])->z = .02 * v->z + hmap->v_pos.z;
+				/* transfer vertex value */
+				(&av[j])->x = v->x + hmap->v_pos.x;
+				(&av[j])->y = v->y + hmap->v_pos.y;
+				(&av[j])->z = v->z + hmap->v_pos.z;
 
-				/* projection settings
-				   as these are done per dpy, how will multiple
-				   dpy's be drawn */
-
-				/* for now, appearance */
+				/* diag for now, appearance */
 				if((hmap->index == 0) \
 					|| (hmap->index == 1) \
 					|| (hmap->index == 2)) {
@@ -264,11 +191,11 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				/* diag */
 				if((hmap->index > 2) && (hmap->index < 15)) {
 					if(hmap->index == 3)
-						ORN();	
+						ORN();
 					if(hmap->index == 4)
-						BLU();	
+						BLU();
 					if(hmap->index == 5)
-						VLT();	
+						VLT();
 				}
 			}
 			/* gl */

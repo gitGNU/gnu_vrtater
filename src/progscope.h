@@ -12,7 +12,6 @@
 /* progscope essentials, see below for another list of these */
 #define VRT_HMAPS_MAX 20
 #define VRT_UNDO_DEPTH 20
-#define VRT_RENDER_CYC 0.041667 /* this should be an external variable */
 #define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
 #define VRT_X_SUPPORT
 #define VRT_RENDERER_GL
@@ -267,12 +266,12 @@ enum {
 #define VRT_CUBE_B_FCOUNT 12
 /* vob type c asteroid, capped, face count */
 #define VRT_ASTEROID_GEOMC_CFCOUNT 10
-/* loose bound thresholds */
-#define LOOSE_BOUND1_100 1 /* 1 cm */
-#define LOOSE_BOUND1_10 1 /* 1 dm */
-#define LOOSE_BOUND_1 1 /* 1 m */
-#define LOOSE_BOUND_10 1 /* 10 m */
-#define LOOSE_BOUND_100 1 /* 100 m */
+/* bound threshold modifiers */
+#define BOUND1_100 1 /* 1 cm */
+#define BOUND1_10 1 /* 1 dm */
+#define BOUND_1 1 /* 1 m */
+#define BOUND_10 1 /* 10 m */
+#define BOUND_100 1 /* 100 m */
 
 /* more progscope */
 /* rvals */
