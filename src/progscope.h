@@ -196,13 +196,11 @@ struct select {
 };
 typedef struct select select_t;
 enum { /* specbits */
-	VRT_ORDINAL_ARGSTYPE_FLOAT, /* default */
-#define VRT_MASK_ARGSTYPE_FLOAT (1 << VRT_ORDINAL_ARGSTYPE_FLOAT)
 	VRT_ORDINAL_NULL_TERMINATED, /* if so, set count 0 */
 #define VRT_MASK_NULL_TERMINATED (1 << VRT_ORDINAL_NULL_TERMINATED)
 	VRT_ORDINAL_HAS_SETB, /* vs. may consider as NULL */
 #define VRT_MASK_HAS_SETB (1 << VRT_ORDINAL_HAS_SETB)
-	VRT_ORDINAL_IS_OUTPUT, /* vobs do not change */
+	VRT_ORDINAL_IS_OUTPUT, /* hmaps do not change */
 #define VRT_MASK_IS_OUTPUT (1 << VRT_ORDINAL_IS_OUTPUT)
 	VRT_ORDINAL_UNDO,
 #define VRT_MASK_UNDO (1 << VRT_ORDINAL_UNDO)

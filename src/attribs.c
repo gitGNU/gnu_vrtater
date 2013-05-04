@@ -12,6 +12,7 @@
 #include "hmap.h"
 #include "vectors.h"
 #include "rotation.h"
+#include "transform.h"
 
 #ifdef VRT_RENDERER_GL
 #include "rendergl.h"
@@ -475,8 +476,8 @@ sort_proc_hmaps(void)
 void
 proc_hmapf(hmapf_t *p, int lod)
 {
-	vf_t tmp;
-	vf_t *q = &tmp;
+	vf_t tmp, *q = &tmp;
+	hmapf_t **a, **b;
 
 	/* adjust hmap via kbase if set */
 
@@ -487,8 +488,12 @@ proc_hmapf(hmapf_t *p, int lod)
 	   note: velocity mode is always on.  for position mode, set velocity
 	   to 0 and then adjust the position manually.  a switch may be added
 	   based on cycle saveing vs. average n voh vobs have fixed pos */
-	/* if(bound_intersection());
-		intersection(); */
+	a = (hmapf_t **)selectf_a;
+	*a = p_hmapf(0);
+	b = (hmapf_t **)selectf_b;
+	*b = p;
+	select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b };
+	intersection(&t);
 	cp_vf(&(p->v_vel), q); /* take a copy of direction/velocity */
 	factor_vf(q, q, vrt_render_cyc); /* create a delta vector given freq */
 	sum_vf(&(p->v_pos), q, &(p->v_pos)); /* new pos = delta vector + pos */

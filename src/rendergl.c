@@ -29,7 +29,7 @@ init_renderer(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	/* left, right, bottom, top, near, far */
-	glFrustum(-.1, .1, -.1, .1, .1, 100.0);
+	glFrustum(-.03, .03, -.03, .03, .03, 100.0);
 
 	/* assume modeling transforms */
 	glMatrixMode(GL_MODELVIEW);
