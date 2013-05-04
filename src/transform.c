@@ -22,20 +22,48 @@ hapticNormill(select_t *sel)
 /*
    transform path on hmap vob intersection.
    where bound vol geom's intersected, calculate intersection of draw geom's
-   for 2 hmap vob's.  adjust attribs of both accordingly
+   for, for now, 2 spherical hmap vob's.  adjust attribs of both accordingly
 */
 int
 intersection(select_t *sel)
 {
-	/* this really would like some hashing. for now tho, it will be simple
-	   and require the caller's tending: given 2 hmaps, in sel a and b
-	   respectively, determine bound intersection.  if intersecting, set
-	   new trajectories for both */
-	/* hmapf_t **a, **b;
-	   btoggles_t t;
-	   a = sel->seta; b = sel->setb;
-	   t = sel->specbits;
-	   __builtin_printf("transform: %i\n", (*(sel->seta))->index); */
+	/* for now
+	   given 2 hmaps, in sel a and b respectively, determine bound
+	   intersection.  if intersecting, set new trajectories for both */
+	btoggles_t t;
+	hmapf_t **a, **b;
+	vf_t *vvela, *vvelb, *vposa, *vposb, vdist, vacca, vaccb;
+	float sza, szb, vola, volb, touch, inter, propoa, propob, acca, accb, elastish = 10;
+
+	a = sel->seta;
+	b = sel->setb;
+	t = sel->specbits;
+
+	vposa = &((*(sel->seta))->v_pos);
+	vposb = &((*(sel->setb))->v_pos);
+	sza = (*(sel->seta))->bounding.v_sz.m;
+	vola = (4.18879020479 * sza * sza * sza);
+	szb = (*(sel->setb))->bounding.v_sz.m;
+	volb = (4.18879020479 * szb * szb * szb);
+	touch = sza + szb;
+
+	dif_vf(vposa, vposb, &vdist);
+	if((&vdist)->m < touch && (*(sel->seta))->mass.kg && (&vdist)->m) {
+
+		vvela = &((*(sel->seta))->v_vel);
+		vvelb = &((*(sel->setb))->v_vel);
+
+		inter = touch - (&vdist)->m;
+		propoa = inter / vola;
+		acca = volb * propoa * elastish;
+		tele_magz_vf(&vdist, &vacca, acca);
+		sum_vf(&vacca, vvela, vvela);
+		inv_vf(&vdist, &vdist);
+		propob = inter / volb;
+		accb = vola * propob * elastish;
+		tele_magz_vf(&vdist, &vaccb, accb);
+		sum_vf(&vaccb, vvelb, vvelb);
+	}	
 	return 0;
 }
 
@@ -62,7 +90,7 @@ join (select_t *sel)
 /*
    send vobs to recycler.
    the recycler could be written to function as undo stack per vob
-   dependant on session name, and perhaps via future supporting data.c.
+   dependant on session name.
 */
 void
 recycler(select_t *sel)

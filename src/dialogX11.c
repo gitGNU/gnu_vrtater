@@ -6,7 +6,6 @@
 #include <X11/X.h>
 #include <unistd.h>
 #include "progscope.h"
-#include "session.h"
 #include "hmap.h"
 #include "transform.h"
 
@@ -14,10 +13,8 @@
 #include "rendergl.h"
 #endif /* VRT_RENDER_GL */
 
-int connect_partialspace(session_t *);
 int *dialog_with_local_user(void);
 void proc_remote_dialog(int *);
-void tendto_curr_sessions(void);
 void cfg_recycler(void);
 void cfg_balance(void);
 void write_dialog(select_t *, char *, int);
@@ -45,7 +42,6 @@ dialogf(select_t *sel, gen_opts_t *o)
 	   retreive dialog with remote users via given dialog in their
 	   hmapf's(if any).  hmapf's have count and arrive in seta.
 		proc_remote_dialog()
-		tendto_curr_sessions()
 		cfg_recycler()
 		cfg_balance()
 		set_groups()
@@ -77,29 +73,6 @@ proc_local_dialog(int *p)
 	;
 }
 
-/* run session with remote vobspace node
-   other nodes will mirror optionally given 'partial vobspace', or selected
-   vobs herein.  success is assumed while implied session_t remains in
-   all_sessions data.  reads from remote node will succeed with no data until
-   session sync or closed */
-int
-connect_partialspace(session_t *p_session)
-{
-	return on_node_session(p_session);
-}
-
-/* tending to curr_session_t and prev_caller_session_t info.
-   referencing session info generated thru session.c, selection of available
-   nodes for calling(cuing) and running, as well as the previous caller archive
-   that allows sessions to be continued.  connections are achieved based on
-   configuration files, or herein. */
-void
-tendto_curr_sessions(void)
-{
-	/* conditionally connect_vobspace(), etc... */
-	;
-}
-
 void
 cfg_recycler(void)
 {
@@ -109,13 +82,6 @@ cfg_recycler(void)
 void
 cfg_balance(void)
 {
-	;
-}
-
-void
-cfg_session_filter (void)
-{
-	/* name a list of lists of sessions */
 	;
 }
 

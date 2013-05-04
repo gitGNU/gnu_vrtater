@@ -85,7 +85,7 @@ generate_vohspace(void)
 
 	/* from stock */
 	for(i=0;i<1;i++)
-		if((p = hmapf_icosahedron_b(&session, .02)))
+		if((p = hmapf_icosahedron_b(&session, .01)))
 			nportf(p, &ptl);
 	for(i=0;i<2;i++)
 		if((p = hmapf_cube_b(&session, .03, .03, .03)))

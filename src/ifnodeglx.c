@@ -11,6 +11,7 @@
 #include <time.h>
 #include "progscope.h"
 #include "ifnodeglx.h" /* !! */
+#include "session.h"
 #include "hmap.h"
 #include "generator.h"
 #include "dialogX11.h"
@@ -43,6 +44,10 @@ float vrt_render_cyc; /* external */
 
 /* diagnostic */
 hmapf_t *diag, *diag2, *diag3, *diag4, *diag5, *diag6;
+
+void tendto_curr_sessions(void);
+int connect_partialspace(session_t *);
+void cfg_session_filter(void);
 
 /* setup for given display and rendering libs */
 void
@@ -349,8 +354,8 @@ node(int argc, char **argv)
 		cp_vf(&j, &(diag5->v_pos));
 		cp_vf(&k, &(diag6->v_pos));
 		/* diag term output */
-#define MESS
-#ifdef MESS
+//#define DIAG
+#ifdef DIAG
 		__builtin_printf("fov0\n");
 		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",
 			fov0->v_pos.x, fov0->v_pos.y,
@@ -372,7 +377,7 @@ node(int argc, char **argv)
 		__builtin_printf("time\n    fps: %f cyc: %f reads: %i/%i\n\n",
 			1 / vrt_render_cyc, vrt_render_cyc,
 			reads, reads + infcount);
-#endif /* MESS */
+#endif /* DIAG */
 
 		/* fps */
 		if(!(frames++ % rsfreq)) {
@@ -413,4 +418,34 @@ node(int argc, char **argv)
 	close_vobspace(0); /* now, for now */
 	close_node(); /* note: move to callback_close_vobspace() */
 	shutdown_glx();
+}
+
+/* tending to curr_session_t and prev_caller_session_t info.
+   referencing session info generated thru session.c, selection of available
+   nodes for calling(cuing) and running, as well as the previous caller archive
+   that allows sessions to be continued.  connections are achieved based on
+   configuration files, or herein. */
+void
+tendto_curr_sessions(void)
+{
+	/* conditionally connect_vobspace(), etc... */
+	;
+}
+
+/* run session with remote vobspace node
+   other nodes will mirror optionally given 'partial vobspace', or selected
+   vobs herein.  success is assumed while implied session_t remains in
+   all_sessions data.  reads from remote node will succeed with no data until
+   session sync or closed */
+int
+connect_partialspace(session_t *p_session)
+{
+	return on_node_session(p_session);
+}
+
+void
+cfg_session_filter(void)
+{
+	/* name a list of lists of sessions */
+	;
 }
