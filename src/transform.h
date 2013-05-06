@@ -6,16 +6,14 @@
 #ifndef VRT_TRANSFORM_H
 #define VRT_TRANSFORM_H
 
-#include "progscope.h"
-
-/* wishlist/in progress */
-void hapticNormill(select_t *);
+int hapticNormill(select_t *);
 int intersection(select_t *);
-void join (select_t *);
-void recycler(select_t *);
-void hmapwrapf(select_t *);
+int group_hmaps(select_t *);
+int join(select_t *);
+int recycler(select_t *);
+int hmapwrapf(select_t *);
 int hmapunwrapf(select_t *);
 int alloc_dialog(select_t *);
-void copy_hmapf(select_t *);
+int cp_hmapf(select_t *);
 
 #endif /* VRT_TRANSFORM_H */

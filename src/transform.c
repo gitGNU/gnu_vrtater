@@ -13,10 +13,11 @@
 /*
    hapticNormill: ... 
 */
-void
+int
 hapticNormill(select_t *sel)
 {
 	/* j: i will beta test this */
+	return 0;
 }
 
 /*
@@ -79,12 +80,12 @@ group_hmaps(select_t *sel)
 }
 
 /*
-   join selected vobs.
+   join selected hmaps.
 */
-void
-join (select_t *sel)
+int
+join(select_t *sel)
 {
-	;
+	return 0;
 }
 
 /*
@@ -92,19 +93,19 @@ join (select_t *sel)
    the recycler could be written to function as undo stack per vob
    dependant on session name.
 */
-void
+int
 recycler(select_t *sel)
 {
-	;
+	return 0;
 }
 
 /*
-   write hmap in selection buffer to network or file, as an hmap vob file
+   format and write hmap referenced in the selection buffer to network or file
    for now assume file/network is meta_u a_file_net_io[10000]
    later actually do the file write or and pass it over the network
 */
 meta_u a_file_net_io[10000]; /* for now */
-void
+int
 hmapwrapf(select_t *sel)
 {
 	int *pb = (int *)a_file_net_io;
@@ -169,10 +170,11 @@ hmapwrapf(select_t *sel)
 	while(j++ < h->dialog_total)
 		*pi++ = *d++;
 	*pb = abs((int)pi - (int)pb) / sizeof(int);
+	return 0;
 }
 
 /*
-   read in an hmap vob file from file or network
+   read file/transfer formated hmap into the selection buffer
    for now assume file/network is meta_u a_file_net_io[10000]
    for now just print it
    later write it to an hmap, allocating for vf_t's and dialog
@@ -251,11 +253,12 @@ alloc_dialog(select_t *sel)
 }
 
 /*
-   make a copy of an hmap in hmap vobspace
-   hmap copy made less name/index retained by recieving hmap
+   make a copy of (for now) a single hmap referenced as first item in
+   *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
+   the recieving hmap retains it's own name/index
 */
-void
-copy_hmapf(select_t *sel)
+int
+cp_hmapf(select_t *sel)
 {
 	hmapf_t *a, *b;
 	vf_t *v, *w;
@@ -318,4 +321,5 @@ copy_hmapf(select_t *sel)
 	e = b->p_dialog;
 	for(j=0;j<a->dialog_total;j++)
 		*e++ = *d++;
+	return 0;
 }

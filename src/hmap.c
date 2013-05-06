@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "progscope.h"
-#include "hmap.h" /* !! */
 #include "vectors.h"
 #include "attribs.h"
 

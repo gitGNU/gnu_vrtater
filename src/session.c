@@ -4,7 +4,7 @@
 */
 
 #include <stdlib.h>
-#include "progscope.h" /* !! */
+#include "progscope.h"
 
 /* for now */
 session_desc_t a_all_sessions[VRT_MAX_CUED_SESSIONS];

@@ -4,7 +4,7 @@
 */
 
 #include <math.h>
-#include "vectors.h" /* !! */
+#include "vectors.h"
 
 /* set and return refrence to vector a, enscribing components x, y, z, and m */
 vf_t *

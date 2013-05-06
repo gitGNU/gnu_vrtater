@@ -75,7 +75,7 @@ hmapf_icosahedron_b(session_t *session, float r)
 	/* int d_total = 0; */
 	/* ... */
 
-	/* keep diagnostic count of vertices as hmap data is written */
+	/* diag */
 	int v_count = 0;
 
 	/* fill in hmap
@@ -150,8 +150,8 @@ hmapf_icosahedron_b(session_t *session, float r)
 
 /* hmap cubeoid: (vrtater layout)
    QDR_SZ derived from opposite corners at distance 2 */
-#define CUBE_B_BOUND0 0.57735026919
 #define QDR_SZ 0.57735026919
+#define CUBE_B_BOUND0 QDR_SZ
 float af_cube_b[8][3] = {
 	{-QDR_SZ, QDR_SZ, -QDR_SZ}, /* 0 */ {QDR_SZ, QDR_SZ, -QDR_SZ}, /* 1 */
    {-QDR_SZ, QDR_SZ, QDR_SZ}, /* 2 */		{QDR_SZ, QDR_SZ, QDR_SZ}, /* 3 */
@@ -193,7 +193,7 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 	/* int d_total = 0; */
 	/* ... */
 
-	/* keep diagnostic count of vertices as hmap data is written */
+	/* diag */
 	int v_count = 0;
 
 	/* fill in hmap

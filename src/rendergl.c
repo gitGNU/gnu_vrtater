@@ -7,10 +7,9 @@
 #include <GL/gl.h>
 #include <stdlib.h>
 #include "progscope.h"
+#include "rendergl.h"
 #include "vectors.h"
 #include "rotation.h"
-
-vf_t glroo; /* gl renderer orgin offset.  external */
 
 void draw_gl_tri(vf_t *, vf_t *, vf_t *);
 
@@ -220,7 +219,7 @@ draw_hmapf(hmapf_t *hmap, int lod)
    stacklevel in apon the modelview matrix of where there might be at least
    32, a function to render apon, within, and about hmaps */
 void
-render_voglspace(void)
+render_voglspace(hmapf_t *freefov0)
 {
 	/* set gl renderer offset orgin */
 	glTranslatef(-(&glroo)->x, -(&glroo)->y, -(&glroo)->z);

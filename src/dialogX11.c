@@ -23,7 +23,7 @@ void read_dialog_set(select_t *);
 /* passthrough function per frame
    given sel(dialog in hmapf's via selectf_a[] or b[]) and o(generator opts). */
 void
-dialogf(select_t *sel, gen_opts_t *o)
+dialog(select_t *sel, gen_opts_t *o)
 {
 	/* ui: retrieve local dialog */
 	dialog_with_local_user();

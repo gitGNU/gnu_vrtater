@@ -10,7 +10,7 @@
 #include <math.h>
 #include <time.h>
 #include "progscope.h"
-#include "ifnodeglx.h" /* !! */
+#include "ifnodeglx.h"
 #include "session.h"
 #include "hmap.h"
 #include "generator.h"
@@ -19,18 +19,13 @@
 #include "rotation.h"
 #include "tug.h"
 
-void setup_glx(int argc, char **argv);
-void shutdown_glx(void);
-
-Display *dpy0 = NULL;
-ifdpy_t ifd0, *ifdpy0 = &ifd0;
-hmapf_t *fov0; /* external */
-XVisualInfo *xvinf0 = NULL;
-Window xwin0;
+Display *dpy0, *dpy_dialog;
+XVisualInfo *xvinf0, *xvinf_dialog;
+Window xwin0, xwin_dialog;
 GLXContext glxcontext0;
 int dbuff = LVAL_TRUE; /* force flush for single buffer'd visual */
-
-vf_t glroo; /* gl renderer orgin offset.  external */
+ifdpy_t ifd0, *ifdpy0 = &ifd0;
+hmapf_t *fov0, *freefov0;
 
 /* interface factors, for now */
 float accel_adv; /* advantage */
@@ -45,6 +40,10 @@ float vrt_render_cyc; /* external */
 /* diagnostic */
 hmapf_t *diag, *diag2, *diag3, *diag4, *diag5, *diag6;
 
+void setup_glx(int argc, char **argv);
+void shutdown_glx(void);
+
+/* session */
 void tendto_curr_sessions(void);
 int connect_partialspace(session_t *);
 void cfg_session_filter(void);
@@ -53,6 +52,9 @@ void cfg_session_filter(void);
 void
 setup_glx(int argc, char **argv)
 {
+	dpy0 = NULL;
+	xvinf0 = NULL;
+
 	/* gl X rendering */
 
 	/* open connection to X server */
@@ -120,6 +122,18 @@ shutdown_glx(void)
 	}
 }
 
+void
+setup_dialog_interface(void)
+{
+	;
+}
+
+void
+shutdown_dialog_interface(void)
+{
+	;
+}
+
 /* state machine */
 void
 node(int argc, char **argv)
@@ -128,7 +142,14 @@ node(int argc, char **argv)
 	/* setup node */
 	setup_glx(argc, argv);
 	generate_node();
-	init_tug_io();
+
+	/* fov */
+	freefov0 = NULL;
+	fov0 = (hmapf_t *) p_hmapf(0); /* for now */
+	freefov0 = fov0; /* for now assume cfg file enabled it(default) */
+
+	/* tug */
+	init_tug_io(); /* if any tug tend to it /w start_tug(init_tug_io()) */
 
 	/* fps */
 	fps = 28.6; /* guess */
@@ -144,7 +165,6 @@ node(int argc, char **argv)
 	accel_ofs = .5;
 
 	/* hmap with fov for dpy0 */
-	fov0 = (hmapf_t *) p_hmapf(0);
 	fov0->ang_spd = 0; /* for now not used for fov hmap */
 	fov0->ang_dpl = 0; /* for now not used for fov hmap */
 	set_vf(&(fov0->v_vel), 0, 0, 0, 0);
@@ -354,7 +374,7 @@ node(int argc, char **argv)
 		cp_vf(&j, &(diag5->v_pos));
 		cp_vf(&k, &(diag6->v_pos));
 		/* diag term output */
-//#define DIAG
+#define DIAG
 #ifdef DIAG
 		__builtin_printf("fov0\n");
 		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",
@@ -399,7 +419,7 @@ node(int argc, char **argv)
 
 		/* renderer renders apon, inside of, and outside of hmaps */
 		glPushMatrix();
-		render_voglspace();
+		render_voglspace(freefov0);
 		glPopMatrix();
 
 		/* draw to dpy0 */

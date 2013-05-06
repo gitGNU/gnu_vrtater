@@ -6,6 +6,6 @@
 #ifndef VRT_DIALOGX11_H
 #define VRT_DIALOGX11_H
 
-void dialogf(select_t *, gen_opts_t *);
+void dialog(select_t *, gen_opts_t *);
 
 #endif /* VRT_DIALOGX11_H */

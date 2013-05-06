@@ -12,6 +12,7 @@
 /* progscope essentials, see below for another list of these */
 #define VRT_HMAPS_MAX 20
 #define VRT_UNDO_DEPTH 20
+#define PI_180 0.017453292519943
 #define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
 #define VRT_X_SUPPORT
 #define VRT_RENDERER_GL
@@ -68,7 +69,7 @@ struct prev_caller_sessions {
 typedef struct prev_caller_sessions prev_caller_sessions_t;
 
 /* render*.c:
-   test palette */
+   diag palette for now */
 #ifdef VRT_RENDERER_GL
 #define ORN() glColor3f(3, .9, 0)
 #define BLU() glColor3f( 0,  0, .9)
@@ -77,14 +78,6 @@ typedef struct prev_caller_sessions prev_caller_sessions_t;
 #define VLT() glColor3f(.7, .2,  1)
 #define RED() glColor3f(.9,  0,  0)
 #endif /* VRT_RENDERER_GL */
-#ifdef VRT_RENDERER_OTHER
-#define VLT()
-#define BLU()
-#define GRN()
-#define YEL()
-#define ORN()
-#define RED()
-#endif /* VRT_RENDERER_OTHER */
 /* draw_format_t */
 struct draw_format_opts {
 	int geom; /* so-far, VRT_DRAWGEOM_TRIANGLES is supported */
@@ -196,6 +189,8 @@ struct select {
 };
 typedef struct select select_t;
 enum { /* specbits */
+	VRT_ORDINAL_ARGSTYPE_FLOAT, /* default */
+#define VRT_MASK_ARGSTYPE_FLOAT (1 << VRT_ORDINAL_ARGSTYPE_FLOAT)
 	VRT_ORDINAL_NULL_TERMINATED, /* if so, set count 0 */
 #define VRT_MASK_NULL_TERMINATED (1 << VRT_ORDINAL_NULL_TERMINATED)
 	VRT_ORDINAL_HAS_SETB, /* vs. may consider as NULL */
@@ -264,12 +259,6 @@ enum {
 #define VRT_CUBE_B_FCOUNT 12
 /* vob type c asteroid, capped, face count */
 #define VRT_ASTEROID_GEOMC_CFCOUNT 10
-/* bound threshold modifiers */
-#define BOUND1_100 1 /* 1 cm */
-#define BOUND1_10 1 /* 1 dm */
-#define BOUND_1 1 /* 1 m */
-#define BOUND_10 1 /* 10 m */
-#define BOUND_100 1 /* 100 m */
 
 /* more progscope */
 /* rvals */

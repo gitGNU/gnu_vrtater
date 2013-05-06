@@ -16,9 +16,6 @@ enum {
 extern hmapf_t *selectf_a;
 extern hmapf_t *selectf_b;
 
-/* per display, hmaps defining feild of view */
-extern hmapf_t *fov0;
-
 void init_selection_buffers(void);
 hmapf_t *hmapf(session_t *);
 void add_tri_to_hmapf(vf_t *, vf_t **);

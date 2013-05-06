@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "attribs.h" /* !! */
+#include "attribs.h"
 #include "hmap.h"
 #include "vectors.h"
 #include "rotation.h"
@@ -24,13 +24,9 @@
 #define VRT_NEAR_THRESH 10000.0f /* for now, 10000 meters */
 #define VRT_PERIF_THRESH 100000.0f
 
-/* positioning, time, mass, factors, for now, also some to ease things */
-#define SQRT_3 1.732050807
-#define RANDOM_OFFSET 123456789
+/* for now, to ease things */
 #define SMALLRANDOM 0.0000001
 #define TINYRANDOM 0.000000001
-#define SLOW1_10 .1
-#define SLOW1_100 .01
 
 unsigned int vrt_hmaps_max; /* external */
 float vrt_render_cyc; /* external */
@@ -48,14 +44,14 @@ hmapf_t **pp_rl_f;
 int dlr_n, dlr_p, dlr_f;
 unsigned int passes;
 
+/* selection buffer */
+hmapf_t *selectf_a; /* external */
+hmapf_t *selectf_b; /* external */
+
 void proc_hmapf(hmapf_t *, int lodval);
 void flow_over(btoggles_t *balance_criteria);
 float estimate_radiusf(hmapf_t *);
 void wanderf(hmapf_t *hmap, float e, float m, float r);
-
-/* selection buffer */
-hmapf_t *selectf_a; /* external */
-hmapf_t *selectf_b; /* external */
 
 /* set up hmap arrays, pointers thereto, nullify their attribs */
 void
@@ -580,7 +576,8 @@ nportf(hmapf_t *p, vf_t *loc)
 	wanderf(p, ((float)rand() * TINYRANDOM), p->mass.kg, r);
 }
 
-/* guestimate for hmap p, a proportion vs. where it were if not a sphere */
+/* for now, guestimate for hmap p, a proportion vs. where it were the same
+   volume and reshaped as a sphere */
 float
 estimate_radiusf(hmapf_t *p)
 {
