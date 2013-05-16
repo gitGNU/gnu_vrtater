@@ -1,4 +1,4 @@
-/* dialogX11.c: user dialog for implicit node. no basic functionality yet.
+/* dialogX11.c: represent dialog for one who runs vrtater.  still pre-alpha.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -15,27 +15,27 @@
 
 int *dialog_with_local_user(void);
 void proc_remote_dialog(int *);
+void proc_local_dialog(int *);
 void cfg_recycler(void);
 void cfg_balance(void);
-void write_dialog(select_t *, char *, int);
 void read_dialog_set(select_t *);
+void write_dialog(select_t *, char *, int);
 
 /* passthrough function per frame
    given sel(dialog in hmapf's via selectf_a[] or b[]) and o(generator opts). */
 void
-dialogf(select_t *sel, gen_opts_t *o)
+dialog(select_t *sel, gen_opts_t *o)
 {
 	/* ui: retrieve local dialog */
 	dialog_with_local_user();
 
-	/* test write_dialog(), assume ui for now.
+	/* for now, test write_dialog(), assume ui for now.
 	   one empty dialog element is passed in for testing
 	   normally generator.c would pass in given dialog from remote nodes
 	   however, here tested is dialog read and write capability */
-	char a_char[] = \
-		"dialog: pass here and everything is published unless encrypted\n";
+	char a_char[] = "dialog: pass here and everything is published unless encrypted\n";
 	write_dialog(sel, a_char, 64); /* n = STRLEN where a_char[STRLEN] */
-	/* test read_dialog(), assume ui for now */
+	/* for now this write to terminal.  assume ui */
 	read_dialog_set(sel);
 
 	/*
@@ -85,6 +85,7 @@ cfg_balance(void)
 	;
 }
 
+/* for now writes to terminal.  assume ui */
 void
 read_dialog_set(select_t *sel)
 {

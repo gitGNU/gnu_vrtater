@@ -25,7 +25,6 @@ vf_t * norm_vf(vf_t *, vf_t *);
 vf_t * normz_vf(vf_t *, vf_t *);
 float dprod_vf(vf_t *, vf_t *);
 vf_t * cprod_vf(vf_t *, vf_t *, vf_t *);
-vf_t * icprod_vf(vf_t *, vf_t *, vf_t *);
 vf_t * sum_vf(vf_t *, vf_t *, vf_t *);
 float sum_mf(vf_t *, vf_t *);
 vf_t * dif_vf(vf_t *, vf_t *, vf_t *);

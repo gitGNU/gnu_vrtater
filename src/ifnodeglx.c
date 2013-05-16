@@ -10,41 +10,52 @@
 #include <math.h>
 #include <time.h>
 #include "progscope.h"
-#include "ifnodeglx.h" /* !! */
+#include "ifnodeglx.h"
 #include "session.h"
 #include "hmap.h"
+#include "attribs.h"
 #include "generator.h"
 #include "dialogX11.h"
 #include "rendergl.h"
 #include "rotation.h"
 #include "tug.h"
 
-void setup_glx(int argc, char **argv);
-void shutdown_glx(void);
-
-Display *dpy0 = NULL;
-ifdpy_t ifd0, *ifdpy0 = &ifd0;
-hmapf_t *fov0; /* external */
-XVisualInfo *xvinf0 = NULL;
-Window xwin0;
+Display *dpy0, *dpy_dialog;
+XVisualInfo *xvinf0, *xvinf_dialog;
+Window xwin0, xwin_dialog;
 GLXContext glxcontext0;
-int dbuff = LVAL_TRUE; /* force flush for single buffer'd visual */
-
-vf_t glroo; /* gl renderer orgin offset.  external */
+int dbuff = 1; /* single or double buffer video, will mabye be compile opt */
+ifdpy_t ifd0, *ifdpy0 = &ifd0;
+hmapf_t *fov0;
+int fov0_available;
+int exiting = 0;
 
 /* interface factors, for now */
-float accel_adv; /* advantage */
-float accel_ofs; /* offset */
+float accel_adv;
+float accel_crv;
+float aaccel_adv;
 
 /* fps */
 time_t start, stop;
-int run, frames, rsfreq, reads, infcount;
+int run, frames, sfreq, reads, infcount;
 float fps;
 float vrt_render_cyc; /* external */
 
 /* diagnostic */
-hmapf_t *diag, *diag2, *diag3, *diag4, *diag5, *diag6;
+hmapf_t *ryg, *ryg1, *diag1, *diag2, *diag3, *diag4, *diag5, *diag6;
+vf_t diag = { 0, 1, 0, 1 };
+vf_t isb = { .5,  0,  0, .5};
+vf_t jsb = {  0, .5,  0, .5};
+vf_t ksb = {  0,  0, .5, .5};
 
+void setup_glx(int argc, char **argv);
+void shutdown_glx(void);
+
+/* dialog */
+void setup_dialog_interface(void);
+void shutdown_dialog_interface(void);
+
+/* session */
 void tendto_curr_sessions(void);
 int connect_partialspace(session_t *);
 void cfg_session_filter(void);
@@ -53,6 +64,9 @@ void cfg_session_filter(void);
 void
 setup_glx(int argc, char **argv)
 {
+	dpy0 = NULL;
+	xvinf0 = NULL;
+
 	/* gl X rendering */
 
 	/* open connection to X server */
@@ -120,56 +134,93 @@ shutdown_glx(void)
 	}
 }
 
+void
+setup_dialog_interface(void)
+{
+	;
+}
+
+void
+shutdown_dialog_interface(void)
+{
+	;
+}
+
 /* state machine */
 void
 node(int argc, char **argv)
 {
 
 	/* setup node */
+
 	setup_glx(argc, argv);
 	generate_node();
-	init_tug_io();
 
-	/* fps */
+	/* fov */
+	fov0 = (hmapf_t *) p_hmapf(0); /* for now */
+	fov0_available = 1;
+
+	/* tug */
+	init_tug_io(); /* if any tug tend to it /w start_tug(init_tug_io()) */
+
+	/* fps indication, disabled below for now */
 	fps = 28.6; /* guess */
 	vrt_render_cyc = .034965;
 	frames = 0;
 	run = 0;
-	rsfreq = 1000;
+	sfreq = 1000;
 	infcount = 0;
 	reads = 0;
 
 	/* interface factors, for now */
-	accel_adv = .1;
-	accel_ofs = .5;
+	accel_adv = .0575;
+	accel_crv = .1; /* reciprocal */
+	aaccel_adv = .035;
 
 	/* hmap with fov for dpy0 */
-	fov0 = (hmapf_t *) p_hmapf(0);
 	fov0->ang_spd = 0; /* for now not used for fov hmap */
 	fov0->ang_dpl = 0; /* for now not used for fov hmap */
 	set_vf(&(fov0->v_vel), 0, 0, 0, 0);
 	set_vf(&(fov0->v_axi), 0, 0, -1, 1); /* oa */
 	set_vf(&(fov0->v_rel), 0, 1, 0, 1); /* up locally */
-	set_vf(&(fov0->v_pos), 0, 0, 0, 0); /* @fp */
+	set_vf(&(fov0->v_pos), 0, 0, 0, 0); /* oa@fp */
 
-	/* diag: endpoints of relative basis vectors vs. node orgin */
-	diag = (hmapf_t *) p_hmapf(3);
-	diag->ang_spd = 0;
-	set_vf(&(diag->v_vel), 0, 0, 0, 0);
-	set_vf(&(diag->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag->v_pos), 0, 0, 0, 0);
+
+	/* diag */
+	ryg = (hmapf_t *) p_hmapf(1);
+	ryg->ang_spd = 1;
+	ryg->ang_dpl = 0;
+	set_vf(&(ryg->v_vel), 0, 0, 0, 0);
+	set_vf(&(ryg->v_axi), .707106, .707106, 0, 1);
+	set_vf(&(ryg->v_pos), 0, 49.5, -1, 0);
+	form_mag_vf(&(ryg->v_pos));
+
+	ryg1 = (hmapf_t *) p_hmapf(2);
+	ryg1->ang_spd = 1;
+	ryg1->ang_dpl = 3.141592;
+	set_vf(&(ryg1->v_vel), 0, 0, 0, 0);
+	set_vf(&(ryg1->v_axi), 0, .707106, .707106, 1);
+	set_vf(&(ryg1->v_pos), 0, 49.5, 1, 0);
+	form_mag_vf(&(ryg1->v_pos));
+
+	/* diag */
+	diag1 = (hmapf_t *) p_hmapf(3);
+	diag1->ang_spd = .000012; 
+	set_vf(&(diag1->v_vel), 0, .1, 0, .1);
+	set_vf(&(diag1->v_axi), 0, 0, -1.0, 1);
+	set_vf(&(diag1->v_pos), 7.071, 7.071, 7.071, 1);
 
 	diag2 = (hmapf_t *) p_hmapf(4);
-	diag2->ang_spd = 0;
-	set_vf(&(diag2->v_vel), 0, 0, 0, 0);
+	diag2->ang_spd = .000010;
+	set_vf(&(diag2->v_vel), 0, .1, 0, .1);
 	set_vf(&(diag2->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag2->v_pos), 0, 0, 0, 0);
+	set_vf(&(diag2->v_pos), 7.071, 7.071, -7.071, 1);
 
 	diag3 = (hmapf_t *) p_hmapf(5);
-	diag3->ang_spd = 0;
-	set_vf(&(diag3->v_vel), 0, 0, 0, 0);
+	diag3->ang_spd = .000015;
+	set_vf(&(diag3->v_vel), 0, .1, 0, .1);
 	set_vf(&(diag3->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag3->v_pos), 0, 0, 0, 0);
+	set_vf(&(diag3->v_pos), 7.071, -7.071, 7.071, 1);
 
 	/* diag: std basis */
 	diag4 = (hmapf_t *) p_hmapf(6);
@@ -177,25 +228,27 @@ node(int argc, char **argv)
 	set_vf(&(diag4->v_vel), 0, 0, 0, 0);
 	set_vf(&(diag4->v_axi), 0, 0, -1.0, 1);
 	set_vf(&(diag4->v_pos), 0, 0, 0, 0);
+	cp_vf(&isb, &(diag4->v_pos));
 
 	diag5 = (hmapf_t *) p_hmapf(7);
 	diag5->ang_spd = 0;
 	set_vf(&(diag5->v_vel), 0, 0, 0, 0);
 	set_vf(&(diag5->v_axi), 0, 0, -1.0, 1);
 	set_vf(&(diag5->v_pos), 0, 0, 0, 0);
+	cp_vf(&jsb, &(diag5->v_pos));
 
 	diag6 = (hmapf_t *) p_hmapf(8);
 	diag6->ang_spd = 0;
 	set_vf(&(diag6->v_vel), 0, 0, 0, 0);
 	set_vf(&(diag6->v_axi), 0, 0, -1.0, 1);
 	set_vf(&(diag6->v_pos), 0, 0, 0, 0);
+	cp_vf(&ksb, &(diag6->v_pos));
 
 	XEvent xevent;
-	int quit = 0;
 
 	/* interface node
 	   all events since last frame are summed, the new frame is drawn */
-	while(!quit) {
+	while(!exiting) {
 		while(XPending(dpy0)) {
 			XNextEvent(dpy0, &xevent);
 			switch(xevent.type) {
@@ -204,35 +257,35 @@ node(int argc, char **argv)
 				switch(XKeycodeToKeysym(dpy0, xevent.xkey.keycode, 0)) {
 
 					case XK_Escape:
-						quit = LVAL_TRUE;
+						exiting = 1;
 					break;
 					case XK_a:
-						ifdpy0->keypan += .017453 * accel_adv;
+						ifdpy0->keypan += .017453 * aaccel_adv;
 						if(ifdpy0->keypan > M_PI)
 							ifdpy0->keypan = -M_PI;
 					break;
 					case XK_d:
-						ifdpy0->keypan -= .017453 * accel_adv;
+						ifdpy0->keypan -= .017453 * aaccel_adv;
 						if(ifdpy0->keypan < -M_PI)
 							ifdpy0->keypan = M_PI;
 					break;
 					case XK_l:
-						ifdpy0->keytilt += .017453 * accel_adv;
+						ifdpy0->keytilt += .017453 * aaccel_adv;
 						if(ifdpy0->keytilt > M_PI)
 							ifdpy0->keytilt = -M_PI;
 					break;
 					case XK_o:
-						ifdpy0->keytilt -= .017453 * accel_adv;
+						ifdpy0->keytilt -= .017453 * aaccel_adv;
 						if(ifdpy0->keytilt < -M_PI)
 							ifdpy0->keytilt = M_PI;
 					break;
 					case XK_k:
-						ifdpy0->keyroll += .017453 * accel_adv;
+						ifdpy0->keyroll += .017453 * aaccel_adv;
 						if(ifdpy0->keyroll > M_PI)
 							ifdpy0->keyroll = -M_PI;
 					break;
 					case XK_semicolon:
-						ifdpy0->keyroll -= .017453 * accel_adv;
+						ifdpy0->keyroll -= .017453 * aaccel_adv;
 						if(ifdpy0->keyroll < -M_PI)
 							ifdpy0->keyroll = M_PI;
 					break;
@@ -257,7 +310,7 @@ node(int argc, char **argv)
 					break;
 					case XK_space:
 						ifdpy0->keypan *= 0.65;
-						ifdpy0->keytilt *= 0.75;
+						ifdpy0->keytilt *= 0.55;
 						ifdpy0->keyroll *= 0.9;
 						ifdpy0->keyvfwd *= 0.85;
 						ifdpy0->keyvside *= 0.85;
@@ -279,39 +332,32 @@ node(int argc, char **argv)
 		}
 
 		/* adjust interfaced hmaps per any node input
-		   for now sum friction into velocity for interfaced hmaps.
-		   this will bring hmap accel to 0 over time */
+		   sum in curvilinear fore/backwards acceleration feedback */
 		tele_magz_vf(&(fov0->v_vel), &(fov0->v_vel),
-			fov0->v_vel.m * accel_ofs);
+			(fov0->v_vel.m * fov0->v_vel.m) /
+			(fov0->v_vel.m + (fov0->v_vel.m * accel_crv)));
 
 		/* accelerate, summing d/t/t with d/t for (+/-)fwd, side */
                 vf_t acc, acc2, acc3;
                 tele_magz_vf(&(fov0->v_axi), &acc, ifdpy0->keyvfwd);
                 sum_vf(&acc, &(fov0->v_vel), &(fov0->v_vel));
+		tele_magz_vf(&(fov0->v_vel), &(fov0->v_vel), fov0->v_vel.m);
+
 		cprod_vf(&(fov0->v_axi), &(fov0->v_rel), &acc2);
                 tele_magz_vf(&acc2, &acc2, ifdpy0->keyvside);
                 sum_vf(&(fov0->v_vel), &acc2, &(fov0->v_vel));
                 tele_magz_vf(&(fov0->v_rel), &acc3, ifdpy0->keyvvrt);
                 sum_vf(&(fov0->v_vel), &acc3, &(fov0->v_vel));
 
-		/* set orgin offset for gl renderer */
-		cp_vf(&(fov0->v_pos), &glroo);
-
-		/* generate next frame's worth of hmaps
-		   regenerate scene modifies hmap position vs. v_vel, and
-		   soon position and orientation through intersection. */
-		regenerate_scene(&quit);
-
 		/* further adjust interfaced hmaps while representing node
 		   output.  per display(dpy) per frame, set the field of view
 		   (fov) per the hmap's holding any.  a focal plane is
 		   represented by vectors v_rel and side, and an optical axis
 		   by vector v_axi.  roll is represented by a combination of
-		   v_rel and side. v_pos is represented when applied to a matrix
-		   translation of the fov along the optical axis.
-		   note: the scene is generated already.  hmap positions remain
-		   valid.  new hmap orientations here set are applicable
-		   immediately, however not drawn till next frame. */
+		   v_rel and side.  v_pos is represented when applied by the
+		   renderer to a matrix translation of the inverse of
+		   fov0->v_pos before rendering, and back again before
+		   returning. */
 
 		/* calculate a basis vector for tilt */
 		vf_t side;
@@ -321,41 +367,38 @@ node(int argc, char **argv)
 		/* roll rel and side around axial */
 		rotate_vf(&(fov0->v_rel), &(fov0->v_axi), ifdpy0->keyroll);
 		rotate_vf(&side, &(fov0->v_axi), ifdpy0->keyroll);
-		glRotatef(ifdpy0->keyroll * 180 / M_PI,
-			fov0->v_axi.x, fov0->v_axi.y, fov0->v_axi.z);
 
 		/* pan side and axial around rel */
 		rotate_vf(&side, &(fov0->v_rel), -ifdpy0->keypan);
 		rotate_vf(&(fov0->v_axi), &(fov0->v_rel), -ifdpy0->keypan);
-		glRotatef(-ifdpy0->keypan * 180 / M_PI,
-			fov0->v_rel.x, fov0->v_rel.y, fov0->v_rel.z);
 
 		/* tilt axial and rel around side */
 		rotate_vf(&(fov0->v_axi), &side, -ifdpy0->keytilt);
 		rotate_vf(&(fov0->v_rel), &side, -ifdpy0->keytilt);
-		glRotatef(-ifdpy0->keytilt * 180 / M_PI,
-			side.x, side.y, side.z);
 
 		/* base's are maintained in their normalized form */
 		normz_vf(&(fov0->v_axi), &(fov0->v_axi));
 		normz_vf(&(fov0->v_rel), &(fov0->v_rel));
 
+		/* fov0 is passed first to set fp_oa */
+		proc_hmapf(fov0, LOD_INF);
 
-		/* diag
-		   express abs rotations with hmaps */
-		//cp_vf(&side, &(diag->v_pos));
-		//cp_vf(&(fov0->v_rel), &(diag2->v_pos));
-		//cp_vf(&(fov0->v_axi), &(diag3->v_pos));
-		/* indicators */
-		vf_t i = {.05,   0,   0, .05};
-		vf_t j = {  0, .05,   0, .05};
-		vf_t k = {  0,   0, .05, .05};
-		cp_vf(&i, &(diag4->v_pos));
-		cp_vf(&j, &(diag5->v_pos));
-		cp_vf(&k, &(diag6->v_pos));
-		/* diag term output */
-//#define DIAG
+		/* generate next frame's worth of hmaps
+		   regenerate scene modifies hmap position vs. v_vel, and
+		   position and soon rotation through intersection of hmaps */
+		regenerate_scene();
+
+		/* rotate the rendered scene around fov0 */
+		glRotatef(ifdpy0->keyroll * 180 / M_PI,
+			fov0->v_axi.x, fov0->v_axi.y, fov0->v_axi.z);
+		glRotatef(-ifdpy0->keypan * 180 / M_PI,
+			fov0->v_rel.x, fov0->v_rel.y, fov0->v_rel.z);
+		glRotatef(-ifdpy0->keytilt * 180 / M_PI,
+			side.x, side.y, side.z);
+
+#define DIAG_OFF
 #ifdef DIAG
+		/* diag term output */
 		__builtin_printf("fov0\n");
 		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",
 			fov0->v_pos.x, fov0->v_pos.y,
@@ -369,18 +412,22 @@ node(int argc, char **argv)
 			acc2.x, acc2.y, acc2.z, acc2.m);
 		__builtin_printf("   vvrt: x %f y %f z %f m %f\n",
 			acc3.x, acc3.y, acc3.z, acc3.m);
+
 		__builtin_printf("kbd\n");
 		__builtin_printf("   roll(k/;) %f  pan(a/d) %f tilt(o/l) %f\n"
 			"   vfwd(w/s) %f vvrt(p/,) %f decel(space)\n",
 			ifdpy0->keyroll, ifdpy0->keypan, ifdpy0->keytilt,
 			ifdpy0->keyvfwd, ifdpy0->keyvvrt);
-		__builtin_printf("time\n    fps: %f cyc: %f reads: %i/%i\n\n",
-			1 / vrt_render_cyc, vrt_render_cyc,
-			reads, reads + infcount);
 #endif /* DIAG */
-
-		/* fps */
-		if(!(frames++ % rsfreq)) {
+#define DIAG_TIME_OFF
+#ifdef DIAG_TIME
+		/* fps: sample interval sfreq, set above, should be proportional
+		   considering the sample granularity used.  at the moment this
+		   is disabled pending further reading.  for now using
+		   vrt_render_cyc default value as scale for state increment.
+		   vrtater time dependant calculations will likely be determined
+		   primarily vs. the video hardware */
+		if(!(frames++ % sfreq)) {
 			if(!run++) {
 				start = time(NULL);
 			} else {
@@ -396,10 +443,14 @@ node(int argc, char **argv)
 				frames = 0; /* reset */
 			}
 		}
+		__builtin_printf("time\n    fps: %f cyc: %f reads: %i/%i\n\n",
+			1 / vrt_render_cyc, vrt_render_cyc,
+			reads, reads + infcount);
+#endif /* DIAG_TIME */
 
 		/* renderer renders apon, inside of, and outside of hmaps */
 		glPushMatrix();
-		render_voglspace();
+		render_vobspace(fov0_available);
 		glPopMatrix();
 
 		/* draw to dpy0 */
@@ -424,7 +475,7 @@ node(int argc, char **argv)
    referencing session info generated thru session.c, selection of available
    nodes for calling(cuing) and running, as well as the previous caller archive
    that allows sessions to be continued.  connections are achieved based on
-   configuration files, or herein. */
+   configuration files, or calls herein */
 void
 tendto_curr_sessions(void)
 {

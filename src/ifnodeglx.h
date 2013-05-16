@@ -20,6 +20,5 @@ typedef struct interface_display ifdpy_t;
 extern float vrt_render_cyc;
 
 void node(int argc, char **argv);
-void tendto_curr_sessions(void);
 
 #endif /* VRT_IFNODEGLX_H */

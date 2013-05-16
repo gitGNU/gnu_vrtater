@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "attribs.h" /* !! */
+#include "attribs.h"
 #include "hmap.h"
 #include "vectors.h"
 #include "rotation.h"
@@ -24,14 +24,9 @@
 #define VRT_NEAR_THRESH 10000.0f /* for now, 10000 meters */
 #define VRT_PERIF_THRESH 100000.0f
 
-/* positioning, time, mass, factors, for now, also some to ease things */
-#define SQRT_3 1.732050807
-#define RANDOM_OFFSET 123456789
-#define SMALLRANDOM 0.0000001
-#define TINYRANDOM 0.000000001
-#define SLOW1_10 .1
-#define SLOW1_100 .01
-
+/* for now, to ease things */
+#define SMALLRANDOM 0.000000100000000
+#define TINYRANDOM 0.000000001000000
 unsigned int vrt_hmaps_max; /* external */
 float vrt_render_cyc; /* external */
 
@@ -48,14 +43,13 @@ hmapf_t **pp_rl_f;
 int dlr_n, dlr_p, dlr_f;
 unsigned int passes;
 
-void proc_hmapf(hmapf_t *, int lodval);
-void flow_over(btoggles_t *balance_criteria);
-float estimate_radiusf(hmapf_t *);
-void wanderf(hmapf_t *hmap, float e, float m, float r);
-
 /* selection buffer */
 hmapf_t *selectf_a; /* external */
 hmapf_t *selectf_b; /* external */
+
+void flow_over(btoggles_t *balance_criteria);
+float estimate_radiusf(hmapf_t *);
+void wanderf(hmapf_t *hmap, float e, float m, float r);
 
 /* set up hmap arrays, pointers thereto, nullify their attribs */
 void
@@ -141,7 +135,8 @@ init_vohspace(void)
 		p->ang_spd = 0; /* radians/second */
 		p->ang_dpl = 0; /* radians */
 		p->mass.kg = 0;
-		p->mass.kfactor = 0;
+		p->mass.meta = 0;
+		p->mass.kfactor = 1;
 		p->kfactor = 1;
 		p->bounding.geom = VRT_BOUND_NONE;
 		p->bounding.v_sz.x = 0;
@@ -157,6 +152,25 @@ init_vohspace(void)
 		p->p_dialog = NULL;
 		p->dialog_total = 0;
 	}
+}
+
+/* free all dynamic memory associated with vohspace and selection buffer */
+void
+free_vohspace_memory(void)
+{
+	int i;
+	for(i=0;i<vrt_hmaps_max;i++) {
+		free((&a_hmaps[i])->p_data_vf);
+		(&a_hmaps[i])->p_data_vf = NULL;
+		free((&a_hmaps[i])->p_dialog);
+		(&a_hmaps[i])->p_dialog = NULL;
+	}
+	free(a_hmaps);
+	free(ap_hmap_near);
+	free(ap_hmap_perif);
+	free(ap_hmap_far);
+	free(selectf_a);
+	free(selectf_b);
 }
 
 /* from given finite set, find then attach unattached hmap */
@@ -208,6 +222,7 @@ detach_hmapf(hmapf_t *p)
 		p->ang_spd = 0;
 		p->ang_dpl = 0;
 		p->mass.kg = 0;
+		p->mass.meta = 0;
 		p->mass.kfactor = 1;
 		p->kfactor = 1;
 		p->bounding.geom = VRT_BOUND_NONE;
@@ -474,10 +489,11 @@ sort_proc_hmaps(void)
 /* per hmap referenced by p, per frame in frequency, process humdrum attribs.
    foreward lod prerequisite to draw function */
 void
-proc_hmapf(hmapf_t *p, int lod)
+proc_hmapf(hmapf_t *m, int lod)
 {
-	vf_t tmp, *q = &tmp;
-	hmapf_t **a, **b;
+
+	vf_t d; /* delta d/t^2 */
+	hmapf_t **a, **b; /* selection buffer */
 
 	/* adjust hmap via kbase if set */
 
@@ -488,24 +504,30 @@ proc_hmapf(hmapf_t *p, int lod)
 	   note: velocity mode is always on.  for position mode, set velocity
 	   to 0 and then adjust the position manually.  a switch may be added
 	   based on cycle saveing vs. average n voh vobs have fixed pos */
+
+	/* sum intersection effects for hmap with fov0 vs. next argued hmap */
 	a = (hmapf_t **)selectf_a;
 	*a = p_hmapf(0);
 	b = (hmapf_t **)selectf_b;
-	*b = p;
-	select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b };
-	intersection(&t);
-	cp_vf(&(p->v_vel), q); /* take a copy of direction/velocity */
-	factor_vf(q, q, vrt_render_cyc); /* create a delta vector given freq */
-	sum_vf(&(p->v_pos), q, &(p->v_pos)); /* new pos = delta vector + pos */
+	*b = m;
+	select_t sel = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b };
+	intersection(&sel);
+
+	/* sum velocity into position for this frame */
+	cp_vf(&(m->v_vel), &d); /* take a copy of direction/velocity */
+	factor_vf(&d, &d, vrt_render_cyc); /* create delta vector given freq */
+	sum_vf(&(m->v_pos), &d, &(m->v_pos)); /* new pos = delta vector + pos */
+
 	/* set vob angular displacement
 	   note: v_ang_vel will be pseudovector.  on fly calc moreso optimal */
-	p->ang_dpl += p->ang_spd * vrt_render_cyc;
+	m->ang_dpl += m->ang_spd * vrt_render_cyc;
 	/* wraparound for 2 * M_PI, without this a glitch occurs on wrap */
-	if(fabs(p->ang_dpl) >= 2 * M_PI)
-		p->ang_dpl = fmodf(p->ang_dpl, 2 * M_PI);
+	if(fabs(m->ang_dpl) >= 2 * M_PI)
+		m->ang_dpl = fmodf(m->ang_dpl, 2 * M_PI);
+
 	/* build renderer's buffer */
-	if(p->p_data_vf)
-		draw_hmapf(p, lod);
+	if(m->p_data_vf)
+		draw_hmapf(m, lod);
 }
 
 /* vs. overload, release any hmaps with balance_filter over balance_criteria.
@@ -524,28 +546,6 @@ flow_over(btoggles_t *balance_criteria)
 	}
 	/* then in positional round these are recycled */
 }
-
-/* free all dynamic memory associated with vohspace and selection buffer */
-void
-free_vohspace_memory(void)
-{
-	int i;
-	for(i=0;i<vrt_hmaps_max;i++) {
-		free((&a_hmaps[i])->p_data_vf);
-		(&a_hmaps[i])->p_data_vf = NULL;
-		free((&a_hmaps[i])->p_dialog);
-		(&a_hmaps[i])->p_dialog = NULL;
-	}
-	free(a_hmaps);
-	free(ap_hmap_near);
-	free(ap_hmap_perif);
-	free(ap_hmap_far);
-	free(selectf_a);
-	free(selectf_b);
-}
-
-/* echo_in_node_partial_vobs() as processed */
-/* ... */
 
 /* search vobspace */
 /* ... */
@@ -573,14 +573,16 @@ nportf(hmapf_t *p, vf_t *loc)
 	cp_vf(loc, &(p->v_pos));
 	form_mag_vf(&(p->v_pos));
 
-	/* arrival */
-	p->mass.kg = 1.0;
+	/* arrival, for now */
 	r = estimate_radiusf(p);
-	/* for now */
-	wanderf(p, ((float)rand() * TINYRANDOM), p->mass.kg, r);
+	double e;
+	e = (double)rand() * TINYRANDOM;
+	wanderf(p, (float)e, p->mass.kg, r);
 }
 
-/* guestimate for hmap p, a proportion vs. where it were if not a sphere */
+/* for now, guestimate for hmap p, a proportion vs. where it were the same
+   volume and reshaped as a sphere, needed to calculate rotation /w a radius
+   this will be moved transform and expanded to guess bound */
 float
 estimate_radiusf(hmapf_t *p)
 {
@@ -610,7 +612,9 @@ estimate_radiusf(hmapf_t *p)
 
 /* set vob in hmap referenced by p to arbitrary but energy factored initial
    conditions vs. given energy e.  v_vel, v_axi, v_pre, ang_spd, and ang_dpl,
-   are set vs. given determinate or estimated radius r and given mass m */
+   are set vs. given determinate or estimated radius r and given mass m.
+   note: now that e, r, and m are easily derived from an hmap, this will be
+   moved to transform.  also could needs a re-write */
 void
 wanderf(hmapf_t *p, float e, float m, float r)
 {
@@ -619,7 +623,7 @@ wanderf(hmapf_t *p, float e, float m, float r)
 	float avg_reflected_ke;
 	float avg_orginv_ke;
 	float avg_tangentv_ke;
-	float rnd, rnd1, rnd2, rnd3;
+	double rnd, rnd1, rnd2, rnd3;
 	static float sign = 1.0;
 
 	/* note: vobspace is represented as 1 default renderer unit per m.
@@ -628,39 +632,39 @@ wanderf(hmapf_t *p, float e, float m, float r)
 	   and redistributed as can r */
 
 	/* pseudo random reciprocal part factors */
-	rnd1 = (float)rand(); rnd2 = (float)rand(); rnd3 = rnd1 + rnd2;
+	rnd1 = (double)rand(); rnd2 = (double)rand(); rnd3 = rnd1 + rnd2;
 
-	/* for spherical regular solid vohs
+	/* given a spherical regular solid represented as an hmap
 	   distribute input energy */
 	kinetic_energy = fabs(e) / m; /* kinetic energy per mass */
 	avg_absorbed_ke = avg_reflected_ke = kinetic_energy / 2;
-	avg_orginv_ke = avg_absorbed_ke * M_SQRT1_2 * (rnd1 / rnd3);
-	avg_tangentv_ke = avg_absorbed_ke * (1 - M_SQRT1_2) * (rnd2 / rnd3);
+	avg_orginv_ke = avg_absorbed_ke * M_SQRT1_2 * (float)(rnd1 / rnd3);
+	avg_tangentv_ke = avg_absorbed_ke * (1 - M_SQRT1_2) * (float)(rnd2 / rnd3);
 
 	/* arbitrary direction vector */
-	rnd = (float)rand() * SMALLRANDOM;
-	p->v_vel.x = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	rnd = (double)rand() * SMALLRANDOM;
+	p->v_vel.x = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_vel.x = copysign(p->v_vel.x, sign);
-	p->v_vel.y = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	p->v_vel.y = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_vel.y = copysign(p->v_vel.y, sign);
-	p->v_vel.z = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	p->v_vel.z = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_vel.z = copysign(p->v_vel.z, sign);
 	normz_vf(&(p->v_vel), &(p->v_vel));
 
 	/* velocity thereapon */
-	tele_mag_vf(&(p->v_vel), &(p->v_vel), avg_orginv_ke); /* m/s */
+	tele_magz_vf(&(p->v_vel), &(p->v_vel), avg_orginv_ke); /* m/s */
 
 	/* arbitrary v_pre vector axis of mass distribution */
-	p->v_pre.x = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	p->v_pre.x = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_pre.x = copysign(p->v_pre.x, sign);
-	p->v_pre.y = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	p->v_pre.y = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_pre.y = copysign(p->v_pre.y, sign);
-	p->v_pre.z = rnd = ((rnd + (float)rand()) * SMALLRANDOM);
+	p->v_pre.z = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->v_pre.z = copysign(p->v_pre.z, sign);
 	normz_vf(&(p->v_pre), &(p->v_pre));
@@ -671,8 +675,8 @@ wanderf(hmapf_t *p, float e, float m, float r)
 
 	/* arbitrary signed rotation speed and initial displacement */
 	p->ang_spd = ANG_AFS * avg_tangentv_ke / r; /* r/s */
-	rnd = (rnd + (float)rand()) / 2;
+	rnd = (rnd + (double)rand()) / 2;
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
 	p->ang_spd = copysign(p->ang_spd, sign);
-	p->ang_dpl = rnd + (float)rand();
+	p->ang_dpl = (float)rnd + (double)rand();
 }
