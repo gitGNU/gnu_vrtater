@@ -7,10 +7,6 @@
 #include "generator.h"
 #include "transform.h"
 
-/* note: diagnostic modes may be available and required if suitable connected
-   tug is present.  These tug features will eventually be supported herein. */
-
-/* add transform recipie qualifiers below to match transform.c */
 enum {
 	VRT_HAPTIC_NORMILL,
 	VRT_INTERSECTION
@@ -24,6 +20,19 @@ void (*fparr[])() = {
 	&call_intersection
 };
 
+/* given pre selected hmaps, call a transform */
+void
+transform(int t)
+{
+	(*fparr[t])();
+}
+
+int
+init_tug_io(void)
+{
+	return 0;
+}
+
 void
 call_hapticNormill(void)
 {
@@ -34,17 +43,4 @@ void
 call_intersection(void)
 {
 	generator_intersection();
-}
-
-/* call a transform recipie. vob(s) will have already been selected. */
-void
-transform(int recipe)
-{
-	(*fparr[recipe])();
-}
-
-int
-init_tug_io(void)
-{
-	return 0;
 }

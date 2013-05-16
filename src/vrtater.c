@@ -20,16 +20,16 @@
 #include <getopt.h>
 #include "progscope.h"
 
-#ifdef VRT_X_SUPPORT
+#if defined(VRT_X_SUPPORT) && defined(VRT_RENDERER_GL)
 #include "ifnodeglx.h"
-#endif /* VRT_X_SUPPORT */
-
-void version(void);
-void usage(void);
+#endif /* VRT_X_SUPPORT && VRT_RENDERER_GL */
 
 extern unsigned int vrt_hmaps_max;
 static int verbose_flag;
 static int readable_flag;
+
+void version(void);
+void usage(void);
 
 void
 version(void)
@@ -68,6 +68,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
+
 	/* optional args */
 	int c;
 	while(1) {
@@ -110,7 +111,6 @@ main(int argc, char **argv)
 				__builtin_printf("Searching for node %s\n",
 					optarg);
 			else {
-				__builtin_printf("foo\n");
 				__builtin_fprintf(stderr, "vrtater: Error: "
 					"syntax -f, --find-node, requires "
 					" a node search string.\n");
@@ -129,8 +129,8 @@ main(int argc, char **argv)
 
 			case 'd':
 			if(optarg)
-				__builtin_printf("Setting diagnostic mode %s\n"
-					, optarg);
+				__builtin_printf("Setting diagnostic mode %s\n",
+					optarg);
 			else
 				__builtin_printf("Setting diagnostic mode\n");
 			break;

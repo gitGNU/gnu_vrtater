@@ -8,10 +8,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "progscope.h"
+#include "stock.h"
 #include "vectors.h"
 #include "hmap.h"
 
-/* hmap icosahedron_b: (vrtater layout) */
+/* hmap icosahedron_b */
 #define WKY 0.26286555606 /* width of key triangle */
 #define LNK 0.809016994375 /* length of key triangle */
 #define ATIP 0.850650808352 /* aligned tip */
@@ -75,7 +76,7 @@ hmapf_icosahedron_b(session_t *session, float r)
 	/* int d_total = 0; */
 	/* ... */
 
-	/* keep diagnostic count of vertices as hmap data is written */
+	/* diag */
 	int v_count = 0;
 
 	/* fill in hmap
@@ -137,6 +138,8 @@ hmapf_icosahedron_b(session_t *session, float r)
 		}
 		add_tri_to_hmapf(av, ppd);
 	}
+	/* volume for caller to set mass */
+	hmap->mass.kg = 4.18879020479 * r * r * r;
 
 	/* diag */
 	if(v_total != v_count)
@@ -148,10 +151,10 @@ hmapf_icosahedron_b(session_t *session, float r)
 	return hmap;
 }
 
-/* hmap cubeoid: (vrtater layout)
+/* hmap cubeoid
    QDR_SZ derived from opposite corners at distance 2 */
-#define CUBE_B_BOUND0 0.57735026919
 #define QDR_SZ 0.57735026919
+#define CUBE_B_BOUND0 QDR_SZ
 float af_cube_b[8][3] = {
 	{-QDR_SZ, QDR_SZ, -QDR_SZ}, /* 0 */ {QDR_SZ, QDR_SZ, -QDR_SZ}, /* 1 */
    {-QDR_SZ, QDR_SZ, QDR_SZ}, /* 2 */		{QDR_SZ, QDR_SZ, QDR_SZ}, /* 3 */
@@ -193,7 +196,7 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 	/* int d_total = 0; */
 	/* ... */
 
-	/* keep diagnostic count of vertices as hmap data is written */
+	/* diag */
 	int v_count = 0;
 
 	/* fill in hmap
@@ -235,6 +238,9 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 		}
 		add_tri_to_hmapf(av, ppd);
 	}
+
+	/* volume for caller to set mass */
+	hmap->mass.kg = l * w * h;
 
 	/* diag */
 	if(v_total != v_count)

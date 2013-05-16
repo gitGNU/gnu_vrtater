@@ -3,7 +3,7 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include "bittoggles.h" /* !! */
+#include "bittoggles.h"
 
 /* test ordinal bit set or clear in integral
    1 if true, 0 if false */

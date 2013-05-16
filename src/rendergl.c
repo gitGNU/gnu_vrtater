@@ -7,14 +7,15 @@
 #include <GL/gl.h>
 #include <stdlib.h>
 #include "progscope.h"
+#include "rendergl.h"
 #include "vectors.h"
 #include "rotation.h"
 
-vf_t glroo; /* gl renderer orgin offset.  external */
+hmapf_t *fov0;
+vf_t oa_fp, *vpt = &oa_fp; 
 
 void draw_gl_tri(vf_t *, vf_t *, vf_t *);
 
-/* note: keep this re-entrant for regenerating node */
 void
 init_renderer(void)
 {
@@ -34,6 +35,18 @@ init_renderer(void)
 	/* assume modeling transforms */
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+}
+
+/* always called first per frame */
+void
+init_next_buffer(void)
+{
+	/* clear last frame */
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | \
+		GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	/* for now, set a color */
+	glColor3f(.1,.5,0);
 }
 
 /* draw a triangle with 3 supplied vf_t's */
@@ -69,50 +82,26 @@ draw_gl_tri(vf_t *a, vf_t *b, vf_t *c)
 	glEnd();
 }
 
-/* always called first per frame */
-void
-set_main_vohfov(vf_t *view_pos, vf_t *view_dir, vf_t *view_roll)
-{
-	set_vf(view_pos, 0.0f, 1.0f, 2.0f, 2.236068f);
-	set_vf(view_dir, 0.0f, -1.0f, -1.0f, 1.414213f);
-	set_vf(view_roll, 0.0f, 0.0f, 0.0f, 0.0f);
-
-	/* set next position for main vofov */
-	/* ... */
-
-	/* clear last frame */
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | \
-		GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-	/* for now, set a color */
-	glColor3f(.1,.5,0);
-}
-
-/* called per hmap per frame in frequency:
-   vs. DRAWGEOM, draw hmaps where format supported */
+/* called per hmap per frame vs. DRAWGEOM, draw hmaps where format supported */
 void
 draw_hmapf(hmapf_t *hmap, int lod)
 {
 	int i, j, vt;
 	vf_t *data_vf = hmap->p_data_vf;
 	vf_t av[3]; /* array for largest polygonal representation */
-	vf_t cpy;
-	vf_t *v = &cpy;
+	vf_t v;
 
 	/* if kbase set, magnify rendered vs. node hugeorgin */
 	/* ... */
 
-	/* diag markers */
-	static vf_t m1, m2;
-	set_vf(&m1, 0.57735026919, 0.57735026919, 0.57735026919, 1);
-	set_vf(&m2, -0.57735026919, -0.57735026919, -0.57735026919, 1);
+	/* set vpt */
+	if(lod == LOD_INF) {
+		vpt = &(hmap->v_pos);
+		fov0 = hmap;
+	}
 
-	/* them's who run this node percieves at display the field of view of
-	   vobspace from glroo.  this is an offset from the vobspace orgin
-	   representing where them's are seeing vobs from.  with the following
-	   matrix translation, the gl renderer automatically places vobs in
-	   the correct place vs. percieved vobspace */
-	glTranslatef(-(&glroo)->x, -(&glroo)->y, -(&glroo)->z);
+	/* translate to where the optical axis eminates from the focal plane */
+	glTranslatef(-vpt->x, -vpt->y, -vpt->z);
 
 	/* draw on basis of draw format options */
 	switch(hmap->draw.geom) {
@@ -127,61 +116,48 @@ draw_hmapf(hmapf_t *hmap, int lod)
 			for(j=0;j<3;j++, data_vf++) {
 
 				/* work with a unit vector representation */
-				cp_vf(data_vf, v);
-				normz_vf(v, v);
+				cp_vf(data_vf, &v);
+				normz_vf(&v, &v);
 
-				/* diag markers */
-				if(hmap->index == 1)
-					cp_vf(&m1, &(hmap->v_pos));
-				if(hmap->index == 2)
-					cp_vf(&m2, &(hmap->v_pos));
-
-				/* rotate */
-				rotate_vf(v, &(hmap->v_axi), hmap->ang_dpl);
+				/* rotate verticies for rendering */
+				rotate_vf(&v, &(hmap->v_axi), hmap->ang_dpl);
 
 				/* restore magnitude vs. unit vector rep. */
-				tele_mag_vf(v, v, data_vf->m);
+				tele_mag_vf(&v, &v, data_vf->m);
 
 				/* transfer vertex value */
-				(&av[j])->x = v->x + hmap->v_pos.x;
-				(&av[j])->y = v->y + hmap->v_pos.y;
-				(&av[j])->z = v->z + hmap->v_pos.z;
+				(&av[j])->x = (&v)->x + hmap->v_pos.x;
+				(&av[j])->y = (&v)->y + hmap->v_pos.y;
+				(&av[j])->z = (&v)->z + hmap->v_pos.z;
 
-				/* diag for now, appearance */
-				if((hmap->index == 0) \
-					|| (hmap->index == 1) \
-					|| (hmap->index == 2)) {
-					/* vob 0 */
+				/* diag */
+				if((hmap->index == 0) || (hmap->index == 1) || (hmap->index == 2)) {
+					/* hmap 0 */
 					if(hmap->index == 0) {
 						YEL();
 						/* tri 0 */
-						if(i == 0) {
+						if(i == 0)
 							RED();
-						}
 					}
-					/* vob 1 */
+					/* hmap 1 */
 					if(hmap->index == 1) {
 						GRN();
 						/* tri 0 */
-						if(i == 0) {
+						if(i == 0)
 							RED();
-						}
 						/* tri 1 */
-						if(i == 1) {
+						if(i == 1)
 							YEL();
-						}
 					}
-					/* vob 2 */
+					/* hmap 2 */
 					if(hmap->index == 2) {
 						YEL();
 						/* tri 0 */
-						if(i == 0) {
+						if(i == 0)
 							RED();
-						}
 						/* tri 1 */
-						if(i == 1) {
+						if(i == 1)
 							GRN();
-						}
 					}
 				} else {
 					/* all else */
@@ -189,7 +165,7 @@ draw_hmapf(hmapf_t *hmap, int lod)
 				}
 
 				/* diag */
-				if((hmap->index > 2) && (hmap->index < 15)) {
+				if((hmap->index >= 3) && (hmap->index <= 5)) {
 					if(hmap->index == 3)
 						ORN();
 					if(hmap->index == 4)
@@ -213,18 +189,20 @@ draw_hmapf(hmapf_t *hmap, int lod)
 		__builtin_printf("renderer: err, unsupported hmap geom.\n");
 		break;
 	}
-	glTranslatef((&glroo)->x, (&glroo)->y, (&glroo)->z);
+	glTranslatef(vpt->x, vpt->y, vpt->z);
 }
 
-/* called immediately before buffer is drawn to all dpy's,  here is nested one
-   stacklevel in apon the modelview matrix of where there might be at least
-   32, a function to render apon, within, and about hmaps */
+/* called after draw_hmapf() and immediately before buffer is drawn to dpy0
+   here is nested one stacklevel in apon the modelview matrix of where there
+   might be at least 32, a function to render apon hmaps and also therein and
+   thereout of those.  viewpoint vpt is the position of hmap fov0, and where
+   freefov is true, caller specifies that the renderer may modify fov0 attribs
+   in the way specified through the renderers interface */
 void
-render_voglspace(void)
+render_vobspace(int fov0_available)
 {
 	/* set gl renderer offset orgin */
-	glTranslatef(-(&glroo)->x, -(&glroo)->y, -(&glroo)->z);
-	/* ... */
+	glTranslatef(-vpt->x, -vpt->y, -vpt->z);
 	;
-	glTranslatef((&glroo)->x, (&glroo)->y, (&glroo)->z);
+	glTranslatef(vpt->x, vpt->y, vpt->z);
 }

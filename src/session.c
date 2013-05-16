@@ -4,14 +4,15 @@
 */
 
 #include <stdlib.h>
-#include "progscope.h" /* !! */
+#include "progscope.h"
 
 /* for now */
 session_desc_t a_all_sessions[VRT_MAX_CUED_SESSIONS];
 prev_caller_sessions_t a_prev_caller_sessions[VRT_MAX_PREV_CALLER_SESSIONS];
 
-session_desc_t *match_vs_all_sessions(session_t *);
 int complete_negotiation(session_desc_t *);
+session_desc_t *match_vs_all_sessions(session_t *);
+int close_session(session_desc_t *);
 void generate_session_name_from_files_in_dir(session_t *);
 int get_session_name_from_file_in_dir(session_t *);
 
