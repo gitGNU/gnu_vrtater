@@ -30,8 +30,6 @@ unsigned int vrt_hmaps_max; /* external */
 hmapf_t *selectf_a; /* external */
 hmapf_t *selectf_b; /* external */
 
-void generate_vohspace(void);
-
 /* main fov */
 vf_t view_pos; /* position */
 vf_t view_dir; /* direction and zoom */
@@ -40,7 +38,10 @@ vf_t view_roll; /* spin and depth */
 /* current session */
 session_t session;
 
-/*test*/
+void generate_vohspace(void);
+void callback_close_vobspace(void);
+
+/* diag */
 void cphmaptest(void);
 void hmapwrap_unwraptst(void);
 void test(void);
@@ -64,10 +65,10 @@ generate_node(void)
 	}
 	__builtin_printf("generator: new session name %llu\n", session);
 
-	/* put configured set of hmaps into vobspace */
+	/* put configured set of hmaps into vohspace */
 	generate_vohspace();
 
-	/* renderer is statefull based on hmaps input */
+	/* renderer is statefull based apon hmaps input */
 	init_renderer();
 
 	return 0;
@@ -79,31 +80,35 @@ generate_vohspace(void)
 	/* for now */
 	int i;
 	hmapf_t *p;
-	vf_t t; (&t)->x=.0; (&t)->y=.01; (&t)->z=-.03;
-	vf_t ptl; cp_vf(&t, &ptl);
+	vf_t d, ptl = { 56, 56, 56, 96.994845 };
+
+	set_vf(&d, 0, .1, -.3, 0);
+	form_mag_vf(&d); 
 
 	/* hmaps from file */
 	/* test(); */
-
 	/* from stock */
 	for(i=0;i<1;i++)
 		if((p = hmapf_icosahedron_b(&session, .01)))
-			nportf(p, &ptl);
+			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<2;i++)
-		if((p = hmapf_cube_b(&session, .03, .03, .03)))
-			nportf(p, sum_vf(&t, &ptl, &ptl));
+		if((p = hmapf_cube_b(&session, .3, .3, .3)))
+			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<6;i++)
-		if((p = hmapf_icosahedron_b(&session, .02)))
-			nportf(p, sum_vf(&t, &ptl, &ptl));
-	for(i=0;i<11;i++)
-		if((p = hmapf_cube_b(&session, .01, .01, .01)))
-			nportf(p, sum_vf(&t, &ptl, &ptl));
+		if((p = hmapf_icosahedron_b(&session, .2)))
+			nportf(p, sum_vf(&d, &ptl, &ptl));
+	for(i=0;i<10;i++)
+		if((p = hmapf_cube_b(&session, 10, 10, 10)))
+			nportf(p, sum_vf(&d, &ptl, &ptl));
 }
 
 void
-regenerate_scene(int *quit)
+regenerate_scene(void)
 {
-	set_main_vohfov(&view_pos, &view_dir, &view_roll);
+	init_next_buffer();
+
+	/* sort hmaps and cue them for drawing */
+	sort_proc_hmaps();
 
 	/* cycle network */
 	session_sync();
@@ -125,12 +130,11 @@ regenerate_scene(int *quit)
 	if(!recurrant++)
 		dialog(&s, &genopts);
 
-	/* sort hmaps and cue them for drawing */
-	sort_proc_hmaps();
-
-	/* given gnu timer lib giving back cycles fork_child_timer_callback()
-	   for now */
-	usleep(33400); /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
+	/* timer
+	   issue:
+	   given gnu timer lib giving back cycles fork_child_timer_callback()
+	   disabled for now, see ifnode**.c for more */
+	/* usleep(33400); */ /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
 }
 
 /* a called function has set gen_opts, or was set herein via caller */
@@ -193,16 +197,12 @@ cphmaptest(void)
 	hmapf_t **p;
 
 	/* test copy_hmap() */
-	static int foo = 100;
-	__builtin_printf("%i\n", foo);
-	if(!foo--) {
-		p = (hmapf_t **)selectf_a;
-		*p = p_hmapf(10);
-		p = (hmapf_t **)selectf_b;
-		*p = p_hmapf(1);
-		select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b};
-		cp_hmapf(&t);
-	}
+	p = (hmapf_t **)selectf_a;
+	*p = p_hmapf(10);
+	p = (hmapf_t **)selectf_b;
+	*p = p_hmapf(1);
+	select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b};
+	cp_hmapf(&t);
 }
 
 void

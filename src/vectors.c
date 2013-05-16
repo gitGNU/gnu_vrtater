@@ -6,7 +6,7 @@
 #include <math.h>
 #include "vectors.h"
 
-/* set and return refrence to vector a, enscribing components x, y, z, and m */
+/* set and return refrence to vector result a, with components x, y, z, and m */
 vf_t *
 set_vf(vf_t *a, float x, float y, float z, float m)
 {
@@ -28,7 +28,7 @@ cp_vf(vf_t *a, vf_t *b)
 	return b;
 }
 
-/* set and return reference to vector a, with complimentary magnitude via
+/* set and return reference to vector result a, with complimentary magnitude via
    direction components.  (x, y, z, any) -- (x, y, z, m') */
 vf_t *
 form_mag_vf(vf_t *a)
@@ -37,10 +37,11 @@ form_mag_vf(vf_t *a)
 	return a;
 }
 
-/* given vector a and desired magnitude m, set and return reference to vector
-   result in b with desired m and proportionally scaled direction.  if given
-   m = 0, direction will be lost.  fast version: for a valid result a->m is a
-   valid and non zero magnitude */
+/* given vector a and desired magnitude m, set and return reference to
+   vector result b with desired m and proportionally scaled direction.  if
+   given a->m is 0, b directional terms will reflect divide by zero return
+   values.  if result b has nullified direction components and given m, given
+   a->m was 0 */
 vf_t *
 tele_mag_vf(vf_t *a, vf_t *b, float m)
 {
@@ -51,31 +52,34 @@ tele_mag_vf(vf_t *a, vf_t *b, float m)
 	return b;
 }
 
-/* given vector a and desired magnitude m, set and return reference to vector
-   result in b with desired m and proportionally scaled direction.  if a->m = 0,
-   a->m is set vs. vector direction components */
+/* given vector a and desired multiplier n, set and return reference to
+   vector result b with desired b->m and proportionally scaled direction.
+   where given n is negative, b will be the scaled inverse of a and b->m will
+   be the scaled a->m.  where a->m is 0, the value of b->m will be determined
+   from vector a direction components, returning the null vector if null */
 vf_t *
-tele_magz_vf(vf_t *a, vf_t *b, float m)
+tele_magz_vf(vf_t *a, vf_t *b, float n)
 {
 	if(a->m) {
-		b->x = (a->x / a->m) * m;
-		b->y = (a->y / a->m) * m;
-		b->z = (a->z / a->m) * m;
-		b->m = m;
+		b->x = (a->x / a->m) * n;
+		b->y = (a->y / a->m) * n;
+		b->z = (a->z / a->m) * n;
+		b->m = n < .0 ? -n : n;
 	} else {
-		/* a->m has zero magnitude; try to produce a magnitude */
-		if((a->m = sqrtf(a->x * a->x + a->y * a->y + a->z * a->z))) {
-			b->x = (a->x / a->m) * m;
-			b->y = (a->y / a->m) * m;
-			b->z = (a->z / a->m) * m;
-			b->m = m;
+		/* vector a has zero magnitude; try to produce magnitude */
+		if((b->m = sqrtf(a->x * a->x + a->y * a->y + a->z * a->z))) {
+			b->x = (a->x / a->m) * n;
+			b->y = (a->y / a->m) * n;
+			b->z = (a->z / a->m) * n;
+			b->m *= n < .0 ? -n : n;
 		}
+		/* else a and b are null */
 	}
 	return b;
 }
 
 /* calculate vector a, where scaled by given factor f.  set and return reference
-   to vector result in b */
+   to vector result b */
 vf_t *
 factor_vf(vf_t *a, vf_t *b, float f)
 {
@@ -87,7 +91,7 @@ factor_vf(vf_t *a, vf_t *b, float f)
 }
 
 /* calculate the inverse value of vector a.  set and return reference to vector
-   result in b */
+   result b */
 vf_t *
 inv_vf(vf_t *a, vf_t *b)
 {
@@ -99,20 +103,23 @@ inv_vf(vf_t *a, vf_t *b)
 }
 
 /* calculate the normal vector for vector a.  set and return reference to result
-   in b.  fast ver: assumes non 0 magnitude.  fed a 0 magnitude, this throws a
-   divide by zero error */
+   b.  if vector a has 0 magnitude, division by zero results occur in b for
+   all non-zero directional terms.  if vector a magnitude is < 0, all vector b
+   directional terms are inverted vs. vector a.  b->m will always be 1 */
 vf_t *
 norm_vf(vf_t *a, vf_t *b)
 {
 	b->x = a->x / a->m;
 	b->y = a->y / a->m;
 	b->z = a->z / a->m;
-	b->m = 1.0f;
+	b->m = 1.0;
 	return b;
 }
 
 /* calculate the normal vector for vector a.  set and return reference to vector
-   result in b.  if a has 0 direction, b gets 0 direction and 0 magnitude */
+   result b.  if a has 0 direction, b gets 0 direction and 0 magnitude.  if
+   vector a magnitude is < 0, all non-zero directional terms are inverted.
+   b->m will always be 1 unless vector a has 0 direction */
 vf_t *
 normz_vf(vf_t *a, vf_t *b)
 {
@@ -120,15 +127,16 @@ normz_vf(vf_t *a, vf_t *b)
 		b->x = a->x / a->m;
 		b->y = a->y / a->m;
 		b->z = a->z / a->m;
-		b->m = 1.0f;
+		b->m = 1.0;
 	} else {
 		/* zero magnitude given; try to produce a magnitude */
 		if((b->m = sqrtf(a->x * a->x + a->y * a->y + a->z * a->z))) {
 			b->x = a->x / b->m;
 			b->y = a->y / b->m;
 			b->z = a->z / b->m;
-			b->m = 1.0f;
+			b->m = 1.0;
 		}
+		/* else a and b are null */
 	}
 	return b;
 }
@@ -141,7 +149,7 @@ dprod_vf(vf_t *a, vf_t *b)
 }
 
 /* calculate the cross product of vectors a and b.  set and return refrence to
-   vector result in c */
+   vector result c */
 vf_t *
 cprod_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -153,7 +161,7 @@ cprod_vf(vf_t *a, vf_t *b, vf_t *c)
 }
 
 /* calculate the sum of vectors a and b.  set and return refrence to vector
-   result in c */
+   result c */
 vf_t *
 sum_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -171,10 +179,9 @@ sum_mf(vf_t *a, vf_t *b)
 	return(a->m + b->m);
 }
 
-/* calculate for c, a vector reference representing the endpoint distance
-   (difference) between vectors a and b where their orgins need not be shared
-   and where their length's represent endpoint's vs. those orgins.  set and
-   return reference to vector result in c */
+/* set vector c so that c->m represents the endpoint distance(difference)
+   between vectors a and b.  vector orgin is implicitly shared.  return
+   vector reference c */
 vf_t *
 dif_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -193,7 +200,7 @@ dif_mf(vf_t *a, vf_t *b)
 }
 
 /* calculate the product of vector a, factored by vector b, deriving magnitude
-   accordingly.  set and return reference to vector result in c */
+   accordingly.  set and return reference to vector result c */
 vf_t *
 mult_vf(vf_t *a, vf_t *b, vf_t *c)
 {
@@ -212,13 +219,13 @@ mult_mf(vf_t *a, vf_t *b)
 }
 
 /* calculate the quotient of vector a divided by vector b, deriving magnitude
-   accordingly.  set and return reference to vector result in c */
+   accordingly.  set and return reference to vector result c */
 vf_t *
 div_vf(vf_t *a, vf_t *b, vf_t *c)
 {
-	c->x = b->x ? a->x / b->x : 0.0f;
-	c->y = b->y ? a->y / b->y : 0.0f;
-	c->z = b->z ? a->z / b->z : 0.0f;
+	c->x = b->x ? a->x / b->x : .0;
+	c->y = b->y ? a->y / b->y : .0;
+	c->z = b->z ? a->z / b->z : .0;
 	c->m = sqrtf(c->x * c->x + c->y * c->y + c->z * c->z);
 	return c;
 }
@@ -228,5 +235,5 @@ div_vf(vf_t *a, vf_t *b, vf_t *c)
 float
 div_mf(vf_t *a, vf_t *b)
 {
-	return(b->m ? a->m / b->m : 0.0f);
+	return(b->m ? a->m / b->m : .0);
 }

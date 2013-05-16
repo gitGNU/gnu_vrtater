@@ -6,11 +6,9 @@
 #ifndef VRT_RENDERGL_H
 #define VRT_RENDERGL_H
 
-vf_t glroo; /* gl renderer orgin offset */
-
 void init_renderer(void);
-void set_main_vohfov(vf_t *view_pos, vf_t *view_dir, vf_t *view_roll);
-void draw_hmapf(hmapf_t *fov, int lodval);
-void render_voglspace(hmapf_t *);
+void init_next_buffer(void);
+void draw_hmapf(hmapf_t *, int lodval);
+void render_vobspace(int);
 
 #endif /* VRT_RENDERGL_H */

@@ -10,6 +10,8 @@
 #include "hmap.h"
 #include "vectors.h"
 
+float vrt_render_cyc; /* external */
+
 /*
    hapticNormill: ... 
 */
@@ -21,50 +23,107 @@ hapticNormill(select_t *sel)
 }
 
 /*
-   transform path on hmap vob intersection.
-   where bound vol geom's intersected, calculate intersection of draw geom's
-   for, for now, 2 spherical hmap vob's.  adjust attribs of both accordingly
+   transform vob paths on hmap intersection.
+   where hmap bound vol geom's intersected, calculate intersection. adjust
+   attribs of both hmaps accordingly.
+   for now, given 2 spherical hmap vob's in sel a and b respectively.
+   notes: cheat by assuming equality between attributes of represented solids
 */
 int
 intersection(select_t *sel)
 {
-	/* for now
-	   given 2 hmaps, in sel a and b respectively, determine bound
-	   intersection.  if intersecting, set new trajectories for both */
-	btoggles_t t;
-	hmapf_t **a, **b;
-	vf_t *vvela, *vvelb, *vposa, *vposb, vdist, vacca, vaccb;
-	float sza, szb, vola, volb, touch, inter, propoa, propob, acca, accb, elastish = 10;
+	/*
+	btoggles_t toggles;
+	toggles = sel->specbits;
+	- determine bound geom
+	*/
 
-	a = sel->seta;
-	b = sel->setb;
-	t = sel->specbits;
+	hmapf_t *hmapa, *hmapb;
+	vf_t *vvela, *vvelb;
+	vf_t vacca = {0, 0, 0, 0};
+	vf_t vaccb = {0, 0, 0, 0};
+	vf_t vdist = {0, 0, 0, 0};
+	float touch, inter, ma, mb, scale;
+	float mva, mvb; /* for now */
 
-	vposa = &((*(sel->seta))->v_pos);
-	vposb = &((*(sel->setb))->v_pos);
-	sza = (*(sel->seta))->bounding.v_sz.m;
-	vola = (4.18879020479 * sza * sza * sza);
-	szb = (*(sel->setb))->bounding.v_sz.m;
-	volb = (4.18879020479 * szb * szb * szb);
-	touch = sza + szb;
+	hmapa = *(sel->seta);
+	hmapb = *(sel->setb);
 
-	dif_vf(vposa, vposb, &vdist);
-	if((&vdist)->m < touch && (*(sel->seta))->mass.kg && (&vdist)->m) {
+	scale = .00005;
 
-		vvela = &((*(sel->seta))->v_vel);
-		vvelb = &((*(sel->setb))->v_vel);
+	dif_vf(&(hmapa->v_pos), &(hmapb->v_pos), &vdist);
+	touch = hmapa->bounding.v_sz.x + hmapb->bounding.v_sz.x;
 
-		inter = touch - (&vdist)->m;
-		propoa = inter / vola;
-		acca = volb * propoa * elastish;
-		tele_magz_vf(&vdist, &vacca, acca);
+	if(hmapb->mass.kg && (&vdist)->m < touch) {
+
+		ma = hmapa->mass.kg;
+		mb = hmapb->mass.kg;
+		inter = touch - (&vdist)->m; /* -intersection */
+
+		/* tend to hmap a */
+		vvela = &(hmapa->v_vel);
+		/* m*v for now */
+		mva = (ma * vvela->m) ? ma * vvela->m : .000001;
+		/* here calculate angle of reflection */
+
+		/* calculate and set acc for a */
+		tele_magz_vf(&vdist, &vacca,
+			scale * inter * mb / mva);
 		sum_vf(&vacca, vvela, vvela);
-		inv_vf(&vdist, &vdist);
-		propob = inter / volb;
-		accb = vola * propob * elastish;
-		tele_magz_vf(&vdist, &vaccb, accb);
+
+		/* tend to hmap b */
+		vvelb = &(hmapb->v_vel);
+		mvb = (mb * vvelb->m) ? mb * vvelb->m: .000001;
+		tele_magz_vf(&vdist, &vaccb,
+			scale * inter * ma / mvb);
 		sum_vf(&vaccb, vvelb, vvelb);
-	}	
+	}
+
+#define DIAG
+#ifdef DIAG
+	if(hmapb->index == 7) {
+		__builtin_printf("\n\nindex a: %i\n", hmapa->index);
+		__builtin_printf("  vposa: x %f y %f z %f m %f\n",
+			hmapa->v_pos.x, hmapa->v_pos.y,
+			hmapa->v_pos.z, hmapa->v_pos.m);
+		__builtin_printf("  vvela: x %f y %f z %f m %f\n",
+			hmapa->v_vel.x, hmapa->v_vel.y,
+			hmapa->v_vel.z, hmapa->v_vel.m);
+		__builtin_printf("  vacca: x %f y %f z %f m %f\n",
+			(&vacca)->x, (&vacca)->y, (&vacca)->z, (&vacca)->m);
+		__builtin_printf("  vdist: x %f y %f z %f m %f\n",
+			(&vdist)->x, (&vdist)->y, (&vdist)->z, (&vdist)->m);
+		__builtin_printf("  vaxia: x %f y %f z %f m %f\n\n",
+			hmapa->v_axi.x, hmapa->v_axi.y,
+			hmapa->v_axi.z, hmapa->v_axi.m);
+		/* todo:
+		   mass not assigned correctly */
+		//__builtin_printf("   kg a: %f\n", ma);
+		__builtin_printf("    sza: %f\n", hmapa->bounding.v_sz.x);
+		__builtin_printf("    mva: %f\n\n", mva);
+		__builtin_printf("  inter: %f\n", inter);
+		__builtin_printf("  touch: %f\n", touch);
+		__builtin_printf("  scale: %f\n\n", scale);
+		/* hmap other */
+		__builtin_printf("index b: %i\n", hmapb->index);
+		__builtin_printf("  vposb: x %f y %f z %f m %f\n",
+			hmapb->v_pos.x, hmapb->v_pos.y,
+			hmapb->v_pos.z, hmapb->v_pos.m);
+		__builtin_printf("  vvelb: x %f y %f z %f m %f\n",
+			hmapb->v_vel.x, hmapb->v_vel.y,
+			hmapb->v_vel.z, hmapb->v_vel.m);
+		__builtin_printf("  vaccb: x %f y %f z %f m %f\n",
+			(&vaccb)->x, (&vaccb)->y, (&vaccb)->z, (&vaccb)->m);
+		__builtin_printf("  vaxib: x %f y %f z %f m %f\n\n",
+			hmapb->v_axi.x, hmapb->v_axi.y,
+			hmapb->v_axi.z, hmapb->v_axi.m);
+		 //__builtin_printf("   kg b: %f\n", mb);
+		__builtin_printf("    szb: %f\n", hmapb->bounding.v_sz.x);
+		__builtin_printf("    mvb: %f\n\n", mvb);
+		usleep(10000);
+	}
+#endif /* DIAG */
+
 	return 0;
 }
 
@@ -80,10 +139,10 @@ group_hmaps(select_t *sel)
 }
 
 /*
-   join selected hmaps.
+   join given hmaps.
 */
 int
-join(select_t *sel)
+join_hmaps(select_t *sel)
 {
 	return 0;
 }
@@ -103,6 +162,7 @@ recycler(select_t *sel)
    format and write hmap referenced in the selection buffer to network or file
    for now assume file/network is meta_u a_file_net_io[10000]
    later actually do the file write or and pass it over the network
+   anything that can be calculated inherently will be omitted
 */
 meta_u a_file_net_io[10000]; /* for now */
 int
@@ -125,6 +185,7 @@ hmapwrapf(select_t *sel)
 	*pi++ = h->attribs.bits;
 	*pi++ = h->attribs.session_filter;
 	*pi++ = h->attribs.balance_filter;
+	*pi++ = h->mass.meta;
 	*pi++ = h->mass.kfactor;
 	*pi++ = h->kfactor;
 	*pi++ = h->vf_total;
@@ -185,7 +246,7 @@ hmapunwrapf(select_t *sel)
 	float *fl = (float *)a_file_net_io;
 	int i, *in = (int *)a_file_net_io;
 
-	__builtin_printf("hmap total: %i\n", (int)*in++); fl++;
+	__builtin_printf("hmap size: %i\n", (int)*in++); fl++;
 	__builtin_printf("vobnum: %i:%i\n", (int)*in++, (int)*in++); fl++; fl++;
 	__builtin_printf("index: %i\n", (int)*in++); fl++;
 	__builtin_printf("bound geom: %i\n", (int)*in++); fl++;
@@ -193,8 +254,9 @@ hmapunwrapf(select_t *sel)
 	__builtin_printf("attribs bits: %i\n", (int)*in++); fl++;
 	__builtin_printf("session filter: %i\n", (int)*in++); fl++;
 	__builtin_printf("balance filter: %i\n", (int)*in++); fl++;
-	__builtin_printf("mass factor: %i\n", (int)*in++); fl++;
-	__builtin_printf("factor: %i\n", (int)*in++); fl++;
+	__builtin_printf("mass meta: %i\n", (int)*in++); fl++;
+	__builtin_printf("mass kfactor: %i\n", (int)*in++); fl++;
+	__builtin_printf("distance kfactor: %i\n", (int)*in++); fl++;
 	int vf_total = (int)*in;
 	__builtin_printf("vf_total: %i\n", (int)*in++); fl++;
 	__builtin_printf("pos: %f %f %f %f\n", \
@@ -204,6 +266,9 @@ hmapunwrapf(select_t *sel)
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
 	__builtin_printf("axi: %f %f %f %f\n", \
+		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
+	in++; in++; in++; in++;	
+	__builtin_printf("rel: %f %f %f %f\n", \
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
 	__builtin_printf("pre: %f %f %f %f\n", \
@@ -255,7 +320,7 @@ alloc_dialog(select_t *sel)
 /*
    make a copy of (for now) a single hmap referenced as first item in
    *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
-   the recieving hmap retains it's own name/index
+   the recieving hmap retains it's own name/index and position
 */
 int
 cp_hmapf(select_t *sel)
@@ -285,6 +350,7 @@ cp_hmapf(select_t *sel)
 	b->ang_spd = a->ang_spd;
 	b->ang_dpl = a->ang_dpl;
 	b->mass.kg = a->mass.kg;
+	b->mass.meta = a->mass.meta;
 	b->mass.kfactor = a->mass.kfactor;
 	b->kfactor = a->kfactor;
 	b->bounding.geom = a->bounding.geom;

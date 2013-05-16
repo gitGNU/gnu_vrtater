@@ -11,10 +11,11 @@
 hmapf_t *a_hmaps;
 
 void init_vohspace(void);
+void free_vohspace_memory(void);
 hmapf_t *attach_hmapf(void);
 void detach_hmapf(hmapf_t *);
 void sort_proc_hmaps(void);
-void free_vohspace_memory(void);
+void proc_hmapf(hmapf_t *, int lodval);
 void nportf(hmapf_t *, vf_t *);
 
 #endif /* VRT_ATTRIBS_H */

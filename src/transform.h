@@ -9,7 +9,7 @@
 int hapticNormill(select_t *);
 int intersection(select_t *);
 int group_hmaps(select_t *);
-int join(select_t *);
+int join_hmaps(select_t *);
 int recycler(select_t *);
 int hmapwrapf(select_t *);
 int hmapunwrapf(select_t *);
