@@ -7,5 +7,7 @@
 #define VRT_DIALOGX11_H
 
 void dialog(select_t *, gen_opts_t *);
+int write_dialog(select_t *, char *);
+int append_dialog(select_t *, char *);
 
 #endif /* VRT_DIALOGX11_H */

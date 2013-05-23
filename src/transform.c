@@ -6,11 +6,19 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include "progscope.h"
 #include "hmap.h"
 #include "vectors.h"
 
 float vrt_render_cyc; /* external */
+
+
+/* transform hmaps
+   given two arrays referencing one or two set's of hmaps, affect those hmaps
+   with given transform function that operate's independantly or as a mutually
+   dependant set of transforms available at given compile time */
 
 /*
    hapticNormill: ... 
@@ -79,7 +87,7 @@ intersection(select_t *sel)
 		sum_vf(&vaccb, vvelb, vvelb);
 	}
 
-#define DIAG
+#define DIAG_OFF
 #ifdef DIAG
 	if(hmapb->index == 7) {
 		__builtin_printf("\n\nindex a: %i\n", hmapa->index);
@@ -162,7 +170,8 @@ recycler(select_t *sel)
    format and write hmap referenced in the selection buffer to network or file
    for now assume file/network is meta_u a_file_net_io[10000]
    later actually do the file write or and pass it over the network
-   anything that can be calculated inherently will be omitted
+   for that, anything that can be calculated inherently will be omitted
+   this will than lead to a revised hmapunwrapf()(see below)
 */
 meta_u a_file_net_io[10000]; /* for now */
 int
@@ -185,7 +194,6 @@ hmapwrapf(select_t *sel)
 	*pi++ = h->attribs.bits;
 	*pi++ = h->attribs.session_filter;
 	*pi++ = h->attribs.balance_filter;
-	*pi++ = h->mass.meta;
 	*pi++ = h->mass.kfactor;
 	*pi++ = h->kfactor;
 	*pi++ = h->vf_total;
@@ -226,9 +234,9 @@ hmapwrapf(select_t *sel)
 		v++;
 	}
 	pi = (int *)pf;
-	*pi++ = h->dialog_total;
+	*pi++ = h->dialog_len;
 	d = h->p_dialog;
-	while(j++ < h->dialog_total)
+	while(j++ < h->dialog_len)
 		*pi++ = *d++;
 	*pb = abs((int)pi - (int)pb) / sizeof(int);
 	return 0;
@@ -237,14 +245,17 @@ hmapwrapf(select_t *sel)
 /*
    read file/transfer formated hmap into the selection buffer
    for now assume file/network is meta_u a_file_net_io[10000]
-   for now just print it
-   later write it to an hmap, allocating for vf_t's and dialog
+   for now display it's contents to stdout,  later write it
+   to an hmap, allocating for vf_t's and dialog.  as anything
+   that can be calculated inherently will be omitted from an
+   hmap file, this function will eventually be revised
 */
 int
 hmapunwrapf(select_t *sel)
 {
 	float *fl = (float *)a_file_net_io;
-	int i, *in = (int *)a_file_net_io;
+	int i, graph, space, ctrl, null, *in = (int *)a_file_net_io;
+	graph = 0; space = 0; ctrl = 0; null = 0;
 
 	__builtin_printf("hmap size: %i\n", (int)*in++); fl++;
 	__builtin_printf("vobnum: %i:%i\n", (int)*in++, (int)*in++); fl++; fl++;
@@ -254,7 +265,6 @@ hmapunwrapf(select_t *sel)
 	__builtin_printf("attribs bits: %i\n", (int)*in++); fl++;
 	__builtin_printf("session filter: %i\n", (int)*in++); fl++;
 	__builtin_printf("balance filter: %i\n", (int)*in++); fl++;
-	__builtin_printf("mass meta: %i\n", (int)*in++); fl++;
 	__builtin_printf("mass kfactor: %i\n", (int)*in++); fl++;
 	__builtin_printf("distance kfactor: %i\n", (int)*in++); fl++;
 	int vf_total = (int)*in;
@@ -288,32 +298,38 @@ hmapunwrapf(select_t *sel)
 		__builtin_printf(" %f\n", (float)*fl++); in++;
 		i++;
 	}
-	int dialog_total = (int)*in;
-	__builtin_printf("dialog_total: %i\n", (int)*in++); fl++;
+	int dialog_len = (int)*in;
+	__builtin_printf("dialog_len: %i\n", (int)*in++); fl++;
 	i=0;
-	__builtin_printf("dialog follows\n");
-	while(i < dialog_total) {
-		for(;!(i%8);i++)
-			__builtin_printf("%x", (int)*in++); fl++;
+	__builtin_printf("dialog:\n");
+	while(i < dialog_len) {
+		for(;!((i%8)==7) && ((i+1)%dialog_len);i++) {
+			if(iscntrl((char)*in)) { ctrl += 1; }
+			if(isgraph((char)*in)) { graph += 1; }
+			if(isspace((char)*in)) { space += 1; }
+			if(!(*in)) { null += 1; }
+			__builtin_printf("%10.8x", (int)*in++); fl++;
+		}
+		if((i+1)%dialog_len) {
+			if(iscntrl((char)*in)) { ctrl += 1; }
+			if(isgraph((char)*in)) { graph += 1; }
+			if(isspace((char)*in)) { space += 1; }
+			if(!(*in)) { null += 1; }
+			__builtin_printf("%10.8x\n", (int)*in++); fl++; i++;
+		} else {
+			if(iscntrl((char)*in)) { ctrl += 1; }
+			if(isgraph((char)*in)) { graph += 1; }
+			if(isspace((char)*in)) { space += 1; }
+			if(!(*in)) { null += 1; }
+			__builtin_printf("%10.8x", (int)*in++); fl++; i++;
+			if(iscntrl((char)*in)) { ctrl += 1; }
+			if(isgraph((char)*in)) { graph += 1; }
+			if(isspace((char)*in)) { space += 1; }
+			if(!(*in)) { null += 1; }
+			__builtin_printf("%10.8x\n", (int)*in); i++;
+		}
 	}
-	__builtin_printf("\n");
-	return 0;
-}
-
-/*
-   resize hmap dialog allocation for entry of dialog theretofore
-   preset dialog_total in &sel_a[0] to new value before calling
-*/
-int
-alloc_dialog(select_t *sel)
-{
-	free((*sel->seta)->p_dialog);
-	if(((*sel->seta)->p_dialog = (int *) malloc((*sel->seta)->dialog_total * sizeof(int))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc for given dialog\n",
-			__FILE__, __LINE__);
-		abort();
-	}
+	__builtin_printf("dialog gscn: %i %i %i %i\n", graph, space, ctrl, null);
 	return 0;
 }
 
@@ -350,7 +366,6 @@ cp_hmapf(select_t *sel)
 	b->ang_spd = a->ang_spd;
 	b->ang_dpl = a->ang_dpl;
 	b->mass.kg = a->mass.kg;
-	b->mass.meta = a->mass.meta;
 	b->mass.kfactor = a->mass.kfactor;
 	b->kfactor = a->kfactor;
 	b->bounding.geom = a->bounding.geom;
@@ -377,7 +392,7 @@ cp_hmapf(select_t *sel)
 		w->m = v->m;
 	}
 	free(b->p_dialog);
-        if((b->p_dialog = (int *) malloc(a->dialog_total * sizeof(int))) == NULL) {
+        if((b->p_dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: could not malloc dialog data for hmap %i\n",
 			__FILE__, __LINE__, b->index);
@@ -385,7 +400,114 @@ cp_hmapf(select_t *sel)
 	}
 	d = a->p_dialog;
 	e = b->p_dialog;
-	for(j=0;j<a->dialog_total;j++)
+	for(j=0;j<a->dialog_len;j++)
 		*e++ = *d++;
+	return 0;
+}
+
+
+/* functions affecting allocation of hmap data */
+
+/*
+   hmap dialog referenced thru sel->seta recieves allocation of len + 1 int's
+*/
+int
+alloc_dialog(select_t *sel, int len)
+{
+	(*sel->seta)->p_dialog = NULL;
+	if(((*sel->seta)->p_dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Could not malloc for given dialog\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+	(*sel->seta)->dialog_len = 0;
+	*(*sel->seta)->p_dialog = '\0';
+	return 0;
+}
+
+/* write, append, or insert s into any given hmap dialog thru sel->seta */
+int
+add_dialog(select_t *sel, char *s, int offset)
+{
+	int i, addlen, orglen, newlen, *pti, *pti2, *swap = NULL;
+	char *ptc;
+
+	if((*sel->seta)->p_dialog) {
+		/* allocate swap, memory to hold previous dialog */
+		if((swap = (int *) malloc((*sel->seta)->dialog_len * sizeof(int))) == NULL) {
+			__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+				"Error: Could not malloc for add_dialog()\n",
+				__FILE__, __LINE__);
+			abort();
+		}
+
+		orglen = (*sel->seta)->dialog_len; /* calc before freeing */
+		addlen = strlen(s);
+		newlen = orglen + addlen;
+
+		/* put original hmap dialog in swap */
+		pti = (*sel->seta)->p_dialog;
+		pti2 = swap;
+		for(i=0;i<orglen;i++)
+			*pti2++ = *pti++;
+
+		/* (re-)allocate memory for dialog with append */
+		free((*sel->seta)->p_dialog);
+		alloc_dialog(sel, newlen);
+
+		/* write original string from swap */
+		pti = (*sel->seta)->p_dialog;
+		pti2 = swap;
+		for(i=0;i<orglen;i++)
+			*pti++ = *pti2++;
+		free(swap);
+	} else {
+		newlen = addlen = strlen(s);
+		alloc_dialog(sel, addlen);
+		pti = (*sel->seta)->p_dialog;
+	}
+
+	/* write new string */
+	ptc = s;
+	for(i=0;i<addlen;i++)
+		*pti++ = *ptc++;
+	*pti = '\0';
+
+	/* tend nicely */
+	(*sel->seta)->dialog_len = newlen;
+
+	return 0;
+}
+
+/* hmap dialog referenced thru sel->seta becomes string s */
+int
+write_dialog(select_t *sel, char *s)
+{
+	int i, len, *d;
+	char *p;
+
+	/* free previous */
+	free((*sel->seta)->p_dialog);
+	(*sel->seta)->p_dialog = NULL;
+
+	/* allocate */
+	len = strlen(s);
+	if(((*sel->seta)->p_dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Could not malloc for given dialog\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+
+	/* write */
+	p = s;
+	d = (*sel->seta)->p_dialog;
+	for(i=0;i<len;i++)
+		*d++ = *p++;
+	*d = '\0';
+
+	(*sel->seta)->dialog_len = len;
+
 	return 0;
 }

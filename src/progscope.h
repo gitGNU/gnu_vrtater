@@ -14,9 +14,9 @@
 #define VRT_UNDO_DEPTH 20
 #define PI_180 0.017453292519943
 #define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
-#define VRT_FREE_FOV 1
 #define VRT_X_SUPPORT
 #define VRT_RENDERER_GL
+#define VRT_US101KBD_X11_DIAG /* for now */
 
 /* meta_u */
 union meta_unit_u {
@@ -118,7 +118,6 @@ typedef struct bounding_volf bounding_volf_t;
 
 struct scale_massf {
 	float kg;
-	float meta;
 	int kfactor; /* 1 or 1000^exponent vs. mass */
 };
 typedef struct scale_massf massf_t;
@@ -157,7 +156,7 @@ enum { /* attribs_t bits */
 #define VRT_MASK_RENDER_FOLLOWS (1 << VRT_ORDINAL_RENDER_FOLLOWS)
 	VRT_ORDINAL_FIXED_FORM, /* requests no deformation */
 #define VRT_MASK_FIXED_FORM (1 << VRT_ORDINAL_FIXED_FORM)
-	VRT_ORDINAL_DIALOG, /* need or xtra cyc vs. dialog_total in generator */
+	VRT_ORDINAL_DIALOG, /* need or xtra cyc vs. dialog_len in generator */
 #define	VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
 	VRT_ORDINAL_BUFFER, /* stack in vobspace /w attribute indicator */
 #define VRT_MASK_BUFFER (1 << VRT_ORDINAL_BUFFER)
@@ -193,15 +192,17 @@ struct hmapf {
 	attribs_t attribs;
 	/* float vertice data */
 	int vf_total; /* total hmap vertices of vf_t */
-	vf_t * p_data_vf; /* if p_data_vf->m == 0, has other vobspace data */
+	vf_t *p_data_vf; /* if p_data_vf->m == 0, has other vobspace data */
 	/* dialog */
-	int dialog_total; /* if dialog_total != 0 has dialog */
-	int * p_dialog;
+	int dialog_len; /* as per strlen(), does not count trailing '\0' */
+	int *p_dialog;
 };
 typedef struct hmapf hmapf_t;
 
-/* select_t(ifor use through hmap selection buffer)
-   example sel buf entry for a single float type hmap
+/* select_t(for use through hmap selection buffer)
+   often these values will be set/used by the called function so they may need
+   to be reset/checked by caller.  see any notes in called function for more.
+   example sel buf entry for a single float type hmap:
    select_t sel = { 0, 0, (hmapf_t **)selectf_a, 0, NULL };
 */
 struct select {
@@ -214,7 +215,7 @@ struct select {
 typedef struct select select_t;
 
 enum { /* select_t specbits */
-	VRT_ORDINAL_ARGSTYPE_FLOAT, /* default */
+	VRT_ORDINAL_ARGSTYPE_FLOAT, /* still considering simutanious types */
 #define VRT_MASK_ARGSTYPE_FLOAT (1 << VRT_ORDINAL_ARGSTYPE_FLOAT)
 	VRT_ORDINAL_NULL_TERMINATED, /* if so, set count 0 */
 #define VRT_MASK_NULL_TERMINATED (1 << VRT_ORDINAL_NULL_TERMINATED)
@@ -228,8 +229,10 @@ enum { /* select_t specbits */
 #define VRT_MASK_MOD_A (1 << VRT_ORDINAL_MOD_A)
 	VRT_ORDINAL_MOD_B,
 #define VRT_MASK_MOD_B (1 << VRT_ORDINAL_MOD_B)
-	VRT_ORDINAL_MOD_BOTH
+	VRT_ORDINAL_MOD_BOTH,
 #define VRT_MASK_MOD_BOTH (1 << VRT_ORDINAL_MOD_BOTH)
+	VRT_ORDINAL_SRCH_BKW
+#define VRT_MASK_SRCH_BKW (1 << VRT_ORDINAL_SRCH_BKW)
 };
 
 

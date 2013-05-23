@@ -13,7 +13,9 @@ int join_hmaps(select_t *);
 int recycler(select_t *);
 int hmapwrapf(select_t *);
 int hmapunwrapf(select_t *);
-int alloc_dialog(select_t *);
 int cp_hmapf(select_t *);
+int alloc_dialog(select_t *, int len);
+int add_dialog(select_t *, char *s, int offset);
+int write_dialog(select_t *, char *s);
 
 #endif /* VRT_TRANSFORM_H */

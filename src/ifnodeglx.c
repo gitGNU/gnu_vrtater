@@ -7,10 +7,12 @@
 #include <GL/glx.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <time.h>
 #include "progscope.h"
 #include "ifnodeglx.h"
+#include "transform.h"
 #include "session.h"
 #include "hmap.h"
 #include "attribs.h"
@@ -26,9 +28,11 @@ Window xwin0, xwin_dialog;
 GLXContext glxcontext0;
 int dbuff = 1; /* single or double buffer video, will mabye be compile opt */
 ifdpy_t ifd0, *ifdpy0 = &ifd0;
-hmapf_t *fov0;
-int fov0_available;
-int exiting = 0;
+hmapf_t *fov0, *buf, modbuf;
+int *mbuf, scbuf[2] = { '\0', '\0' };
+int fov0_available = 0;
+int runnode = 1;
+int diagtext = 0;
 
 /* interface factors, for now */
 float accel_adv;
@@ -47,6 +51,8 @@ vf_t diag = { 0, 1, 0, 1 };
 vf_t isb = { .5,  0,  0, .5};
 vf_t jsb = {  0, .5,  0, .5};
 vf_t ksb = {  0,  0, .5, .5};
+int recurrant = 0;
+char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
 
 void setup_glx(int argc, char **argv);
 void shutdown_glx(void);
@@ -54,6 +60,9 @@ void shutdown_glx(void);
 /* dialog */
 void setup_dialog_interface(void);
 void shutdown_dialog_interface(void);
+
+/* diagnostic */
+void diag_char(char c);
 
 /* session */
 void tendto_curr_sessions(void);
@@ -151,17 +160,20 @@ void
 node(int argc, char **argv)
 {
 
-	/* setup node */
+	/* initialize node */
 
 	setup_glx(argc, argv);
 	generate_node();
 
 	/* fov */
-	fov0 = (hmapf_t *) p_hmapf(0); /* for now */
-	fov0_available = 1;
+	fov0 = (hmapf_t *)p_hmapf(0); /* for now */
+	fov0_available = 1; /* will be default in vanilla config file */
 
 	/* tug */
 	init_tug_io(); /* if any tug tend to it /w start_tug(init_tug_io()) */
+
+	/* modeling */
+	buf = &modbuf; /* start pointed to hmap model buffer */
 
 	/* fps indication, disabled below for now */
 	fps = 28.6; /* guess */
@@ -244,11 +256,17 @@ node(int argc, char **argv)
 	set_vf(&(diag6->v_pos), 0, 0, 0, 0);
 	cp_vf(&ksb, &(diag6->v_pos));
 
-	XEvent xevent;
 
 	/* interface node
 	   all events since last frame are summed, the new frame is drawn */
-	while(!exiting) {
+
+	XEvent xevent;
+
+	/* for now set selection a to fov0 */
+	hmapf_t **p = (hmapf_t **)selectf_a;
+	*p = fov0;
+
+	while(runnode) {
 		while(XPending(dpy0)) {
 			XNextEvent(dpy0, &xevent);
 			switch(xevent.type) {
@@ -256,76 +274,296 @@ node(int argc, char **argv)
 				case KeyPress:
 				switch(XKeycodeToKeysym(dpy0, xevent.xkey.keycode, 0)) {
 
-					case XK_Escape:
-						exiting = 1;
+					case VRT_KEY_tab:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_tab);
+					else
+						;
 					break;
-					case XK_a:
-						ifdpy0->keypan += .017453 * aaccel_adv;
-						if(ifdpy0->keypan > M_PI)
-							ifdpy0->keypan = -M_PI;
+
+					case VRT_KEY_linefeed:
+					if(diagtext) {
+						diagtext = 0;
+						diag_char('\n');
+					}
 					break;
-					case XK_d:
-						ifdpy0->keypan -= .017453 * aaccel_adv;
-						if(ifdpy0->keypan < -M_PI)
-							ifdpy0->keypan = M_PI;
+
+					case VRT_KEY_esc:
+					runnode = 0; /* for now */
 					break;
-					case XK_l:
-						ifdpy0->keytilt += .017453 * aaccel_adv;
-						if(ifdpy0->keytilt > M_PI)
-							ifdpy0->keytilt = -M_PI;
-					break;
-					case XK_o:
-						ifdpy0->keytilt -= .017453 * aaccel_adv;
-						if(ifdpy0->keytilt < -M_PI)
-							ifdpy0->keytilt = M_PI;
-					break;
-					case XK_k:
-						ifdpy0->keyroll += .017453 * aaccel_adv;
-						if(ifdpy0->keyroll > M_PI)
-							ifdpy0->keyroll = -M_PI;
-					break;
-					case XK_semicolon:
-						ifdpy0->keyroll -= .017453 * aaccel_adv;
-						if(ifdpy0->keyroll < -M_PI)
-							ifdpy0->keyroll = M_PI;
-					break;
-					case XK_w:
-						/* /w ANG_AFS /reg-s u sphere */
-						ifdpy0->keyvfwd += .011281 * accel_adv;
-					break;
-					case XK_s:
-						ifdpy0->keyvfwd -= .011281 * accel_adv;
-					break;
-					case XK_c:
-						ifdpy0->keyvside += .008281 * accel_adv;
-					break;
-					case XK_z:
-						ifdpy0->keyvside -= .008281 * accel_adv;
-					break;
-					case XK_p:
-						ifdpy0->keyvvrt += .008281 * accel_adv;
-					break;
-					case XK_comma:
-						ifdpy0->keyvvrt -= .008281 * accel_adv;
-					break;
-					case XK_space:
+
+					case VRT_KEY_space:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_space);
+					else {
 						ifdpy0->keypan *= 0.65;
 						ifdpy0->keytilt *= 0.55;
 						ifdpy0->keyroll *= 0.9;
 						ifdpy0->keyvfwd *= 0.85;
 						ifdpy0->keyvside *= 0.85;
 						ifdpy0->keyvvrt *= 0.85;
+					}
 					break;
-					case XK_Tab:
+
+					case VRT_KEY_comma:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_comma);
+					else
+						ifdpy0->keyvvrt -= .008281 * accel_adv;
 					break;
-					case XK_backslash:
+
+					case VRT_KEY_0:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_0);
+					break;
+
+					case VRT_KEY_1:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_1);
+					break;
+
+					case VRT_KEY_2:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_2);
+					break;
+
+					case VRT_KEY_3:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_3);
+					break;
+
+					case VRT_KEY_4:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_4);
+					break;
+
+					case VRT_KEY_5:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_5);
+					break;
+
+					case VRT_KEY_6:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_6);
+					break;
+
+					case VRT_KEY_7:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_7);
+					break;
+
+					case VRT_KEY_8:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_8);
+					break;
+
+					case VRT_KEY_9:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_9);
+					break;
+
+					case VRT_KEY_semicolon:
+					if(!diagtext) {
+						ifdpy0->keyroll -= .017453 * aaccel_adv;
+						if(ifdpy0->keyroll < -M_PI)
+							ifdpy0->keyroll = M_PI;
+					}
+					break;
+
+					case VRT_KEY_equal:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_equal);
+					break;
+
+					case VRT_KEY_backslash:
+					if(!diagtext) {
+						diagtext = 1;
+						select_t text = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
+						if(!recurrant++)
+							add_dialog(&text, diagtextmsg, strlen(diagtextmsg));
+					}
+					break;
+
+					case VRT_KEY_a:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_a);
+					else {
+						ifdpy0->keypan += .017453 * aaccel_adv;
+						if(ifdpy0->keypan > M_PI)
+							ifdpy0->keypan = -M_PI;
+					}
+					break;
+
+					case VRT_KEY_b:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_b);
+					break;
+
+					case VRT_KEY_c:
+					if(diagtext) 
+						diag_char(VRT_KEYCODE_c);
+					else
+						ifdpy0->keyvside += .008281 * accel_adv;
+					break;
+
+					case VRT_KEY_d:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_d);
+					else {
+						ifdpy0->keypan -= .017453 * aaccel_adv;
+						if(ifdpy0->keypan < -M_PI)
+							ifdpy0->keypan = M_PI;
+					}
+					break;
+
+					case VRT_KEY_e:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_e);
+					break;
+
+					case VRT_KEY_f:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_f);
+					break;
+
+					case VRT_KEY_g:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_g);
+					break;
+
+					case VRT_KEY_h:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_h);
+					break;
+
+					case VRT_KEY_i:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_i);
+					break;
+
+					case VRT_KEY_j:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_j);
+					break;
+
+					case VRT_KEY_k:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_k);
+					else {
+						ifdpy0->keyroll += .017453 * aaccel_adv;
+						if(ifdpy0->keyroll > M_PI)
+							ifdpy0->keyroll = -M_PI;
+					}
+					break;
+
+					case VRT_KEY_l:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_l);
+					else {
+						ifdpy0->keytilt += .017453 * aaccel_adv;
+						if(ifdpy0->keytilt > M_PI)
+							ifdpy0->keytilt = -M_PI;
+					}
+					break;
+
+					case VRT_KEY_m:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_m);
+					break;
+
+					case VRT_KEY_n:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_n);
+					break;
+
+					case VRT_KEY_o:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_o);
+					else {
+						ifdpy0->keytilt -= .017453 * aaccel_adv;
+						if(ifdpy0->keytilt < -M_PI)
+							ifdpy0->keytilt = M_PI;
+					}
+					break;
+
+					case VRT_KEY_p:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_p);
+					else
+						ifdpy0->keyvvrt += .008281 * accel_adv;
+					break;
+
+					case VRT_KEY_q:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_q);
+					break;
+
+					case VRT_KEY_r:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_r);
+					break;
+
+					case VRT_KEY_s:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_s);
+					else
+						ifdpy0->keyvfwd -= .011281 * accel_adv;
+					break;
+
+					case VRT_KEY_t:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_t);
+					break;
+
+					case VRT_KEY_u:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_u);
+					break;
+
+					case VRT_KEY_v:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_v);
+					break;
+
+					case VRT_KEY_w:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_w);
+					else
+						ifdpy0->keyvfwd += .011281 * accel_adv;
+					break;
+
+					case VRT_KEY_x:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_x);
+					break;
+
+					case VRT_KEY_y:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_y);
+					break;
+
+					case VRT_KEY_z:
+					if(diagtext)
+						diag_char(VRT_KEYCODE_z);
+					else
+						ifdpy0->keyvside -= .008281 * accel_adv;
+					break;
+
+					case VRT_KEY_del:
+					if(diagtext) {
+						select_t del = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
+						write_dialog(&del, "");
+					}
 					break;
 				}
 				break;
+
 				case ButtonPress:
 				break;
+
 				case ButtonRelease:
 				break;
+
 				case MotionNotify:
 				break;
 			}
@@ -396,10 +634,10 @@ node(int argc, char **argv)
 		glRotatef(-ifdpy0->keytilt * 180 / M_PI,
 			side.x, side.y, side.z);
 
-#define DIAG_OFF
+#define DIAG
 #ifdef DIAG
 		/* diag term output */
-		__builtin_printf("fov0\n");
+		__builtin_printf("\nfov0\n");
 		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",
 			fov0->v_pos.x, fov0->v_pos.y,
 			fov0->v_pos.z, fov0->v_pos.m);
@@ -415,7 +653,8 @@ node(int argc, char **argv)
 
 		__builtin_printf("kbd\n");
 		__builtin_printf("   roll(k/;) %f  pan(a/d) %f tilt(o/l) %f\n"
-			"   vfwd(w/s) %f vvrt(p/,) %f decel(space)\n",
+			"   vfwd(w/s) %f vvrt(p/,) %f decel(space) dialog(\\)\n\n"
+			"fov dialog\n",
 			ifdpy0->keyroll, ifdpy0->keypan, ifdpy0->keytilt,
 			ifdpy0->keyvfwd, ifdpy0->keyvvrt);
 #endif /* DIAG */
@@ -469,6 +708,15 @@ node(int argc, char **argv)
 	close_vobspace(0); /* now, for now */
 	close_node(); /* note: move to callback_close_vobspace() */
 	shutdown_glx();
+}
+
+/* diag.  modify sela element 1 dialog by adding c to end of selection */
+void
+diag_char(char c)
+{
+	select_t dialog_sela = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
+	*scbuf = (int)c;
+	add_dialog(&dialog_sela, (char *)scbuf, strlen((char *)scbuf));
 }
 
 /* tending to curr_session_t and prev_caller_session_t info.

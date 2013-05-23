@@ -4,8 +4,9 @@
 */
 
 #include <X11/X.h>
-#include <unistd.h>
+#include <string.h>
 #include "progscope.h"
+#include "dialogX11.h"
 #include "hmap.h"
 #include "transform.h"
 
@@ -18,8 +19,7 @@ void proc_remote_dialog(int *);
 void proc_local_dialog(int *);
 void cfg_recycler(void);
 void cfg_balance(void);
-void read_dialog_set(select_t *);
-void write_dialog(select_t *, char *, int);
+int read_dialog_set(select_t *);
 
 /* passthrough function per frame
    given sel(dialog in hmapf's via selectf_a[] or b[]) and o(generator opts). */
@@ -29,17 +29,15 @@ dialog(select_t *sel, gen_opts_t *o)
 	/* ui: retrieve local dialog */
 	dialog_with_local_user();
 
-	/* for now, test write_dialog(), assume ui for now.
-	   one empty dialog element is passed in for testing
-	   normally generator.c would pass in given dialog from remote nodes
-	   however, here tested is dialog read and write capability */
-	char a_char[] = "dialog: pass here and everything is published unless encrypted\n";
-	write_dialog(sel, a_char, 64); /* n = STRLEN where a_char[STRLEN] */
-	/* for now this write to terminal.  assume ui */
-	read_dialog_set(sel);
+	/* generator.c passes in given dialog from in-node and in-node partial
+	   that has been changed by the modeling functions, as well as dialog from
+	   on-node vobs that came in from running remote nodes.  here presented are
+	   simulated test case's of varied in-node vob's affected by modeling.
+		for now this writes to stdout.  assumes terminal(s) */
+	select_t add = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
+	read_dialog_set(&add);
 
-	/*
-	   retreive dialog with remote users via given dialog in their
+	/* retreive dialog with remote users via given dialog in their
 	   hmapf's(if any).  hmapf's have count and arrive in seta.
 		proc_remote_dialog()
 		cfg_recycler()
@@ -85,32 +83,20 @@ cfg_balance(void)
 	;
 }
 
-/* for now writes to terminal.  assume ui */
-void
+/* for now write formatted sel->seta dialog to stdout.  readable if usleep() in
+   transform.c is given a fitting delay and the console can handle it */
+int
 read_dialog_set(select_t *sel)
 {
 	int i, j;
+	hmapf_t **m;
 
 	/* for now, print all selected dialog from seta */
-	for(i=0;i<sel->counta;i++, (sel->seta)++)
-		for(j=0;j<(*sel->seta)->dialog_total;j++)
-			__builtin_printf("%s", (char *) \
-				(*sel->seta)->p_dialog + (j * sizeof(int)));
-}
-
-void
-write_dialog(select_t *sel, char *chars, int l)
-{
-
-	int i, *d;
-	hmapf_t *h;
-	char *p;
-
-	p = chars;
-	h = *(sel->seta);
-	(*sel->seta)->dialog_total = l; /* becomes correct after alloc */
-	alloc_dialog(sel);
-	d = (*sel->seta)->p_dialog;
-	for(i=0;i<l;i++)
-		*d++ = *p++;
+	m = (sel->seta);
+	for(i=0;i<sel->counta;i++, m++)
+		for(j=0;j<(*m)->dialog_len;j++)
+			__builtin_printf("%s", (char *)
+				(*m)->p_dialog + (j * sizeof(int)));
+	__builtin_printf("\n");
+	return 0;
 }

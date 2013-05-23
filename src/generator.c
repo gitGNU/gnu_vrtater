@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h> /* for now */
 #include "progscope.h"
 #include "hmap.h"
 #include "vectors.h"
@@ -30,11 +31,6 @@ unsigned int vrt_hmaps_max; /* external */
 hmapf_t *selectf_a; /* external */
 hmapf_t *selectf_b; /* external */
 
-/* main fov */
-vf_t view_pos; /* position */
-vf_t view_dir; /* direction and zoom */
-vf_t view_roll; /* spin and depth */
-
 /* current session */
 session_t session;
 
@@ -52,6 +48,7 @@ generate_node(void)
 	int lval;
 
 	/* init generator */
+	init_selection_buffers();
 	init_selection_buffers();
 	/* init attribs.  hmap arrays, pointers thereto */
 	init_vohspace();
@@ -97,7 +94,7 @@ generate_vohspace(void)
 	for(i=0;i<6;i++)
 		if((p = hmapf_icosahedron_b(&session, .2)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
-	for(i=0;i<10;i++)
+	for(i=0;i<11;i++)
 		if((p = hmapf_cube_b(&session, 10, 10, 10)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 }
@@ -115,20 +112,24 @@ regenerate_scene(void)
 	/* collect_off_node_vobs() */
 	/* ... */
 
-	/* pass on node hmaps with modified dialog to dialog().  pass all in
-	   node and in node partial hmaps to dialog if VRT_MASK_HMAP_MODELING
-	   set */
-	/* ... */
-
-	/* for now, test set of one empty dialog element.  example here pretends
-	   inbound hmap 15 has dialog.  calls dialog() */
+	/* pass on-node hmaps with modified dialog to dialog().  pass all
+	   in-node and in-node partial hmaps to dialog if VRT_MASK_HMAP_MODELING
+	   is set.  for now, simulate case where some in-node dialog, newly
+	   created by modeling transforms has been generated in hmap 15 */
 	hmapf_t **p = (hmapf_t **)selectf_a;
-	*p = p_hmapf(15);
-	select_t s = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
-
 	static int recurrant = 0;
-	if(!recurrant++)
+	if(!recurrant++) {
+		*p = p_hmapf(15);
+		select_t s = { VRT_MASK_HMAP_MODELING, 1, (hmapf_t **)p, 0, NULL };
+		char a_char[] = "dialog: pass here and everything is published unless encrypted\n";
+		add_dialog(&s, a_char, strlen(a_char)); /* simulate new dialog */
 		dialog(&s, &genopts);
+	}
+
+	/* test basic hmap dialog editing vs. fov0 currently held by hmap 0 */
+	*p = p_hmapf(0);
+	select_t kbd = { VRT_MASK_HMAP_MODELING, 1, (hmapf_t **)p, 0, NULL };
+	dialog(&kbd, &genopts); /* uses same select_t info */
 
 	/* timer
 	   issue:
@@ -202,6 +203,7 @@ cphmaptest(void)
 	p = (hmapf_t **)selectf_b;
 	*p = p_hmapf(1);
 	select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b};
+	__builtin_printf("cphmaptest()\n");
 	cp_hmapf(&t);
 }
 
@@ -209,10 +211,12 @@ void
 hmapwrap_unwraptst(void)
 {
 	hmapf_t **p = (hmapf_t **)selectf_a;
-	*(p++) = p_hmapf(0);
+	*(p++) = p_hmapf(15);
 	*p = NULL;
 	select_t s = { VRT_MASK_NULL_TERMINATED, 0, (hmapf_t **)selectf_a, 0, NULL};
+	__builtin_printf("hmapwrapf() test\n");
 	hmapwrapf(&s); /* from selection buf to file */
+	__builtin_printf("hmapunwrapf() test\n");
 	hmapunwrapf(&s); /* from file to vobspace or selection buf */
 }
 

@@ -135,7 +135,6 @@ init_vohspace(void)
 		p->ang_spd = 0; /* radians/second */
 		p->ang_dpl = 0; /* radians */
 		p->mass.kg = 0;
-		p->mass.meta = 0;
 		p->mass.kfactor = 1;
 		p->kfactor = 1;
 		p->bounding.geom = VRT_BOUND_NONE;
@@ -150,7 +149,7 @@ init_vohspace(void)
 		p->p_data_vf = NULL;
 		p->vf_total = 0;
 		p->p_dialog = NULL;
-		p->dialog_total = 0;
+		p->dialog_len = 0;
 	}
 }
 
@@ -222,7 +221,6 @@ detach_hmapf(hmapf_t *p)
 		p->ang_spd = 0;
 		p->ang_dpl = 0;
 		p->mass.kg = 0;
-		p->mass.meta = 0;
 		p->mass.kfactor = 1;
 		p->kfactor = 1;
 		p->bounding.geom = VRT_BOUND_NONE;
@@ -237,7 +235,7 @@ detach_hmapf(hmapf_t *p)
 		p->vf_total = 0;
 		free(p->p_data_vf);
 		p->p_dialog = NULL;
-		p->dialog_total = 0;
+		p->dialog_len = 0;
 		p->p_data_vf = NULL;
 		free(p->p_dialog);
 		return;
@@ -496,21 +494,19 @@ proc_hmapf(hmapf_t *m, int lod)
 	hmapf_t **a, **b; /* selection buffer */
 
 	/* adjust hmap via kbase if set */
+	/* ... */
 
-	/* note: vobs in 'partial vobspaces', also need to be written thru
-           session_filter to set of all derived sessions vob is attached to. */
-
-	/* set vob position
-	   note: velocity mode is always on.  for position mode, set velocity
-	   to 0 and then adjust the position manually.  a switch may be added
-	   based on cycle saveing vs. average n voh vobs have fixed pos */
+	/* for in-node partial vobs, hash together thru session_filter a list
+	   of pointers to associated hmaps per associated sessions for session.c
+	   sync with remote nodes */
+	/* ... */
 
 	/* sum intersection effects for hmap with fov0 vs. next argued hmap */
 	a = (hmapf_t **)selectf_a;
 	*a = p_hmapf(0);
 	b = (hmapf_t **)selectf_b;
 	*b = m;
-	select_t sel = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b };
+	select_t sel = { 0, 0, (hmapf_t **)a, 0, (hmapf_t **)b };
 	intersection(&sel);
 
 	/* sum velocity into position for this frame */
@@ -589,22 +585,26 @@ estimate_radiusf(hmapf_t *p)
 	float r;
 	switch(p->bounding.geom) {
 		case VRT_BOUND_NONE:
-			r = 0;
+		r = 0;
 		break;
+
 		case VRT_BOUND_SPHERE:
-			r = p->bounding.v_sz.x;
+		r = p->bounding.v_sz.x;
 		break;
+
 		case VRT_BOUND_CYL:
-			r = 0;
+		r = 0;
 		break;
+
 		case VRT_BOUND_RCUBOID:
-			r = M_SQRT1_2 * sqrt(
-				p->bounding.v_sz.x * p->bounding.v_sz.x +
-				p->bounding.v_sz.y * p->bounding.v_sz.y +
-				p->bounding.v_sz.z * p->bounding.v_sz.z);
+		r = M_SQRT1_2 * sqrt(
+			p->bounding.v_sz.x * p->bounding.v_sz.x +
+			p->bounding.v_sz.y * p->bounding.v_sz.y +
+			p->bounding.v_sz.z * p->bounding.v_sz.z);
 		break;
+
 		case VRT_BOUND_CUBE:
-			r = 0;
+		r = 0;
 		break;
 	}
 	return r;
