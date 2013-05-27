@@ -7,39 +7,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "progscope.h"
-#include "vectors.h"
 #include "attribs.h"
-
-unsigned int vrt_hmaps_max; /* external */
-
-/* selection buffer */
-hmapf_t *selectf_a; /* external */
-hmapf_t *selectf_b; /* external */
-
-void
-init_selection_buffers(void)
-{
-	/* allocate hmapf selection buffers
-	   note: dont talk about double number calls :-| */
-	selectf_a = NULL;
-	if((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
-			"Error: Could not malloc for selectf_a\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-	selectf_b = NULL;
-	if((selectf_b = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
-			"Error: Could not malloc for selectf_b\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-}
 
 /* attach an empty hmap to given session */
 hmapf_t *
-hmapf(session_t *psession)
+hmapf(session_t *session)
 {
 	hmapf_t *p;
 
@@ -53,36 +25,12 @@ hmapf(session_t *psession)
 		return NULL;
 	}
 	/* append hmap index to session name */
-	p->name = *psession | (session_t)p->index;
-	__builtin_printf("hmap(%llu): generated vob %i\n", \
+	p->name = *session | (session_t)p->index;
+	__builtin_printf("hmap(%llu): generated vob %i\n",
 		p->name, p->index);
+	__builtin_printf("hmap(%x): generated vob %i\n",
+		(int)p->name, p->index);
 	return p;
-}
-
-/* add a triangle to hmap data */
-void
-add_tri_to_hmapf(vf_t *av, vf_t **ppd)
-{
-	int i;
-	vf_t *p;
-
-	p = av;
-	for(i=0; i<3; i++, p++, (*ppd)++) {
-		(*ppd)->x = p->x;
-		(*ppd)->y = p->y;
-		(*ppd)->z = p->z;
-		(*ppd)->m = p->m;
-	}
-}
-
-void
-add_vf_to_hmap(vf_t *p, vf_t **ppd)
-{
-	(*ppd)->x = p->x;
-	(*ppd)->y = p->y;
-	(*ppd)->z = p->z;
-	(*ppd)->m = p->m;
-	(*ppd)++;
 }
 
 hmapf_t *

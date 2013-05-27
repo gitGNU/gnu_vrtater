@@ -6,8 +6,10 @@
 #ifndef VRT_GENERATOR_H
 #define VRT_GENERATOR_H
 
+#include "vectors.h"
+
 int generate_node(void);
-void regenerate_scene(void);
+void regenerate_scene(vf_t *);
 void close_vobspace(double time_till_closed);
 void close_node(void);
 int resize_node(int, int);

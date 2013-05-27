@@ -3,20 +3,18 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_TYPES_H
-#define VRT_TYPES_H
+#ifndef VRT_PROGSCOPE_H
+#define VRT_PROGSCOPE_H
 
 #include "bittoggles.h"
 #include "vectors.h"
 
 /* progscope essentials.  see end of this file for return value definitions */
-#define VRT_HMAPS_MAX 20
-#define VRT_UNDO_DEPTH 20
-#define PI_180 0.017453292519943
-#define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
 #define VRT_X_SUPPORT
 #define VRT_RENDERER_GL
 #define VRT_US101KBD_X11_DIAG /* for now */
+#define PI_180 0.017453292519943
+#define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
 
 /* meta_u */
 union meta_unit_u {
@@ -25,21 +23,6 @@ union meta_unit_u {
 	float f;
 };
 typedef union meta_unit_u meta_u;
-
-/* level of detail, also affects refresh rate, distance from pov */
-enum {
-	LOD_INF,
-	LOD_NEAR,
-	LOD_PERIF,
-	LOD_FAR
-};
-
-typedef struct draw_format_opts draw_format_t;
-enum { /* geom options */
-	VRT_DRAWGEOM_NONE,
-	VRT_DRAWGEOM_TRIANGLES,
-	VRT_DRAWGEOM_LINES
-};
 
 /* session.c:
    defines, for now these are set for testing */
@@ -58,7 +41,7 @@ enum { /* geom options */
 /* session_t, complextimate_t, session_desc_t, prev_caller_session_t */
 typedef long long unsigned int session_t; /* 2^16 * n = 2^bitcount */
 
-struct complextimate {
+struct complextimate { /* these stats kept by code in generator.c */
 	int hmap_count;
 	int avg_vertices;
 	int avg_map_sz;
@@ -89,217 +72,62 @@ struct prev_caller_sessions {
 };
 typedef struct prev_caller_sessions prev_caller_sessions_t;
 
-
-/* render*.c:
-   diag palette for now */
-#ifdef VRT_RENDERER_GL
-#define ORN() glColor3f(3, .9, 0)
-#define BLU() glColor3f( 0,  0, .9)
-#define GRN() glColor3f(.1, .9,  0)
-#define YEL() glColor3f(.9, .8,  0)
-#define VLT() glColor3f(.7, .2,  1)
-#define RED() glColor3f(.9,  0,  0)
-#endif /* VRT_RENDERER_GL */
-
-/* draw_format_t */
-struct draw_format_opts {
-	int geom; /* so-far, VRT_DRAWGEOM_TRIANGLES is supported */
-	/* add options as per stock/renderer support */
-};
-
-
-/* attribs.c:
-   bounding_volf_t, massf_t, attribs_t */
-struct bounding_volf {
-	int geom;
-	vf_t v_sz;
-};
-typedef struct bounding_volf bounding_volf_t;
-
-struct scale_massf {
-	float kg;
-	int kfactor; /* 1 or 1000^exponent vs. mass */
-};
-typedef struct scale_massf massf_t;
-
-struct attrib_bits {
-	btoggles_t bits;
-	btoggles_t session_filter; /* vs. the max current sessions def */
-	btoggles_t balance_filter; /* vob dur-ability */
-};
-typedef struct attrib_bits attribs_t;
-
-enum { /* attribs_t bits */
-	VRT_ORDINAL_VOB_SELECTED,
-#define VRT_MASK_VOB_SELECTED (1 << VRT_ORDINAL_VOB_SELECTED)
-	VRT_ORDINAL_FLOW_OVER,
-#define VRT_MASK_FLOW_OVER (1 << VRT_ORDINAL_FLOW_OVER)
-	VRT_ORDINAL_HOLD, /* hold vob for given time, hold() */
-#define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
-	VRT_ORDINAL_LEFT_IN_TUNNEL, /* send to recycler(), 'may be deleted' */
-#define VRT_MASK_LEFT_IN_TUNNEL (1 << VRT_ORDINAL_LEFT_IN_TUNNEL)
-	VRT_ORDINAL_RECYCLE,
-#define VRT_MASK_RECYCLE (1 << VRT_ORDINAL_RECYCLE)
-	VRT_ORDINAL_SESSION_FILTER,
-#define VRT_MASK_SESSION_FILTER (1 << VRT_ORDINAL_SESSION_FILTER)
-	VRT_ORDINAL_ATTACH_BY_FILTER,
-#define VRT_MASK_ATTACH_BY_FILTER (1 << VRT_ORDINAL_ATTACH_BY_FILTER)
-	VRT_ORDINAL_ATTACH_ANY,
-#define VRT_MASK_ATTACH_ANY (1 << VRT_ORDINAL_ATTACH_ANY)
-	VRT_ORDINAL_BALANCE_FILTER,
-#define VRT_MASK_BALANCE_FILTER (1 << VRT_ORDINAL_BALANCE_FILTER)
-	VRT_ORDINAL_PUBLISHED,
-#define VRT_MASK_PUBLISHED (1 << VRT_ORDINAL_PUBLISHED)
-	VRT_ORDINAL_PARTIAL,
-#define VRT_MASK_PARTIAL (1 << VRT_ORDINAL_PARTIAL)
-	VRT_ORDINAL_RENDER_FOLLOWS, /* for renderer */
-#define VRT_MASK_RENDER_FOLLOWS (1 << VRT_ORDINAL_RENDER_FOLLOWS)
-	VRT_ORDINAL_FIXED_FORM, /* requests no deformation */
-#define VRT_MASK_FIXED_FORM (1 << VRT_ORDINAL_FIXED_FORM)
-	VRT_ORDINAL_DIALOG, /* need or xtra cyc vs. dialog_len in generator */
-#define	VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
-	VRT_ORDINAL_BUFFER, /* stack in vobspace /w attribute indicator */
-#define VRT_MASK_BUFFER (1 << VRT_ORDINAL_BUFFER)
-	VRT_ORDINAL_VERTICE_MODS, /* unaffix this locally when sending */
-#define VRT_MASK_VERTICE_MODS (1 << VRT_ORDINAL_VERTICE_MODS)
-	VRT_ORDINAL_DIALOG_MODS, /* unaffix this locally when sending */
-#define VRT_MASK_DIALOG_MODS (1 << VRT_ORDINAL_DIALOG_MODS)
-};
-
-
-/* hmap.c:
-   hmapf_t, select_t */
-struct hmapf {
-	/* vob identifier */
-	session_t name;
-	int index;
-	/* base quantities: distance meters(m), time seconds(s), mass (kg)
-	   direction radians(r)	*/
-	vf_t v_pos; /* position vector from node orgin to hmap orgin */
-	vf_t v_vel; /* direction of travel/velocity vector */
-	vf_t v_axi; /* pole bias along hmap vob rotational axis vs. vobspace */
-	vf_t v_rel; /* optional use relative frame of reference */
-	vf_t v_pre; /* axis of mass distribution vs. v_axi precession */
-	float ang_spd; /* (r/s), angular speed about rotational axes */
-	float ang_dpl; /* (r), angular displacement about rotational axes */
-	massf_t mass;
-	float kfactor; /* 1 or 1000^exponent vs. distances */
-	/* bounding volume */
-	bounding_volf_t bounding;
-	/* drawing format */
-	draw_format_t draw; /* set vs. stock/display supported format options */
-	/* hmap attribute bits, struct includes values for some */
-	attribs_t attribs;
-	/* float vertice data */
-	int vf_total; /* total hmap vertices of vf_t */
-	vf_t *p_data_vf; /* if p_data_vf->m == 0, has other vobspace data */
-	/* dialog */
-	int dialog_len; /* as per strlen(), does not count trailing '\0' */
-	int *p_dialog;
-};
-typedef struct hmapf hmapf_t;
-
-/* select_t(for use through hmap selection buffer)
-   often these values will be set/used by the called function so they may need
-   to be reset/checked by caller.  see any notes in called function for more.
-   example sel buf entry for a single float type hmap:
-   select_t sel = { 0, 0, (hmapf_t **)selectf_a, 0, NULL };
-*/
-struct select {
-	btoggles_t specbits;
-	int counta; /* for 2 or more. counta + countb <= VRT_HMAPS_MAX */
-	hmapf_t **seta; /* hmap set a, for read, transform, or replace */
-	int countb;
-	hmapf_t **setb; /* complimentary set if any */
-};
-typedef struct select select_t;
-
-enum { /* select_t specbits */
-	VRT_ORDINAL_ARGSTYPE_FLOAT, /* still considering simutanious types */
-#define VRT_MASK_ARGSTYPE_FLOAT (1 << VRT_ORDINAL_ARGSTYPE_FLOAT)
-	VRT_ORDINAL_NULL_TERMINATED, /* if so, set count 0 */
-#define VRT_MASK_NULL_TERMINATED (1 << VRT_ORDINAL_NULL_TERMINATED)
-	VRT_ORDINAL_HAS_SETB, /* vs. may consider as NULL */
-#define VRT_MASK_HAS_SETB (1 << VRT_ORDINAL_HAS_SETB)
-	VRT_ORDINAL_IS_OUTPUT, /* hmaps do not change */
-#define VRT_MASK_IS_OUTPUT (1 << VRT_ORDINAL_IS_OUTPUT)
-	VRT_ORDINAL_UNDO,
-#define VRT_MASK_UNDO (1 << VRT_ORDINAL_UNDO)
-	VRT_ORDINAL_MOD_A,
-#define VRT_MASK_MOD_A (1 << VRT_ORDINAL_MOD_A)
-	VRT_ORDINAL_MOD_B,
-#define VRT_MASK_MOD_B (1 << VRT_ORDINAL_MOD_B)
-	VRT_ORDINAL_MOD_BOTH,
-#define VRT_MASK_MOD_BOTH (1 << VRT_ORDINAL_MOD_BOTH)
-	VRT_ORDINAL_SRCH_BKW
-#define VRT_MASK_SRCH_BKW (1 << VRT_ORDINAL_SRCH_BKW)
-};
-
-
-/* generator.c */
+/* enumerated levels of detail
+   these are used by attribs.c for sorting hmaps and generator.c for selecting
+   a set of lod envelopes desireable vs. positional code.  they also provide
+   render*.c with a deterermined average distance from givn viewpoint(vpt) vs.
+   field of view(fov) held by a given hmap.  furthermore, LOD_INF is passed
+   may affect update for positional code and level of detail for renderer */
 enum {
-	VRT_ATTACH_SEAMLESS
+	VRT_ORDINAL_LOD_INF,
+#define VRT_MASK_LOD_INF (1 << VRT_ORDINAL_LOD_INF)
+	VRT_ORDINAL_LOD_NEAR,
+#define VRT_MASK_LOD_NEAR (1 << VRT_ORDINAL_LOD_NEAR)
+	VRT_ORDINAL_LOD_PERIF,
+#define VRT_MASK_LOD_PERIF (1 << VRT_ORDINAL_LOD_PERIF)
+	VRT_ORDINAL_LOD_FAR
+#define VRT_MASK_LOD_FAR (1 << VRT_ORDINAL_LOD_FAR)
 };
 
-enum {
-	VRT_WALL_TYPEA
-};
-
-/* generator_opts_t */
+/* generator_opts_t
+   generator.c includes dialog*.h and render*.h both recieving &genopts.  when
+   given criteria are turned off, code in generator.c will try to maintain
+   reasonable values for all options here otherwise specified.  said code will
+   also tend to any implicit considerations when these options are chosen vs.
+   given associated values if any, based on determination thru haptic qualities
+   of hmaps vs. vohspace.  also, balance_criteria is still in the works, and
+   may be proposed as some hybrid of bits vs. a quantity once needed */
 struct generator_opts {
 	/* may be used by caller and called */
-	btoggles_t balance_criteria;
-	btoggles_t vobspace_criteria;
+	btoggles_t balance_criteria; /* balance_filter options */
+	btoggles_t vobspace_criteria; /* context options */
 	int why; /* fail, ... */
 	int what; /* shutdown, ... */
 	double when; /* shutdown, ... */
+	int sort_perif_ratio; /* lod envelope */
+	int sort_far_ratio;
+	float near_threshf;
+	float perif_threshf;
 };
-typedef struct generator_opts gen_opts_t;
+typedef struct generator_opts genopts_t;
 
-enum { /* gen_opts_t vobspace_criteria, always cleared after use by generator */
+/* gen_opts_t vobspace_criteria.  effective while held high, some of these
+   where noted, will be cleared by generator after use */
+enum {
 	VRT_ORDINAL_SHUTDOWN,
 #define VRT_MASK_SHUTDOWN (1 << VRT_ORDINAL_SHUTDOWN)
 	VRT_ORDINAL_DASHF,
 #define VRT_MASK_DASHF (1 << VRT_ORDINAL_DASHF)
-	VRT_ORDINAL_HMAP_MODELING
+	VRT_ORDINAL_HMAP_MODELING,
 #define VRT_MASK_HMAP_MODELING (1 << VRT_ORDINAL_HMAP_MODELING)
+	VRT_ORDINAL_LODSET_EXTERNAL
+#define VRT_MASK_LODSET_EXTERNAL (1 << VRT_ORDINAL_LODSET_EXTERNAL)
 };
 
-
-/* stock.c:
-   bounding volume geometry */
-enum {
-	VRT_BOUND_NONE,
-	VRT_BOUND_SPHERE,
-	VRT_BOUND_CYL,
-	VRT_BOUND_RCUBOID,
-	VRT_BOUND_CUBE
-};
-
-/* in progress, voh asteroid: types, geometries */
-enum {
-	VRT_ASTEROID_TYPEC,
-	VRT_ASTEROID_TYPES,
-	VRT_ASTEROID_TYPEM,
-	VRT_ASTEROID_GEOMA,
-	VRT_ASTEROID_GEOMB,
-	VRT_ASTEROID_GEOMC
-};
-
-/* vob cap's, face counts */
-#define VRT_CAPC_FCOUNT 5
-/* vob type sphere_b, capped, face count */
-#define VRT_ICOSAHEDRON_B_CFCOUNT 10
-/* vob type cube_b, face count */
-#define VRT_CUBE_B_FCOUNT 12
-/* vob type c asteroid, capped, face count */
-#define VRT_ASTEROID_GEOMC_CFCOUNT 10
-
-/* more progscope */
 /* rvals */
 #define LVAL_TRUE 1
 #define LVAL_FALSE 0
 #define SUCCESS 0
 #define FAIL -1
 
-#endif /* VRT_TYPES_H */
+#endif /* VRT_PROGSCOPE_H */

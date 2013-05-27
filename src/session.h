@@ -6,6 +6,8 @@
 #ifndef VRT_SESSION_H
 #define VRT_SESSION_H
 
+#include "progscope.h"
+
 void init_sessions(void);
 void session_sync(void);
 session_desc_t *p_session_desc(void);

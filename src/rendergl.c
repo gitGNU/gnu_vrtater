@@ -10,6 +10,7 @@
 #include "rendergl.h"
 #include "vectors.h"
 #include "rotation.h"
+#include "hmap.h"
 
 hmapf_t *fov0;
 vf_t oa_fp, *vpt = &oa_fp; 
@@ -30,7 +31,7 @@ init_renderer(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	/* left, right, bottom, top, near, far */
-	glFrustum(-.03, .03, -.03, .03, .03, 100.0);
+	glFrustum(-.03, .03, -.03, .03, .03, 10000.0); /* for now */
 
 	/* assume modeling transforms */
 	glMatrixMode(GL_MODELVIEW);
@@ -47,6 +48,13 @@ init_next_buffer(void)
 
 	/* for now, set a color */
 	glColor3f(.1,.5,0);
+}
+
+/* called after hmap holding fov0 is sent */
+void
+renderer_next_genopts(genopts_t *genopts)
+{
+	;
 }
 
 /* draw a triangle with 3 supplied vf_t's */
@@ -84,7 +92,7 @@ draw_gl_tri(vf_t *a, vf_t *b, vf_t *c)
 
 /* called per hmap per frame vs. DRAWGEOM, draw hmaps where format supported */
 void
-draw_hmapf(hmapf_t *hmap, int lod)
+render_hmapf(hmapf_t *hmap, int lod)
 {
 	int i, j, vt;
 	vf_t *data_vf = hmap->p_data_vf;
@@ -94,10 +102,23 @@ draw_hmapf(hmapf_t *hmap, int lod)
 	/* if kbase set, magnify rendered vs. node hugeorgin */
 	/* ... */
 
-	/* set vpt */
-	if(lod == LOD_INF) {
+	/* todo: for render_vobspace()
+	   buffer vrt_hmaps_max <= *hmaps, vs. their lod value */
+	switch(lod) {
+
+		case VRT_MASK_LOD_INF:
+		fov0 = hmap; /* vs. filter in proc_hmapf() sent once, first */
 		vpt = &(hmap->v_pos);
-		fov0 = hmap;
+		break;
+
+		case VRT_MASK_LOD_NEAR:
+		break;
+
+		case VRT_MASK_LOD_PERIF:
+		break;
+
+		case VRT_MASK_LOD_FAR:
+		break;
 	}
 
 	/* translate to where the optical axis eminates from the focal plane */

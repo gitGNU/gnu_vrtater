@@ -7,10 +7,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h> /* for now */
-#include "progscope.h"
 #include "hmap.h"
 #include "vectors.h"
-#include "rotation.h"
 #include "transform.h"
 #include "attribs.h"
 #include "session.h"
@@ -24,7 +22,7 @@
 #include "rendergl.h"
 #endif /* VRT_RENDER_GL */
 
-gen_opts_t genopts;
+genopts_t genopts;
 unsigned int vrt_hmaps_max; /* external */
 
 /* selection buffer */
@@ -34,6 +32,7 @@ hmapf_t *selectf_b; /* external */
 /* current session */
 session_t session;
 
+void init_selection_buffers(void);
 void generate_vohspace(void);
 void callback_close_vobspace(void);
 
@@ -42,6 +41,27 @@ void cphmaptest(void);
 void hmapwrap_unwraptst(void);
 void test(void);
 
+void
+init_selection_buffers(void)
+{
+	/* allocate hmapf selection buffers
+	   note: dont talk about double number calls :-| */
+	selectf_a = NULL;
+	if((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for selectf_a\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+	selectf_b = NULL;
+	if((selectf_b = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for selectf_b\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+}
+
 int
 generate_node(void)
 {
@@ -49,11 +69,10 @@ generate_node(void)
 
 	/* init generator */
 	init_selection_buffers();
-	init_selection_buffers();
 	/* init attribs.  hmap arrays, pointers thereto */
 	init_vohspace();
 
-	/* get session '0'(primary 'in node' session name) */
+	/* get session '0'(primary 'in-node' session name) */
 	if((lval = in_node_session(&session)) != SUCCESS) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Attemped session failed to generate node\n",
@@ -100,36 +119,62 @@ generate_vohspace(void)
 }
 
 void
-regenerate_scene(void)
+regenerate_scene(vf_t *vpt)
 {
-	init_next_buffer();
+	renderer_next_genopts(&genopts);
 
 	/* sort hmaps and cue them for drawing */
-	sort_proc_hmaps();
+	sort_proc_hmaps(vpt);
 
 	/* cycle network */
 	session_sync();
 	/* collect_off_node_vobs() */
 	/* ... */
 
-	/* pass on-node hmaps with modified dialog to dialog().  pass all
-	   in-node and in-node partial hmaps to dialog if VRT_MASK_HMAP_MODELING
-	   is set.  for now, simulate case where some in-node dialog, newly
-	   created by modeling transforms has been generated in hmap 15 */
+	/* pass on-node hmaps with modified dialog to dialog().
+	   pass all in-node and in-node partial hmaps to dialog if
+	   VRT_MASK_HMAP_MODELING is set.
+	   diag: for now, simulate case where some in-node dialog, newly
+	   created by modeling transforms, has been generated in hmap 15 */
 	hmapf_t **p = (hmapf_t **)selectf_a;
 	static int recurrant = 0;
 	if(!recurrant++) {
 		*p = p_hmapf(15);
-		select_t s = { VRT_MASK_HMAP_MODELING, 1, (hmapf_t **)p, 0, NULL };
-		char a_char[] = "dialog: pass here and everything is published unless encrypted\n";
+		select_t s = { 0, 1, (hmapf_t **)p, 0, NULL };
+		char a_char[] = "dialog: "
+			"pass here and everything is published unless encrypted\n";
 		add_dialog(&s, a_char, strlen(a_char)); /* simulate new dialog */
 		dialog(&s, &genopts);
 	}
 
 	/* test basic hmap dialog editing vs. fov0 currently held by hmap 0 */
 	*p = p_hmapf(0);
-	select_t kbd = { VRT_MASK_HMAP_MODELING, 1, (hmapf_t **)p, 0, NULL };
+	select_t kbd = { 0, 1, (hmapf_t **)p, 0, NULL };
 	dialog(&kbd, &genopts); /* uses same select_t info */
+
+	/* generator options */
+	if((&genopts)->vobspace_criteria & (
+		VRT_MASK_SHUTDOWN |
+		VRT_MASK_HMAP_MODELING |
+		VRT_MASK_LODSET_EXTERNAL)
+	) {
+		switch((&genopts)->vobspace_criteria) {
+
+			case VRT_MASK_SHUTDOWN:
+			break;
+
+			case VRT_MASK_SHUTDOWN & VRT_MASK_DASHF:
+			break;
+
+			case VRT_MASK_HMAP_MODELING:
+			break;
+
+			case VRT_MASK_LODSET_EXTERNAL:
+			set_lod_envelopef(2, 4, 1000.0, 10000.0);
+			(&genopts)->vobspace_criteria &= (-1 ^ VRT_MASK_LODSET_EXTERNAL);
+			break;
+		}
+	}
 
 	/* timer
 	   issue:

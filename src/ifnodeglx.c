@@ -14,13 +14,13 @@
 #include "ifnodeglx.h"
 #include "transform.h"
 #include "session.h"
-#include "hmap.h"
 #include "attribs.h"
 #include "generator.h"
-#include "dialogX11.h"
 #include "rendergl.h"
 #include "rotation.h"
 #include "tug.h"
+#include "hmap.h"
+#include "dialogX11.h"
 
 Display *dpy0, *dpy_dialog;
 XVisualInfo *xvinf0, *xvinf_dialog;
@@ -185,7 +185,7 @@ node(int argc, char **argv)
 	reads = 0;
 
 	/* interface factors, for now */
-	accel_adv = .0575;
+	accel_adv = .1150;
 	accel_crv = .1; /* reciprocal */
 	aaccel_adv = .035;
 
@@ -618,15 +618,18 @@ node(int argc, char **argv)
 		normz_vf(&(fov0->v_axi), &(fov0->v_axi));
 		normz_vf(&(fov0->v_rel), &(fov0->v_rel));
 
-		/* fov0 is passed first to set fp_oa */
-		proc_hmapf(fov0, LOD_INF);
+		
+		/* fov0 is passed and rendered first to set fp_oa */
+		init_next_buffer();
+		proc_hmapf(fov0, VRT_MASK_LOD_INF);
 
-		/* generate next frame's worth of hmaps
-		   regenerate scene modifies hmap position vs. v_vel, and
-		   position and soon rotation through intersection of hmaps */
-		regenerate_scene();
+		/* regenerate next frame's worth of hmaps modifying hmap
+		   position vs. v_vel, and (soon rotation/)v_pos through
+		   intersection of hmaps.  lod envelopes are centered around
+		   fov0->v_pos' */
+		regenerate_scene(&(fov0->v_pos));
 
-		/* rotate the rendered scene around fov0 */
+		/* rotate scene rendered around fov0->v_pos'(set in last call */
 		glRotatef(ifdpy0->keyroll * 180 / M_PI,
 			fov0->v_axi.x, fov0->v_axi.y, fov0->v_axi.z);
 		glRotatef(-ifdpy0->keypan * 180 / M_PI,
@@ -653,7 +656,8 @@ node(int argc, char **argv)
 
 		__builtin_printf("kbd\n");
 		__builtin_printf("   roll(k/;) %f  pan(a/d) %f tilt(o/l) %f\n"
-			"   vfwd(w/s) %f vvrt(p/,) %f decel(space) dialog(\\)\n\n"
+			"   vfwd(w/s) %f vvrt(p/,) %f decel(space)\n"
+			"   dialog(\\) pre-alpha exit(esc)\n\n"
 			"fov dialog\n",
 			ifdpy0->keyroll, ifdpy0->keypan, ifdpy0->keytilt,
 			ifdpy0->keyvfwd, ifdpy0->keyvvrt);

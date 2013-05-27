@@ -3,9 +3,7 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include "progscope.h"
 #include "generator.h"
-#include "transform.h"
 
 enum {
 	VRT_HAPTIC_NORMILL,

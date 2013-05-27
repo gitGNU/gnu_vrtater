@@ -6,7 +6,6 @@
 #include <X11/X.h>
 #include <string.h>
 #include "progscope.h"
-#include "dialogX11.h"
 #include "hmap.h"
 #include "transform.h"
 
@@ -24,15 +23,16 @@ int read_dialog_set(select_t *);
 /* passthrough function per frame
    given sel(dialog in hmapf's via selectf_a[] or b[]) and o(generator opts). */
 void
-dialog(select_t *sel, gen_opts_t *o)
+dialog(select_t *sel, genopts_t *o)
 {
 	/* ui: retrieve local dialog */
 	dialog_with_local_user();
 
 	/* generator.c passes in given dialog from in-node and in-node partial
-	   that has been changed by the modeling functions, as well as dialog from
-	   on-node vobs that came in from running remote nodes.  here presented are
-	   simulated test case's of varied in-node vob's affected by modeling.
+	   that has been changed by the modeling functions, as well as dialog
+	   from on-node vobs that came in from running remote nodes.  here
+	   presented are simulated test case's of varied in-node vob's affected
+	   by modeling.
 		for now this writes to stdout.  assumes terminal(s) */
 	select_t add = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
 	read_dialog_set(&add);

@@ -12,6 +12,32 @@
 #include "vectors.h"
 #include "hmap.h"
 
+/* add a triangle to hmap data */
+void
+add_tri_to_hmapf(vf_t *av, vf_t **ppd)
+{
+	int i;
+	vf_t *p;
+
+	p = av;
+	for(i=0; i<3; i++, p++, (*ppd)++) {
+		(*ppd)->x = p->x;
+		(*ppd)->y = p->y;
+		(*ppd)->z = p->z;
+		(*ppd)->m = p->m;
+	}
+}
+
+void
+add_vf_to_hmap(vf_t *p, vf_t **ppd)
+{
+	(*ppd)->x = p->x;
+	(*ppd)->y = p->y;
+	(*ppd)->z = p->z;
+	(*ppd)->m = p->m;
+	(*ppd)++;
+}
+
 /* hmap icosahedron_b */
 #define WKY 0.26286555606 /* width of key triangle */
 #define LNK 0.809016994375 /* length of key triangle */
@@ -87,9 +113,9 @@ hmapf_icosahedron_b(session_t *session, float r)
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
 
 	/* set bounding */
-	hmap->bounding.geom = VRT_BOUND_SPHERE;
-	hmap->bounding.v_sz.x = ICOSAHEDRON_B_BOUND0 * r;
-	form_mag_vf(&(hmap->bounding.v_sz));
+	hmap->envelope.geom = VRT_BOUND_SPHERE;
+	hmap->envelope.v_sz.x = ICOSAHEDRON_B_BOUND0 * r;
+	form_mag_vf(&(hmap->envelope.v_sz));
 
 	/* allocate for hmap's vf data(if any) */
 	vf_t *data_vf;
@@ -139,7 +165,7 @@ hmapf_icosahedron_b(session_t *session, float r)
 		add_tri_to_hmapf(av, ppd);
 	}
 	/* volume for caller to set mass */
-	hmap->mass.kg = 4.18879020479 * r * r * r;
+	hmap->attribs.kg = 4.18879020479 * r * r * r;
 
 	/* diag */
 	if(v_total != v_count)
@@ -207,11 +233,11 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
 
 	/* set bounding */
-	hmap->bounding.geom = VRT_BOUND_RCUBOID;
-	hmap->bounding.v_sz.x = CUBE_B_BOUND0 * w / 2;
-	hmap->bounding.v_sz.y = CUBE_B_BOUND0 * h / 2;
-	hmap->bounding.v_sz.z = CUBE_B_BOUND0 * l / 2;
-	form_mag_vf(&(hmap->bounding.v_sz));
+	hmap->envelope.geom = VRT_BOUND_RCUBOID;
+	hmap->envelope.v_sz.x = CUBE_B_BOUND0 * w / 2;
+	hmap->envelope.v_sz.y = CUBE_B_BOUND0 * h / 2;
+	hmap->envelope.v_sz.z = CUBE_B_BOUND0 * l / 2;
+	form_mag_vf(&(hmap->envelope.v_sz));
 
 	/* allocate for hmap's vf data(if any) */
 	vf_t *data_vf;
@@ -240,7 +266,7 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 	}
 
 	/* volume for caller to set mass */
-	hmap->mass.kg = l * w * h;
+	hmap->attribs.kg = l * w * h;
 
 	/* diag */
 	if(v_total != v_count)

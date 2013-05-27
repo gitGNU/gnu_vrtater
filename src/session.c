@@ -45,17 +45,19 @@ p_prev_caller_sessions(void)
 	return a_prev_caller_sessions;
 }
 
-/* for now, produce a random session name/number where VRT_VOBS_MAX <= 65536
-   uniqueness has a 1:(16.8M - tl_namespace) chance of being false
-   this is pretty weak however it will do for testing in node sessions.
-   to call another node, one needs to have an in node session.  these local
-   sessions need no connection.  they do however appear in a_all_sessions[] */
+/* for now, produce a random session name/number 0-65536/0-65536.  session_t
+   is a a long long unsigned int.  for now however, it is used as an int for
+   simplicity.  therefore vrt_hmaps_max must be <= 65536 and session uniqueness
+   has a 1:65536 chance of being unique.  this is pretty sub-optimal, however
+   it will be fine for testing in node sessions.  to call another node, one
+   needs to have an in-node session.  these local sessions need no connection.
+   they will however appear in a_all_sessions[] */
 int
 in_node_session(session_t *session)
 {
 	/* backup previous session for local node .vrtater/session/ln_session */
 	/* generate session number for local node */
-	*session = (0 | (session_t)(rand() << 16));
+	*session = (session_t)(rand() << 16);
 	/* set current session for local node .vrtater/session/ln_session */
 	return 0; /* for now */
 }

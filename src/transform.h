@@ -6,6 +6,8 @@
 #ifndef VRT_TRANSFORM_H
 #define VRT_TRANSFORM_H
 
+#include "hmap.h"
+
 int hapticNormill(select_t *);
 int intersection(select_t *);
 int group_hmaps(select_t *);

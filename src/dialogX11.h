@@ -6,7 +6,10 @@
 #ifndef VRT_DIALOGX11_H
 #define VRT_DIALOGX11_H
 
-void dialog(select_t *, gen_opts_t *);
+#include "progscope.h"
+#include "hmap.h"
+
+void dialog(select_t *, genopts_t *);
 int write_dialog(select_t *, char *);
 int append_dialog(select_t *, char *);
 

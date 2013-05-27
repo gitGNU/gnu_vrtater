@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "progscope.h"
 #include "hmap.h"
 #include "vectors.h"
 
@@ -60,12 +59,12 @@ intersection(select_t *sel)
 	scale = .00005;
 
 	dif_vf(&(hmapa->v_pos), &(hmapb->v_pos), &vdist);
-	touch = hmapa->bounding.v_sz.x + hmapb->bounding.v_sz.x;
+	touch = hmapa->envelope.v_sz.x + hmapb->envelope.v_sz.x;
 
-	if(hmapb->mass.kg && (&vdist)->m < touch) {
+	if(hmapb->attribs.kg && (&vdist)->m < touch) {
 
-		ma = hmapa->mass.kg;
-		mb = hmapb->mass.kg;
+		ma = hmapa->attribs.kg;
+		mb = hmapb->attribs.kg;
 		inter = touch - (&vdist)->m; /* -intersection */
 
 		/* tend to hmap a */
@@ -107,7 +106,7 @@ intersection(select_t *sel)
 		/* todo:
 		   mass not assigned correctly */
 		//__builtin_printf("   kg a: %f\n", ma);
-		__builtin_printf("    sza: %f\n", hmapa->bounding.v_sz.x);
+		__builtin_printf("    sza: %f\n", hmapa->envelope.v_sz.x);
 		__builtin_printf("    mva: %f\n\n", mva);
 		__builtin_printf("  inter: %f\n", inter);
 		__builtin_printf("  touch: %f\n", touch);
@@ -126,7 +125,7 @@ intersection(select_t *sel)
 			hmapb->v_axi.x, hmapb->v_axi.y,
 			hmapb->v_axi.z, hmapb->v_axi.m);
 		 //__builtin_printf("   kg b: %f\n", mb);
-		__builtin_printf("    szb: %f\n", hmapb->bounding.v_sz.x);
+		__builtin_printf("    szb: %f\n", hmapb->envelope.v_sz.x);
 		__builtin_printf("    mvb: %f\n\n", mvb);
 		usleep(10000);
 	}
@@ -138,7 +137,7 @@ intersection(select_t *sel)
 /*
    allow hmaps to share intersection, attach etc...  requires tending to
    session_filter and data via perhaps rname_hmapf(), enter_group(),
-   leave_group(), and group_groups(), all based on hmap session_filter and name.
+   leave_group(), and group_groups(), all based on hmap session_filter and name
 */
 int
 group_hmaps(select_t *sel)
@@ -147,7 +146,7 @@ group_hmaps(select_t *sel)
 }
 
 /*
-   join given hmaps.
+   join given hmaps
 */
 int
 join_hmaps(select_t *sel)
@@ -158,7 +157,7 @@ join_hmaps(select_t *sel)
 /*
    send vobs to recycler.
    the recycler could be written to function as undo stack per vob
-   dependant on session name.
+   dependant on session name
 */
 int
 recycler(select_t *sel)
@@ -167,11 +166,12 @@ recycler(select_t *sel)
 }
 
 /*
-   format and write hmap referenced in the selection buffer to network or file
-   for now assume file/network is meta_u a_file_net_io[10000]
-   later actually do the file write or and pass it over the network
-   for that, anything that can be calculated inherently will be omitted
-   this will than lead to a revised hmapunwrapf()(see below)
+   format and write to a proto .vrtmap, hmap referenced in the selection
+   buffer to network or file.  this will be further optimized for sending
+   over net by removing anything that can not be calculated inherently.
+   this will then ofc lead to a revised hmapunwrapf()(see below).  for now
+   assume file/network is meta_u a_file_net_io[10000].  later actually do the
+   file write or and pass it over the network
 */
 meta_u a_file_net_io[10000]; /* for now */
 int
@@ -186,17 +186,9 @@ hmapwrapf(select_t *sel)
 	vf_t *v;
 
 	h = *(sel->seta);
-	*pi++ = (int)h->name >> 16; /* ... */
-	*pi++ = (int)h->name;
+	*pi++ = (int)(h->name >> 16);
+	*pi++ = (int)(h->name & 0xffff);
 	*pi++ = h->index;
-	*pi++ = h->bounding.geom;
-	*pi++ = h->draw.geom;
-	*pi++ = h->attribs.bits;
-	*pi++ = h->attribs.session_filter;
-	*pi++ = h->attribs.balance_filter;
-	*pi++ = h->mass.kfactor;
-	*pi++ = h->kfactor;
-	*pi++ = h->vf_total;
 	pf = (float *)pi;
 	*pf++ = h->v_pos.x;
 	*pf++ = h->v_pos.y;
@@ -220,11 +212,26 @@ hmapwrapf(select_t *sel)
 	*pf++ = h->v_pre.m;
 	*pf++ = h->ang_spd;
 	*pf++ = h->ang_dpl;
-	*pf++ = h->mass.kg;
-	*pf++ = h->bounding.v_sz.x;
-	*pf++ = h->bounding.v_sz.y;
-	*pf++ = h->bounding.v_sz.z;
-	*pf++ = h->bounding.v_sz.m;
+	pi = (int *)pf;
+	*pi++ = h->attribs.bits;
+	*pi++ = h->attribs.modifiers;
+	*pi++ = h->attribs.session_filter;
+	*pi++ = h->attribs.balance_filter;
+	pf = (float *)pi;
+	*pf++ = h->attribs.kg;
+	pi = (int *)pf;
+	*pi++ = h->attribs.kfactorm;
+	*pi++ = h->attribs.kfactord;
+	*pi++ = h->envelope.geom;
+	pf = (float *)pi;
+	*pf++ = h->envelope.v_sz.x;
+	*pf++ = h->envelope.v_sz.y;
+	*pf++ = h->envelope.v_sz.z;
+	*pf++ = h->envelope.v_sz.m;
+	pi = (int *)pf;
+	*pi++ = h->draw.geom;
+	*pi++ = h->vf_total;
+	pf = (float *)pi;
 	v = h->p_data_vf;
 	while(i++ < h->vf_total) {
 		*pf++ = v->x;
@@ -243,12 +250,11 @@ hmapwrapf(select_t *sel)
 }
 
 /*
-   read file/transfer formated hmap into the selection buffer
-   for now assume file/network is meta_u a_file_net_io[10000]
-   for now display it's contents to stdout,  later write it
-   to an hmap, allocating for vf_t's and dialog.  as anything
-   that can be calculated inherently will be omitted from an
-   hmap file, this function will eventually be revised
+   read .vrtmap file/transfer formated hmap into selection buffer.  for now
+   assume file/network is meta_u a_file_net_io[10000].  for now display it's
+   contents to stdout.  later write it to an hmap, allocating for vf_t's and
+   dialog.  as anything that can be calculated inherently will be omitted from
+   an hmap file, this function will eventually be revised
 */
 int
 hmapunwrapf(select_t *sel)
@@ -257,39 +263,41 @@ hmapunwrapf(select_t *sel)
 	int i, graph, space, ctrl, null, *in = (int *)a_file_net_io;
 	graph = 0; space = 0; ctrl = 0; null = 0;
 
-	__builtin_printf("hmap size: %i\n", (int)*in++); fl++;
-	__builtin_printf("vobnum: %i:%i\n", (int)*in++, (int)*in++); fl++; fl++;
+	__builtin_printf("hmapf size: %i\n", (int)*in++); fl++;
+	__builtin_printf("vobnum: %i:", (int)*in++); fl++;
+	__builtin_printf("%i\n", (int)*in++); fl++;
 	__builtin_printf("index: %i\n", (int)*in++); fl++;
-	__builtin_printf("bound geom: %i\n", (int)*in++); fl++;
-	__builtin_printf("draw geom: %i\n", (int)*in++); fl++;
-	__builtin_printf("attribs bits: %i\n", (int)*in++); fl++;
-	__builtin_printf("session filter: %i\n", (int)*in++); fl++;
-	__builtin_printf("balance filter: %i\n", (int)*in++); fl++;
-	__builtin_printf("mass kfactor: %i\n", (int)*in++); fl++;
-	__builtin_printf("distance kfactor: %i\n", (int)*in++); fl++;
-	int vf_total = (int)*in;
-	__builtin_printf("vf_total: %i\n", (int)*in++); fl++;
-	__builtin_printf("pos: %f %f %f %f\n", \
+	__builtin_printf("pos: %f %f %f %f\n",
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
-	__builtin_printf("vel: %f %f %f %f\n", \
+	__builtin_printf("vel: %f %f %f %f\n",
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
-	__builtin_printf("axi: %f %f %f %f\n", \
+	__builtin_printf("axi: %f %f %f %f\n",
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
-	__builtin_printf("rel: %f %f %f %f\n", \
+	__builtin_printf("rel: %f %f %f %f\n",
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
-	__builtin_printf("pre: %f %f %f %f\n", \
+	__builtin_printf("pre: %f %f %f %f\n",
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
 	__builtin_printf("ang_spd: %f\n", (float)*fl++); in++;
 	__builtin_printf("ang_dpl: %f\n", (float)*fl++); in++;
+	__builtin_printf("attribs bits: 0x%x\n", (int)*in++); fl++;
+	__builtin_printf("attribs modifiers: 0x%x\n", (int)*in++); fl++;
+	__builtin_printf("session filter: 0x%x\n", (int)*in++); fl++;
+	__builtin_printf("balance filter: 0x%x\n", (int)*in++); fl++;
 	__builtin_printf("kg: %f\n", (float)*fl++); in++;
+	__builtin_printf("kfactorm: %i\n", (int)*in++); fl++;
+	__builtin_printf("kfactord: %i\n", (int)*in++); fl++;
+	__builtin_printf("bound geom: %i\n", (int)*in++); fl++;
 	__builtin_printf("bound size: %f %f %f %f\n", \
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
+	__builtin_printf("draw geom: %i\n", (int)*in++); fl++;
+	int vf_total = (int)*in;
+	__builtin_printf("vf_total: %i\n", (int)*in++); fl++;
 	i=0;
 	while(i < vf_total) {
 		__builtin_printf("vf %i: %f", i, (float)*fl++); in++;
@@ -303,6 +311,7 @@ hmapunwrapf(select_t *sel)
 	i=0;
 	__builtin_printf("dialog:\n");
 	while(i < dialog_len) {
+		/* print !last char 1 thru 7 of rows of 8 chars */
 		for(;!((i%8)==7) && ((i+1)%dialog_len);i++) {
 			if(iscntrl((char)*in)) { ctrl += 1; }
 			if(isgraph((char)*in)) { graph += 1; }
@@ -310,23 +319,20 @@ hmapunwrapf(select_t *sel)
 			if(!(*in)) { null += 1; }
 			__builtin_printf("%10.8x", (int)*in++); fl++;
 		}
-		if((i+1)%dialog_len) {
+		if((i+1)%dialog_len) { /* print !last char 8 in row of 8 */
 			if(iscntrl((char)*in)) { ctrl += 1; }
 			if(isgraph((char)*in)) { graph += 1; }
 			if(isspace((char)*in)) { space += 1; }
 			if(!(*in)) { null += 1; }
-			__builtin_printf("%10.8x\n", (int)*in++); fl++; i++;
-		} else {
+			__builtin_printf("%10.8x\n", (int)*in++); fl++;
+			i++;
+		} else { /* last char */
 			if(iscntrl((char)*in)) { ctrl += 1; }
 			if(isgraph((char)*in)) { graph += 1; }
 			if(isspace((char)*in)) { space += 1; }
 			if(!(*in)) { null += 1; }
-			__builtin_printf("%10.8x", (int)*in++); fl++; i++;
-			if(iscntrl((char)*in)) { ctrl += 1; }
-			if(isgraph((char)*in)) { graph += 1; }
-			if(isspace((char)*in)) { space += 1; }
-			if(!(*in)) { null += 1; }
-			__builtin_printf("%10.8x\n", (int)*in); i++;
+			__builtin_printf("%10.8x\n", (int)*in++); fl++;
+			i++; i++;
 		}
 	}
 	__builtin_printf("dialog gscn: %i %i %i %i\n", graph, space, ctrl, null);
@@ -336,8 +342,7 @@ hmapunwrapf(select_t *sel)
 /*
    make a copy of (for now) a single hmap referenced as first item in
    *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
-   the recieving hmap retains it's own name/index and position
-*/
+   recieving hmap retains name/index, session_filter, position, and kfactord */
 int
 cp_hmapf(select_t *sel)
 {
@@ -365,16 +370,17 @@ cp_hmapf(select_t *sel)
 	b->v_pre.m = a->v_pre.m;
 	b->ang_spd = a->ang_spd;
 	b->ang_dpl = a->ang_dpl;
-	b->mass.kg = a->mass.kg;
-	b->mass.kfactor = a->mass.kfactor;
-	b->kfactor = a->kfactor;
-	b->bounding.geom = a->bounding.geom;
-	b->bounding.v_sz.x = a->bounding.v_sz.x;
-	b->bounding.v_sz.y = a->bounding.v_sz.y;
-	b->bounding.v_sz.z = a->bounding.v_sz.z;
-	b->bounding.v_sz.m = a->bounding.v_sz.m;
+	b->attribs.bits = a->attribs.bits;
+	b->attribs.modifiers = a->attribs.modifiers;
+	b->attribs.balance_filter = a->attribs.balance_filter;
+	b->attribs.kg = a->attribs.kg;
+	b->attribs.kfactorm = a->attribs.kfactorm;
+	b->envelope.geom = a->envelope.geom;
+	b->envelope.v_sz.x = a->envelope.v_sz.x;
+	b->envelope.v_sz.y = a->envelope.v_sz.y;
+	b->envelope.v_sz.z = a->envelope.v_sz.z;
+	b->envelope.v_sz.m = a->envelope.v_sz.m;
 	b->draw.geom = a->draw.geom;
-	b->attribs = a->attribs;
 	b->vf_total = a->vf_total;
 	free(b->p_data_vf);
         if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
