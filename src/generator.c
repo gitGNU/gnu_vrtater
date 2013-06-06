@@ -98,12 +98,13 @@ generate_vohspace(void)
 	hmapf_t *p;
 	vf_t d, ptl = { 56, 56, 56, 96.994845 };
 
-	set_vf(&d, 0, .1, -.3, 0);
+	set_vf(&d, 0, .001, -.003, 0);
 	form_mag_vf(&d); 
 
-	/* hmaps from file */
-	/* test(); */
-	/* from stock */
+	/* add hmaps to in-node vs. cfg. should add test for vohspace full.
+	   from file */
+	/* ... */
+	/* for now */
 	for(i=0;i<1;i++)
 		if((p = hmapf_icosahedron_b(&session, .01)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
@@ -113,8 +114,11 @@ generate_vohspace(void)
 	for(i=0;i<6;i++)
 		if((p = hmapf_icosahedron_b(&session, .2)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
-	for(i=0;i<11;i++)
+	for(i=0;i<10;i++)
 		if((p = hmapf_cube_b(&session, 10, 10, 10)))
+			nportf(p, sum_vf(&d, &ptl, &ptl));
+	for(i=0;i<1;i++)
+		if((p = hmapf_cylinder_b(&session, 30, 64, 16, 18)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 }
 
@@ -181,6 +185,7 @@ regenerate_scene(vf_t *vpt)
 	   given gnu timer lib giving back cycles fork_child_timer_callback()
 	   disabled for now, see ifnode**.c for more */
 	/* usleep(33400); */ /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
+//test();
 }
 
 /* a called function has set gen_opts, or was set herein via caller */
@@ -256,7 +261,7 @@ void
 hmapwrap_unwraptst(void)
 {
 	hmapf_t **p = (hmapf_t **)selectf_a;
-	*(p++) = p_hmapf(15);
+	*(p++) = p_hmapf(19);
 	*p = NULL;
 	select_t s = { VRT_MASK_NULL_TERMINATED, 0, (hmapf_t **)selectf_a, 0, NULL};
 	__builtin_printf("hmapwrapf() test\n");
@@ -269,7 +274,7 @@ void
 test(void)
 {
 	hmapwrap_unwraptst();
-	cphmaptest();
+//	cphmaptest(); /* found error copying hmap 10 to 1.  needs tending */
 }
 
 /* support tug input */

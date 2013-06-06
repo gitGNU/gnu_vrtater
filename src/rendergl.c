@@ -57,7 +57,7 @@ renderer_next_genopts(genopts_t *genopts)
 	;
 }
 
-/* draw a triangle with 3 supplied vf_t's */
+/* draw a triangle with 3 supplied vf_t's, each describing a relative vertex */
 void
 draw_gl_tri(vf_t *a, vf_t *b, vf_t *c)
 {

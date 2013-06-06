@@ -35,7 +35,7 @@ dialog(select_t *sel, genopts_t *o)
 	   by modeling.
 		for now this writes to stdout.  assumes terminal(s) */
 	select_t add = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
-	read_dialog_set(&add);
+	//read_dialog_set(&add);
 
 	/* retreive dialog with remote users via given dialog in their
 	   hmapf's(if any).  hmapf's have count and arrive in seta.

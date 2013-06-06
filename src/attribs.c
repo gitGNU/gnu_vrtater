@@ -650,7 +650,7 @@ estimate_radiusf(hmapf_t *p)
 		r = p->envelope.v_sz.x;
 		break;
 
-		case VRT_BOUND_CYL:
+		case VRT_BOUND_CYLINDER:
 		r = 0;
 		break;
 

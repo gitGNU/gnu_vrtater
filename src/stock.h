@@ -13,14 +13,12 @@
 /* building block face counts */
 #define VRT_CAPC_FCOUNT 5
 #define VRT_CUBE_B_FCOUNT 12
-
-/* building block cap face counts */
 #define VRT_ICOSAHEDRON_B_CFCOUNT 10
-#define VRT_ASTEROID_GEOMC_CFCOUNT 10 /* in progress */
 
 void add_tri_to_hmapf(vf_t *, vf_t **);
 void add_vf_to_hmap(vf_t *, vf_t **);
 hmapf_t *hmapf_icosahedron_b(session_t *, float r);
+hmapf_t *hmapf_cylinder_b(session_t *session, float r, int e, float l, int t);
 hmapf_t *hmapf_cube_b(session_t *, float l, float w, float h);
 
 #endif /* VRT_STOCK_H */

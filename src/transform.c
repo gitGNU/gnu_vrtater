@@ -10,6 +10,7 @@
 #include <ctype.h>
 #include "hmap.h"
 #include "vectors.h"
+#include "stock.h"
 
 float vrt_render_cyc; /* external */
 
@@ -169,6 +170,7 @@ recycler(select_t *sel)
    format and write to a proto .vrtmap, hmap referenced in the selection
    buffer to network or file.  this will be further optimized for sending
    over net by removing anything that can not be calculated inherently.
+   for example the magnitudes of vectors as these may calculated on unwrap.
    this will then ofc lead to a revised hmapunwrapf()(see below).  for now
    assume file/network is meta_u a_file_net_io[10000].  later actually do the
    file write or and pass it over the network
@@ -300,7 +302,7 @@ hmapunwrapf(select_t *sel)
 	__builtin_printf("vf_total: %i\n", (int)*in++); fl++;
 	i=0;
 	while(i < vf_total) {
-		__builtin_printf("vf %i: %f", i, (float)*fl++); in++;
+		__builtin_printf("vf %i: %f", i + 1, (float)*fl++); in++;
 		__builtin_printf(" %f", (float)*fl++); in++;
 		__builtin_printf(" %f", (float)*fl++); in++;
 		__builtin_printf(" %f\n", (float)*fl++); in++;
@@ -342,7 +344,8 @@ hmapunwrapf(select_t *sel)
 /*
    make a copy of (for now) a single hmap referenced as first item in
    *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
-   recieving hmap retains name/index, session_filter, position, and kfactord */
+   recieving hmap retains name/index, session_filter, position, and kfactord
+   oops: found an error copying hmap index 10 to hmap index 1 */
 int
 cp_hmapf(select_t *sel)
 {
@@ -383,7 +386,7 @@ cp_hmapf(select_t *sel)
 	b->draw.geom = a->draw.geom;
 	b->vf_total = a->vf_total;
 	free(b->p_data_vf);
-        if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
+	if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: could not malloc vertice data for hmap %i\n",
 			__FILE__, __LINE__, b->index);
@@ -398,7 +401,7 @@ cp_hmapf(select_t *sel)
 		w->m = v->m;
 	}
 	free(b->p_dialog);
-        if((b->p_dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
+    if((b->p_dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: could not malloc dialog data for hmap %i\n",
 			__FILE__, __LINE__, b->index);

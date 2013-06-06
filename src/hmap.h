@@ -74,7 +74,7 @@ typedef struct bounds envelope_t;
 enum { /* envelope_t geom */
 	VRT_BOUND_NONE,
 	VRT_BOUND_SPHERE,
-	VRT_BOUND_CYL,
+	VRT_BOUND_CYLINDER,
 	VRT_BOUND_RCUBOID,
 	VRT_BOUND_CUBE
 };

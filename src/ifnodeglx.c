@@ -46,11 +46,12 @@ float fps;
 float vrt_render_cyc; /* external */
 
 /* diagnostic */
-hmapf_t *ryg, *ryg1, *diag1, *diag2, *diag3, *diag4, *diag5, *diag6;
+hmapf_t *ryg, *ryg1, *diag1, *diag2, *diag3, *diag4, *diag5, *diag6, *diag8;
 vf_t diag = { 0, 1, 0, 1 };
-vf_t isb = { .5,  0,  0, .5};
-vf_t jsb = {  0, .5,  0, .5};
-vf_t ksb = {  0,  0, .5, .5};
+vf_t isb = { .5,  0,  0, .5 };
+vf_t jsb = {  0, .5,  0, .5 };
+vf_t ksb = {  0,  0, .5, .5 };
+vf_t vrloc8 = { 0, 0, -80, 8 };
 int recurrant = 0;
 char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
 
@@ -200,7 +201,7 @@ node(int argc, char **argv)
 
 	/* diag */
 	ryg = (hmapf_t *) p_hmapf(1);
-	ryg->ang_spd = 1;
+	ryg->ang_spd = .25;
 	ryg->ang_dpl = 0;
 	set_vf(&(ryg->v_vel), 0, 0, 0, 0);
 	set_vf(&(ryg->v_axi), .707106, .707106, 0, 1);
@@ -208,7 +209,7 @@ node(int argc, char **argv)
 	form_mag_vf(&(ryg->v_pos));
 
 	ryg1 = (hmapf_t *) p_hmapf(2);
-	ryg1->ang_spd = 1;
+	ryg1->ang_spd = .25;
 	ryg1->ang_dpl = 3.141592;
 	set_vf(&(ryg1->v_vel), 0, 0, 0, 0);
 	set_vf(&(ryg1->v_axi), 0, .707106, .707106, 1);
@@ -256,6 +257,13 @@ node(int argc, char **argv)
 	set_vf(&(diag6->v_pos), 0, 0, 0, 0);
 	cp_vf(&ksb, &(diag6->v_pos));
 
+	diag8 = (hmapf_t *) p_hmapf(19);
+	diag8->ang_spd = 0;
+	diag8->ang_dpl = M_PI_2;
+	set_vf(&(diag8->v_vel), 0, 0, 0, 0);
+	set_vf(&(diag8->v_axi), 0, .707106, .707106, 1);
+	set_vf(&(diag8->v_pos), 0, 0, 0, 0);
+	cp_vf(&vrloc8, &(diag8->v_pos));
 
 	/* interface node
 	   all events since last frame are summed, the new frame is drawn */
@@ -637,7 +645,7 @@ node(int argc, char **argv)
 		glRotatef(-ifdpy0->keytilt * 180 / M_PI,
 			side.x, side.y, side.z);
 
-#define DIAG
+#define DIAG_OFF
 #ifdef DIAG
 		/* diag term output */
 		__builtin_printf("\nfov0\n");

@@ -26,9 +26,7 @@ hmapf(session_t *session)
 	}
 	/* append hmap index to session name */
 	p->name = *session | (session_t)p->index;
-	__builtin_printf("hmap(%llu): generated vob %i\n",
-		p->name, p->index);
-	__builtin_printf("hmap(%x): generated vob %i\n",
+	__builtin_printf("generated hmap %x (%i)\n",
 		(int)p->name, p->index);
 	return p;
 }
