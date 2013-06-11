@@ -388,8 +388,8 @@ cp_hmapf(select_t *sel)
 	free(b->p_data_vf);
 	if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: could not malloc vertice data for hmap %i\n",
-			__FILE__, __LINE__, b->index);
+			"Error: could not malloc vertice data copying hmap %i to %i\n",
+			__FILE__, __LINE__, a->index, a->index);
 		abort();
 	}
 	v = a->p_data_vf;
@@ -403,8 +403,8 @@ cp_hmapf(select_t *sel)
 	free(b->p_dialog);
     if((b->p_dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: could not malloc dialog data for hmap %i\n",
-			__FILE__, __LINE__, b->index);
+			"Error: could not malloc dialog data copying hmap %i to %i\n",
+			__FILE__, __LINE__, a->index, b->index);
 		abort();
 	}
 	d = a->p_dialog;

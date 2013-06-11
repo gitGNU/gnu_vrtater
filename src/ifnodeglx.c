@@ -24,7 +24,9 @@
 
 Display *dpy0, *dpy_dialog;
 XVisualInfo *xvinf0, *xvinf_dialog;
-Window xwin0, xwin_dialog;
+Window xwin0;
+int xwin0x = 800;
+int xwin0y = 800;
 GLXContext glxcontext0;
 int dbuff = 1; /* single or double buffer video, will mabye be compile opt */
 ifdpy_t ifd0, *ifdpy0 = &ifd0;
@@ -51,7 +53,7 @@ vf_t diag = { 0, 1, 0, 1 };
 vf_t isb = { .5,  0,  0, .5 };
 vf_t jsb = {  0, .5,  0, .5 };
 vf_t ksb = {  0,  0, .5, .5 };
-vf_t vrloc8 = { 0, 0, -80, 8 };
+vf_t vrloc8 = { 0, 0, -8, 8 };
 int recurrant = 0;
 char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
 
@@ -120,7 +122,7 @@ setup_glx(int argc, char **argv)
 	xwinattr.event_mask = KeyPressMask;
 
 	/* create an Xwindow with visual and attributes */
-	xwin0=XCreateWindow(dpy0, RootWindow(dpy0, xvinf0->screen), 0, 0, 800, 800, 0, xvinf0->depth, InputOutput, xvinf0->visual, CWColormap|CWEventMask, &xwinattr);
+	xwin0=XCreateWindow(dpy0, RootWindow(dpy0, xvinf0->screen), 0, 0, xwin0x, xwin0y, 0, xvinf0->depth, InputOutput, xvinf0->visual, CWColormap|CWEventMask, &xwinattr);
 
 	/* set Xwindow properties */
 	XSetStandardProperties(dpy0, xwin0, "vrtater", "vrtater", None, argv, argc, NULL);
@@ -130,7 +132,7 @@ setup_glx(int argc, char **argv)
  		__builtin_exit(1);
 
 	/* make Xwindow current and map it */
-	glXMakeCurrent(dpy0, xwin0, glxcontext0);
+	glXMakeCurrent(dpy0, xwin0, glxcontext0)   ;
 	XMapWindow(dpy0, xwin0);
 }
 

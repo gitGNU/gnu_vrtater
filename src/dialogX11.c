@@ -32,8 +32,7 @@ dialog(select_t *sel, genopts_t *o)
 	   that has been changed by the modeling functions, as well as dialog
 	   from on-node vobs that came in from running remote nodes.  here
 	   presented are simulated test case's of varied in-node vob's affected
-	   by modeling.
-		for now this writes to stdout.  assumes terminal(s) */
+	   by modeling.  for now this writes to stdout.  assumes terminal(s) */
 	select_t add = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
 	//read_dialog_set(&add);
 

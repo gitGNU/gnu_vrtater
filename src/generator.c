@@ -106,19 +106,19 @@ generate_vohspace(void)
 	/* ... */
 	/* for now */
 	for(i=0;i<1;i++)
-		if((p = hmapf_icosahedron_b(&session, .01)))
+		if((p = hmapf_icosahedron_c(&session, .01)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<2;i++)
-		if((p = hmapf_cube_b(&session, .3, .3, .3)))
+		if((p = hmapf_cube_c(&session, .3, .3, .3)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<6;i++)
-		if((p = hmapf_icosahedron_b(&session, .2)))
+		if((p = hmapf_icosahedron_c(&session, .2)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<10;i++)
-		if((p = hmapf_cube_b(&session, 10, 10, 10)))
+		if((p = hmapf_cube_c(&session, 10, 10, 10)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<1;i++)
-		if((p = hmapf_cylinder_b(&session, 30, 64, 16, 18)))
+		if((p = hmapf_cylinder_c(&session, 1, 25, 1.35, 0)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 }
 
@@ -261,7 +261,7 @@ void
 hmapwrap_unwraptst(void)
 {
 	hmapf_t **p = (hmapf_t **)selectf_a;
-	*(p++) = p_hmapf(19);
+	*(p++) = p_hmapf(10);
 	*p = NULL;
 	select_t s = { VRT_MASK_NULL_TERMINATED, 0, (hmapf_t **)selectf_a, 0, NULL};
 	__builtin_printf("hmapwrapf() test\n");

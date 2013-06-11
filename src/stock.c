@@ -12,7 +12,7 @@
 #include "vectors.h"
 #include "hmap.h"
 
-/* icosahedron_b */
+/* icosahedron_c */
 #define WKY 0.26286555606 /* width of key triangle */
 #define LNK 0.809016994375 /* length of key triangle */
 #define ATIP 0.850650808352 /* aligned tip */
@@ -21,81 +21,61 @@
 #define ENDH 0.525731112119 /* height of ends */
 #define ISL 0.948537775762 /* inside layer */
 #define ISL2 0.474268887881 /* inside layer / 2 */
-#define ICOSAHEDRON_B_BOUND0 1
+#define ICOSAHEDRON_C_BOUND0 1
 
-int icosahedron_b_idx_top[VRT_CAPC_FCOUNT][3] = {
-	{0, 1, 3}, {0, 3, 5}, {0, 5, 4}, {0, 4, 2}, {0, 2, 1}
-};
+/* cube_c cuboid */
+#define QDR_SZ 0.57735026919 /* derived from opposite corners at distance 2 */
+#define CUBE_C_BOUND0 QDR_SZ
 
-int icosahedron_b_idx_mid[VRT_ICOSAHEDRON_B_CFCOUNT][3] = {
-	{1, 7, 3}, {3, 7, 9}, {3, 9, 5}, {5, 9, 10}, {4, 5, 10},
-	{4, 10, 8}, {2, 4, 8}, {2, 8, 6}, {1, 2, 6}, {1, 6, 7}
-};
-
-int icosahedron_b_idx_bot[VRT_CAPC_FCOUNT][3] = {
-	{6, 11, 7}, {7, 11, 9}, {9, 11, 10}, {8, 10, 11}, {6, 8, 11}
-};
-
-float a_icosahedron_b[12][3] = {
-				{0, ISL2+ENDH, 0}, /* 0 */
-
-				{0, ISL2, ATIP}, /* 1 */
-	{-LNK, ISL2, WKY}, /* 2 */			{LNK, ISL2, WKY}, /* 3 */
-
-		{-ETIP, ISL2, -AEDG}, /* 4 */	{ETIP, ISL2, -AEDG}, /* 5 */
-
-		{-ETIP, -ISL2, AEDG}, /* 6 */	{ETIP, -ISL2, AEDG}, /* 7 */
-
-	{-LNK, -ISL2, -WKY}, /* 8 */			{LNK, -ISL2, -WKY}, /* 9 */
-				{0, -ISL2, -ATIP}, /* 10 */
-
-				{0, -ISL2-ENDH, 0} /* 11 */
-};
-
-/* enscribe an icosahedron_b VRT_DRAWGEOM_TRIANGLES hmap attached to session,
+/* icosahedron_c */
+/* enscribe an icosahedron_c VRT_DRAWGEOM_TRIANGLES hmap attached to session,
    with a radius of r.  return null pointer if vohspace full */
 hmapf_t *
-hmapf_icosahedron_b(session_t *session, float r)
+hmapf_icosahedron_c(session_t *session, float r)
 {
-	int i, j;
 
-	/* attach an hmap if any left */
+	int icosahedron_c_idx[VRT_ICOSAHEDRON_C_FCOUNT][3] = {
+		{0, 1, 3}, {0, 3, 5}, {0, 5, 4}, {0, 4, 2}, {0, 2, 1},
+		{1, 7, 3}, {3, 7, 9}, {3, 9, 5}, {5, 9, 10}, {4, 5, 10},
+		{4, 10, 8}, {2, 4, 8}, {2, 8, 6}, {1, 2, 6}, {1, 6, 7},
+		{6, 11, 7}, {7, 11, 9}, {9, 11, 10}, {8, 10, 11}, {6, 8, 11}
+	};
+
+	float a_icosahedron_c[12][3] = {
+					{0, ISL2+ENDH, 0}, /* 0 */
+
+					{0, ISL2, ATIP}, /* 1 */
+		{-LNK, ISL2, WKY}, /* 2 */			{LNK, ISL2, WKY}, /* 3 */
+
+			{-ETIP, ISL2, -AEDG}, /* 4 */	{ETIP, ISL2, -AEDG}, /* 5 */
+
+			{-ETIP, -ISL2, AEDG}, /* 6 */	{ETIP, -ISL2, AEDG}, /* 7 */
+
+		{-LNK, -ISL2, -WKY}, /* 8 */			{LNK, -ISL2, -WKY}, /* 9 */
+					{0, -ISL2, -ATIP}, /* 10 */
+
+					{0, -ISL2-ENDH, 0} /* 11 */
+	};
+
+	int i, j;
+	vf_t av[3], *tri;
+
+	/* attach an hmap */
 	hmapf_t *hmap;
 	if(!(hmap = hmapf(session)))
 		return NULL;
 
-	/* for VRT_DRAWGEOM_TRIANGLES, 3 vectors to hold a triangle */
-	vf_t av[3];
-	vf_t *tri;
-
-	/* vf data
-	   calculate hmap size in terms of total vf_t's (3 per triangle)
-	   2 type c caps + icosahedron_b capped-face-count */
-	int v_total = 3 * (VRT_CAPC_FCOUNT * 2 + VRT_ICOSAHEDRON_B_CFCOUNT);
-
-	/* dialog data
-	   calculate size of dialog data(if any) for hmap */
-	/* int d_total = 0; */
-	/* ... */
-
-	/* diag */
-	int v_count = 0;
-
-	/* fill in hmap
-	   set total vertice count */
-	hmap->vf_total = v_total;
-
-	/* set draw format options */
+	/* hmap attribs */
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
-
-	/* set bounding */
 	hmap->envelope.geom = VRT_BOUND_SPHERE;
-	hmap->envelope.v_sz.x = ICOSAHEDRON_B_BOUND0 * r;
+	hmap->envelope.v_sz.x = ICOSAHEDRON_C_BOUND0 * r;
 	form_mag_vf(&(hmap->envelope.v_sz));
+	hmap->attribs.kg = 4.18879020479 * r * r * r;
 
-	/* allocate for hmap's vf data(if any) */
+	/* allocate for hmap data */
+	hmap->vf_total = VRT_ICOSAHEDRON_C_FCOUNT * 3;
 	vf_t *data_vf;
-	if((data_vf = (vf_t *) malloc(v_total * sizeof(vf_t))) == NULL) {
+	if((data_vf = (vf_t *) malloc(hmap->vf_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
@@ -108,115 +88,60 @@ hmapf_icosahedron_b(session_t *session, float r)
 	vf_t **ppd = &pd;
 	*ppd = hmap->p_data_vf;
 
-	/* top cap */
-	for(i=0; i<VRT_CAPC_FCOUNT; i++) {
-		for(j=0, tri=av; j<3; j++, tri++, v_count++) {
-			tri->x = a_icosahedron_b[icosahedron_b_idx_top[i][j]][0] * r;
-			tri->y = a_icosahedron_b[icosahedron_b_idx_top[i][j]][1] * r;
-			tri->z = a_icosahedron_b[icosahedron_b_idx_top[i][j]][2] * r;
+	for(i=0; i<VRT_ICOSAHEDRON_C_FCOUNT; i++) {
+		for(j=0, tri=av; j<3; j++, tri++) {
+			tri->x = a_icosahedron_c[icosahedron_c_idx[i][j]][0] * r;
+			tri->y = a_icosahedron_c[icosahedron_c_idx[i][j]][1] * r;
+			tri->z = a_icosahedron_c[icosahedron_c_idx[i][j]][2] * r;
 			form_mag_vf(tri);
 		}
 		add_tri_to_hmapf(av, ppd);
 	}
-
-	/* mid section */
-	for(i=0; i<VRT_ICOSAHEDRON_B_CFCOUNT; i++) {
-		for(j=0, tri=av; j<3; j++, tri++, v_count++) {
-			tri->x = a_icosahedron_b[icosahedron_b_idx_mid[i][j]][0] * r;
-			tri->y = a_icosahedron_b[icosahedron_b_idx_mid[i][j]][1] * r;
-			tri->z = a_icosahedron_b[icosahedron_b_idx_mid[i][j]][2] * r;
-			form_mag_vf(tri);
-		}
-		add_tri_to_hmapf(av, ppd);
-	}
-
-	/* bottom cap */
-	for(i=0;i<VRT_CAPC_FCOUNT; i++) {
-		for(j=0, tri=av; j<3; j++, tri++, v_count++) {
-			tri->x = a_icosahedron_b[icosahedron_b_idx_bot[i][j]][0] * r;
-			tri->y = a_icosahedron_b[icosahedron_b_idx_bot[i][j]][1] * r;
-			tri->z = a_icosahedron_b[icosahedron_b_idx_bot[i][j]][2] * r;
-			form_mag_vf(tri);
-		}
-		add_tri_to_hmapf(av, ppd);
-	}
-
-	/* volume for caller to set mass */
-	hmap->attribs.kg = 4.18879020479 * r * r * r;
-
-	/* diag */
-	if(v_total != v_count)
-		__builtin_printf("hmap(): err, vertice compile mismatch\n");
-
-	/* add/allocate for dialog data(if any) */
-	/* ... */
 
 	return hmap;
 }
 
-/* cube_b cubeoid */
-#define QDR_SZ 0.57735026919 /* derived from opposite corners at distance 2 */
-#define CUBE_B_BOUND0 QDR_SZ
-
-int cube_b_idx[VRT_CUBE_B_FCOUNT][3] = {
-	{5, 4, 7}, {7, 4, 6}, {5, 1, 4}, {4, 1, 0}, {5, 7, 1}, {1, 7, 3},
-	{2, 3, 6}, {6, 3, 7}, {2, 0, 3}, {3, 0, 1}, {2, 6, 0}, {0, 6, 4}
-};
-
-float a_cube_b[8][3] = {
-	{-QDR_SZ, QDR_SZ, -QDR_SZ}, /* 0 */ {QDR_SZ, QDR_SZ, -QDR_SZ}, /* 1 */
-   {-QDR_SZ, QDR_SZ, QDR_SZ}, /* 2 */		{QDR_SZ, QDR_SZ, QDR_SZ}, /* 3 */
-
-	{-QDR_SZ, -QDR_SZ, -QDR_SZ}, /* 4 */ {QDR_SZ, -QDR_SZ, -QDR_SZ}, /* 5 */
-
-   {-QDR_SZ, -QDR_SZ, QDR_SZ}, /* 6 */		{QDR_SZ, -QDR_SZ, QDR_SZ} /* 7 */
-};
-
-/* enscribe a cube_b VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
+/* enscribe a cube_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
    length width and height given.  return null pointer if vohspace full */
 hmapf_t *
-hmapf_cube_b(session_t *session, float l, float w, float h)
+hmapf_cube_c(session_t *session, float l, float w, float h)
 {
 	int i, j;
 
-	/* attach an hmap if any left */
+	int cube_c_idx[VRT_CUBE_C_FCOUNT][3] = {
+		{2, 3, 1}, {1, 0, 2}, {6, 7, 3}, {3, 2, 6}, {7, 5, 1}, {1, 3, 7},
+		{5, 4, 0}, {0, 1, 5}, {4, 6, 2}, {2, 0, 4}, {4, 5, 7}, {7, 6, 4}
+	};
+
+	float a_cube_c[8][3] = {
+		{-QDR_SZ, QDR_SZ, -QDR_SZ}, /* 0 */ {QDR_SZ, QDR_SZ, -QDR_SZ}, /* 1 */
+	   {-QDR_SZ, QDR_SZ, QDR_SZ}, /* 2 */		{QDR_SZ, QDR_SZ, QDR_SZ}, /* 3 */
+
+		{-QDR_SZ, -QDR_SZ, -QDR_SZ}, /* 4 */ {QDR_SZ, -QDR_SZ, -QDR_SZ}, /* 5 */
+
+	   {-QDR_SZ, -QDR_SZ, QDR_SZ}, /* 6 */		{QDR_SZ, -QDR_SZ, QDR_SZ} /* 7 */
+	};
+
+	vf_t av[3], *tri;
+
+	/* attach an hmap */
 	hmapf_t *hmap;
 	if(!(hmap = hmapf(session)))
 		return NULL;
 
-	/* for VRT_DRAWGEOM_TRIANGLES, 3 vectors to hold a triangle */
-	vf_t av[3];
-	vf_t *tri;
-
-	/* vf data
-	   calculate hmap size in terms of total vf_t's (3 per triangle) */
-	int v_total = VRT_CUBE_B_FCOUNT * 3;
-
-	/* dialog data
-	   calculate size of dialog data(if any) for hmap */
-	/* int d_total = 0; */
-	/* ... */
-
-	/* diag */
-	int v_count = 0;
-
-	/* fill in hmap
-	   set total vertice count */
-	hmap->vf_total = v_total;
-
-	/* set draw format options */
+	/* hmap attribs */
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
-
-	/* set bounding */
 	hmap->envelope.geom = VRT_BOUND_RCUBOID;
-	hmap->envelope.v_sz.x = CUBE_B_BOUND0 * w / 2;
-	hmap->envelope.v_sz.y = CUBE_B_BOUND0 * h / 2;
-	hmap->envelope.v_sz.z = CUBE_B_BOUND0 * l / 2;
+	hmap->envelope.v_sz.x = CUBE_C_BOUND0 * w / 2;
+	hmap->envelope.v_sz.y = CUBE_C_BOUND0 * h / 2;
+	hmap->envelope.v_sz.z = CUBE_C_BOUND0 * l / 2;
 	form_mag_vf(&(hmap->envelope.v_sz));
+	hmap->attribs.kg = l * w * h;
 
-	/* allocate for hmap's vf data(if any) */
+	/* allocate for hmap data */
+	hmap->vf_total = VRT_CUBE_C_FCOUNT * 3;
 	vf_t *data_vf;
-	if((data_vf = (vf_t *) malloc(v_total * sizeof(vf_t))) == NULL) {
+	if((data_vf = (vf_t *) malloc(hmap->vf_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
@@ -229,39 +154,46 @@ hmapf_cube_b(session_t *session, float l, float w, float h)
 	vf_t **ppd = &pd;
 	*ppd = hmap->p_data_vf;
 
-	/* cube_b */
-	for(i=0; i<VRT_CUBE_B_FCOUNT; i++) {
-		for(j=0, tri=av; j<3; j++, tri++, v_count++) {
-			tri->x = a_cube_b[cube_b_idx[i][j]][0] * l;
-			tri->y = a_cube_b[cube_b_idx[i][j]][1] * w;
-			tri->z = a_cube_b[cube_b_idx[i][j]][2] * h;
+	for(i=0; i<VRT_CUBE_C_FCOUNT; i++) {
+		for(j=0, tri=av; j<3; j++, tri++) {
+			tri->x = a_cube_c[cube_c_idx[i][j]][0] * l;
+			tri->y = a_cube_c[cube_c_idx[i][j]][1] * w;
+			tri->z = a_cube_c[cube_c_idx[i][j]][2] * h;
 			form_mag_vf(tri);
 		}
 		add_tri_to_hmapf(av, ppd);
 	}
 
-	/* volume for caller to set mass */
-	hmap->attribs.kg = l * w * h;
-
-	/* diag */
-	if(v_total != v_count)
-		__builtin_printf("hmap(): err, vertice compile mismatch\n");
-
-	/* add/allocate for dialog data(if any) */
-	/* ... */
-
 	return hmap;
 }
 
-/* enscribe a cylinder_b VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
-   r radius, e capedges, l length, and t threads/length.  t may be 0.  the first
-   and last threads have a lead-in taper that adds an extra thread length
-   between them thus l is divided into t + 1 lengths per thread.  return null
-   pointer if vohspace full */
+/* enscribe a cylinder_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
+   r radius, e capedges, l length, and t threads per that length.  t may be 0.
+	the first and last threads have end taper's adding an extra thread length.
+	n length/(threads + 1) sized lengths are created, the threads and the taper
+	set contained therein them.  return null pointer if vohspace full */
 hmapf_t *
-hmapf_cylinder_b(session_t *session, float r, int e, float l, int t)
+hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 {
 	int i, j;
+	float yoffset = l / 2;							/* scaling vs. y axis of hmap */
+	float halfa = 2 * M_PI / e;					/* half corner angle */
+	float lpthread = l / (t + 1);					/* cylinder length per thread */
+	float incthread = lpthread / e;				/* increment sum for thread */
+	vf_t a, b, c, *itr, *tri;						/* vrtater coords */
+
+#define CYL_MORE_IMPLEMENTED_SOMETIME
+#ifdef CYL_MORE_IMPLEMENTED
+	float ledge = r * 2 * sin(M_PI / e);		/* length of polygon edge */
+	float tprhyp = ledge * e;						/* taper hyptoenuse */
+	float pitcha = atan(lpthread / tprhyp);	/* pitch angle of thread */
+	float pitchhyp = tprhyp / cos(pitcha);		/* pitch hypotenuse */
+	float tpradj = tprhyp * cos(pitcha);		/* taper adjacent */
+	float spanbase = e * (1 /(e - .5));			/* span triangle base */
+	float threadspan = tprhyp * sin(pitcha);	/* thread span */
+	float tprend = sin(spanbase * e) - tprhyp; /* taper endpiece */
+	float tproffs = tprend / e;					/* taper offset */
+#endif
 
 	hmapf_t *hmap;
 	if(!(hmap = hmapf(session)))
@@ -286,90 +218,50 @@ hmapf_cylinder_b(session_t *session, float r, int e, float l, int t)
 	}
 	hmap->p_data_vf = data_vf; /* maintain p_data_vf in hmap */
 
-/* need to shift the sine vs. cosine for each tip of the polygon formed, as the
-   triangle derived will be composed of one the previous triangle components */
+	/* fill in hmap data */
 
-	float yoffset = l / 2;							/* scaling vs. y axis of hmap */
-	float ledge = r * 2 * sin(M_PI / e);		/* length of polygon edge */
-	float halfa = 2 * M_PI / e;					/* half corner angle */
-	float lpthread = l / (t + 1);					/* cylinder length per thread */
-	float incthread = lpthread / e;				/* increment sum for thread */
-	float tprhyp = ledge * e;						/* taper hyptoenuse */
-	float pitcha = atan(lpthread / tprhyp);	/* pitch angle of thread */
-	float pitchhyp = tprhyp / cos(pitcha);		/* pitch hypotenuse */
-	float tpradj = tprhyp * cos(pitcha);		/* taper adjacent */
-	float spanbase = e * (1 /(e - .5));			/* span triangle base */
-	float threadspan = tprhyp * sin(pitcha);	/* thread span */
-	float tprend = sin(spanbase * e) - tprhyp; /* taper endpiece */
-	float tproffs = tprend / e;					/* taper offset */
-
-	vf_t org, mid, end, *itr, *tri = (vf_t *) data_vf; /* vrtater coords */
-	form_mag_vf(set_vf(&org, 0, yoffset, 0, 0));
-	form_mag_vf(set_vf(&mid, 0, yoffset, r, 0));
-
-	/* top */
+	/* cylinder top */
+	itr = tri = (vf_t *) data_vf;
+	form_mag_vf(set_vf(&a, 0, yoffset, 0, 0));
+	form_mag_vf(set_vf(&b, 0, yoffset, r, 0));
 	for(i = 1; i <= e; i++) {
-		set_vf(&end, sin(i * halfa) * r, yoffset, cos(i * halfa) * r, 0);
-		form_mag_vf(&end);
-		tri->x = (&org)->x;
-		tri->y = (&org)->y;
-		tri->z = (&org)->z;
-		form_mag_vf(tri++);
-		tri->x = (&mid)->x;
-		tri->y = (&mid)->y;
-		tri->z = (&mid)->z;
-		form_mag_vf(tri++);
-		tri->x = (&end)->x;
-		tri->y = (&end)->y;
-		tri->z = (&end)->z;
-		form_mag_vf(tri++);
-		cp_vf(&end, &mid);
+		form_mag_vf(set_vf(&c, sin(i * halfa) * r, yoffset, cos(i * halfa) * r, 0));
+		form_mag_vf(cp_vf(&a, tri++));
+		form_mag_vf(cp_vf(&b, tri++));
+		form_mag_vf(cp_vf(&c, tri++));
+		cp_vf(&c, &b);
 	}
 
 	/* top taper */
-	itr = (vf_t *) data_vf;
-	for(i = 1; i <= e; i++) {
-		/* @ orgin, _ m e, o m e, ... */
-		++itr;
-		tri->x = itr->x; /* mid, o _ e, o m e, ... */
-		tri->y = itr->y;
-		tri->z = itr->z;
-		(tri++)->m = itr->m;
+	for(i = 0; i < e; i++) {
 
-		++itr;
-		tri->x = itr->x; /* end, o m _, o m e, ... */
-		tri->y = itr->y;
-		tri->z = itr->z;
-		(tri++)->m = itr->m;
+		/* top taper top face */
+		itr++; /* b */
+		cp_vf(itr, tri++); /* alignment off top cap */
 
-		tri->x = itr->x;
-		tri->y = itr->y - (i * incthread); /* end along y */
-		tri->z = itr->z;
-		form_mag_vf(tri++);
+		itr++; /* c */
+		form_mag_vf(set_vf(tri++, itr->x,
+			itr->y - ((i + 1) * incthread),
+			itr->z, 0));
 
-		++itr; /* next orgin, o m e, _ m e, ... */
+		cp_vf(itr, tri++);
+		itr++; /* nxt a */
 
-		if(i > 1) {
-			/* @ orgin third segment, o m e, o m e, _.. */
-			itr -= 2;
-			tri->x = itr->x; /* mid, o m e, o _ e, ... */
-			tri->y = itr->y;
-			tri->z = itr->z;
-			(tri++)->m = itr->m;
+		if(i > 0) { /* first has only a compound top face */
 
-			itr++;
-			tri->x = itr->x; /* end, o m e, o m _, ... */
-			tri->y = itr->y - (i * incthread);
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+			/* top taper bottom face */
+			itr -= 2; /* b */
+			cp_vf(itr, tri++);
 
-			itr--;
-			tri->x = itr->x; /* mid, o m e, o _ e, ... */
-			tri->y = itr->y - ((i - 1) * incthread); /* end along y - incthread */
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+			form_mag_vf(set_vf(tri++, itr->x,
+				itr->y - (i * incthread),
+				itr->z, 0));
 
-			itr += 2; /* next orgin, o m e, o m e, _.. */
+			itr++; /* c */
+			form_mag_vf(set_vf(tri++, itr->x,
+				itr->y - ((i + 1) * incthread),
+				itr->z, 0));
+			itr++; /* nxt a */
 		}
 	}
 
@@ -377,111 +269,91 @@ hmapf_cylinder_b(session_t *session, float r, int e, float l, int t)
 	for(i = 0; i < t; i++) {
 		itr = (vf_t *) data_vf;
 		for(j = 0; j < e; j++) {
-			/* @ orgin, _ m e, o m e, ... */
-			itr++;
-			tri->x = itr->x; /* mid, o _ e, o m e, ... */
-			tri->y = itr->y - ((j * incthread) + (i * lpthread));
-			tri->z = itr->z;
-			form_mag_vf(tri++);
 
-			itr++;
-			tri->x = itr->x; /* end, o m _, o m e, ... */
-			tri->y = itr->y - (((j + 1) * incthread) + (i * lpthread));
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+			/* top thread face */
+			itr++; /* b */
+			form_mag_vf(set_vf(tri++, itr->x,
+				itr->y - (i * lpthread + j * incthread),
+				itr->z, 0));
 
-			tri->x = itr->x; /* end, o m _, o m e, ... */
-			tri->y = itr->y - (((j + 1) * incthread) + ((i + 1) * lpthread));
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+			itr++; /* c */
+			form_mag_vf(set_vf(tri++, itr->x,
+				itr->y - ((i + 1) * lpthread + (j + 1) * incthread),
+				itr->z, 0));
 
-			itr--;
-			tri->x = itr->x; /* mid, o _ e, o m e, ... */
-			tri->y = itr->y - ((j * incthread) + (i * lpthread));
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+			form_mag_vf(set_vf(tri++, itr->x,
+				itr->y - (i * lpthread + (j + 1) * incthread),
+				itr->z, 0));
 
-			itr++;
-			tri->x = itr->x; /* end, o m _, o m e, ... */
-			tri->y = itr->y - (((j + 1) * incthread) + ((i + 1) * lpthread));
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+			/* bottom thread face */
+			itr--; /* b */
+			form_mag_vf(set_vf(tri++, itr->x,
+				itr->y - (i * lpthread + j * incthread),
+				itr->z, 0));
 
-			itr--;
-			tri->x = itr->x; /* mid, o _ e, o m e, ... */
-			tri->y = itr->y - ((j * incthread) + ((i + 1) * lpthread));
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+			form_mag_vf(set_vf(tri++, itr->x,
+				itr->y - ((i + 1) * lpthread + j * incthread),
+				itr->z, 0));
 
-			itr += 2; /* next orgin, o m e, _ m e, ... */
+			itr++; /* c */
+			form_mag_vf(set_vf(tri++, itr->x,
+				itr->y - ((i + 1) * lpthread + (j + 1) * incthread),
+				itr->z, 0));
+
+			itr++; /* nxt edge */
 		} 
 	}
 
-	/* bot taper */
+	/* bottom taper */
 	itr = (vf_t *) data_vf;
-	for(i = e; i > 0; i--) {
-		/* last orgin, _ m e, o m e, ... */
-		if(i > 1) {
-			itr++;
-			tri->x = itr->x; /* mid, o _ e, o m e, ... */
-			tri->y = -itr->y + (i * incthread);
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+	j = e - 1;
+	for(i = 0; i < e; i++) {
+		if(i < j) { /* last has only bottom face */
 
-			itr++;
-			tri->x = itr->x; /* end, o m _, o m e, ... */
-			tri->y = -itr->y + ((i - 1) * incthread);
-			tri->z = itr->z;
-			form_mag_vf(tri++);
+			/* bottom taper top face */
+			itr++; /* b */
+			form_mag_vf(set_vf(tri++, itr->x,
+				-yoffset + ((e - i) * incthread),
+				itr->z, 0));
 
-			tri->x = itr->x;
-			tri->y = -itr->y;
-			tri->z = itr->z;
-			(tri++)->m = itr->m;
+			itr++; /* c */
+			set_vf(tri++, itr->x, -yoffset, itr->z, itr->m);
 
-			itr++; /* next orgin, o m e, _ m e, ... */
+			form_mag_vf(set_vf(tri++, itr->x,
+				-yoffset + ((e - (i + 1)) * incthread),
+				itr->z, 0));
+
+			itr -= 2; /* a */
 		}
 
-		if(i == 1)
-			itr += 3;
+		/* bottom taper bottom face */
+		itr++; /* b */
+		form_mag_vf(set_vf(tri++, itr->x,
+			-yoffset + ((e - i) * incthread),
+			itr->z, 0));
 
-		itr -= 2;
-		tri->x = itr->x; /* last mid, o _ e, o m e, ... */
-		tri->y = -itr->y + (i * incthread);
-		tri->z = itr->z;
-		form_mag_vf(tri++);
+		set_vf(tri++, itr->x, -yoffset, itr->z, itr->m);
 
-		itr++;
-		tri->x = itr->x; /* end, o m _, o m e, ... */
-		tri->y = -itr->y;
-		tri->z = itr->z;
-		(tri++)->m = itr->m;
+		itr++; /* c */
+		set_vf(tri++, itr->x, -yoffset, itr->z, itr->m);
 
-		itr--;
-		tri->x = itr->x; /* mid, o _ e, o m e, ... */
-		tri->y = -itr->y;
-		tri->z = itr->z;
-		(tri++)->m = itr->m;
-
-		itr += 2; /* next orgin, o m e, _ m e, ... */
+		itr++; /* nxt a */
 	}
 
-	/* bot
-	   inverting y flips normals yet does not change the drawing precedence */
+	/* cylinder bottom */
 	itr = (vf_t *) data_vf;
-	for(i = 1; i <= e; i++) {
-		tri->x = itr->x;
-		tri->y = -itr->y;
-		tri->z = itr->z;
-		(tri++)->m = (itr++)->m;
-		tri->x = itr->x;
-		tri->y = -itr->y;
-		tri->z = itr->z;
-		(tri++)->m = (itr++)->m;
-		tri->x = itr->x;
-		tri->y = -itr->y;
-		tri->z = itr->z;
-		(tri++)->m = (itr++)->m;
+	for(i = 0; i < e; i++) {
+
+		itr++; /* b */
+		set_vf(tri++, itr->x, -yoffset, itr->z, itr->m);
+
+		itr--; /* a */
+		set_vf(tri++, itr->x, -yoffset, itr->z, itr->m);
+
+		itr += 2; /* c */
+		set_vf(tri++, itr->x, -yoffset, itr->z, itr->m);
+
+		itr++; /* nxt a */
 	}
 
 	/* volume for caller to set mass */

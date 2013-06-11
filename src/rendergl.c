@@ -15,8 +15,6 @@
 hmapf_t *fov0;
 vf_t oa_fp, *vpt = &oa_fp; 
 
-void draw_gl_tri(vf_t *, vf_t *, vf_t *);
-
 void
 init_renderer(void)
 {
@@ -57,47 +55,14 @@ renderer_next_genopts(genopts_t *genopts)
 	;
 }
 
-/* draw a triangle with 3 supplied vf_t's, each describing a relative vertex */
-void
-draw_gl_tri(vf_t *a, vf_t *b, vf_t *c)
-{
-	vf_t nv;
-	float *q, *r, *s, *n;
-	GLfloat glv[3][3], gln[3];
-	int i;
-
-	/* surface normal */
-	cprod_vf(c, b, &nv);
-	normz_vf(&nv, &nv);
-
-	n = &((&nv)->x);
-	q = &(a->x);
-	r = &(b->x);
-	s = &(c->x);
-
-	for(i=0; i<3; i++) {
-		glv[0][i] = (GLfloat)*q++;
-		glv[1][i] = (GLfloat)*r++;
-		glv[2][i] = (GLfloat)*s++;
-		gln[i] = (GLfloat)*n++;
-	}
-
-	glNormal3fv(gln);
-	glBegin(GL_TRIANGLES);
-		glVertex3fv(&glv[0][0]);
-		glVertex3fv(&glv[1][0]);
-		glVertex3fv(&glv[2][0]);
-	glEnd();
-}
-
 /* called per hmap per frame vs. DRAWGEOM, draw hmaps where format supported */
 void
 render_hmapf(hmapf_t *hmap, int lod)
 {
-	int i, j, vt;
-	vf_t *data_vf = hmap->p_data_vf;
-	vf_t av[3]; /* array for largest polygonal representation */
-	vf_t v;
+
+	int i, j;
+	vf_t v, nv, edge, plane, *data_vf = hmap->p_data_vf;
+	GLfloat glv[3][3], gln[3];
 
 	/* if kbase set, magnify rendered vs. node hugeorgin */
 	/* ... */
@@ -109,6 +74,7 @@ render_hmapf(hmapf_t *hmap, int lod)
 		case VRT_MASK_LOD_INF:
 		fov0 = hmap; /* vs. filter in proc_hmapf() sent once, first */
 		vpt = &(hmap->v_pos);
+		//__builtin_printf("vpt rend %f %f %f\n", vpt->x, vpt->y, vpt->z);
 		break;
 
 		case VRT_MASK_LOD_NEAR:
@@ -131,72 +97,68 @@ render_hmapf(hmapf_t *hmap, int lod)
 		break;
 
 		case VRT_DRAWGEOM_TRIANGLES:
-		/* 3 vf_t's(vertices) per triangle */
-		vt = hmap->vf_total / 3;
-		for(i=0;i<vt;i++) {
-			for(j=0;j<3;j++, data_vf++) {
-
-				/* work with a unit vector representation */
-				cp_vf(data_vf, &v);
-				normz_vf(&v, &v);
+		
+		for(i = 0; i < hmap->vf_total / 3; i++) {
+			for(j = 0; j < 3; j++, data_vf++) {
 
 				/* rotate verticies for rendering */
+				cp_vf(data_vf, &v);
 				rotate_vf(&v, &(hmap->v_axi), hmap->ang_dpl);
 
-				/* restore magnitude vs. unit vector rep. */
-				tele_mag_vf(&v, &v, data_vf->m);
-
-				/* transfer vertex value */
-				(&av[j])->x = (&v)->x + hmap->v_pos.x;
-				(&av[j])->y = (&v)->y + hmap->v_pos.y;
-				(&av[j])->z = (&v)->z + hmap->v_pos.z;
+				/* format vertices for rendering */
+				glv[j][0] = (GLfloat)(&v)->x + hmap->v_pos.x;
+				glv[j][1] = (GLfloat)(&v)->y + hmap->v_pos.y;
+				glv[j][2] = (GLfloat)(&v)->z + hmap->v_pos.z;
 
 				/* diag */
-				if((hmap->index == 0) || (hmap->index == 1) || (hmap->index == 2)) {
-					/* hmap 0 */
+				if((hmap->index >= 0) && (hmap->index <= 5)) {
 					if(hmap->index == 0) {
 						YEL();
-						/* tri 0 */
 						if(i == 0)
 							RED();
 					}
-					/* hmap 1 */
 					if(hmap->index == 1) {
 						GRN();
-						/* tri 0 */
 						if(i == 0)
 							RED();
-						/* tri 1 */
 						if(i == 1)
 							YEL();
 					}
-					/* hmap 2 */
 					if(hmap->index == 2) {
 						YEL();
-						/* tri 0 */
 						if(i == 0)
 							RED();
-						/* tri 1 */
 						if(i == 1)
 							GRN();
 					}
-				} else {
-					/* all else */
-					GRN();
-				}
-
-				/* diag */
-				if((hmap->index >= 3) && (hmap->index <= 5)) {
 					if(hmap->index == 3)
 						ORN();
 					if(hmap->index == 4)
 						BLU();
 					if(hmap->index == 5)
 						VLT();
-				}
+				} else { GRN(); }
 			}
-			/* gl */
-			draw_gl_tri(&av[0], &av[1], &av[2]);
+
+			/* set surface normal */
+			(&edge)->x = (float)glv[1][0] - glv[0][0];
+			(&edge)->y = (float)glv[1][1] - glv[0][1];
+			(&edge)->z = (float)glv[1][2] - glv[0][2];
+			(&plane)->x = (float)glv[2][0] - glv[1][0];
+			(&plane)->y = (float)glv[2][1] - glv[1][1];
+			(&plane)->z = (float)glv[2][2] - glv[1][2];
+			cprod_vf(&edge, &plane, &nv); /* adds (&nv)->m */
+			gln[0] = (GLfloat)(&nv)->x / (&nv)->m;
+			gln[1] = (GLfloat)(&nv)->y / (&nv)->m;
+			gln[2] = (GLfloat)(&nv)->z / (&nv)->m;
+			glNormal3fv(gln);
+
+			/* draw */
+			glBegin(GL_TRIANGLES);
+				glVertex3fv(&glv[0][0]);
+				glVertex3fv(&glv[1][0]);
+				glVertex3fv(&glv[2][0]);
+			glEnd();
 		}
 		break;
 
