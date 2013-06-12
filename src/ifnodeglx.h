@@ -11,12 +11,27 @@
 
 struct interface_display {
 	int indexfov; /* hmap dpy_ is attached to */
-	float keypan;
+	float accel_adv; /* acceleration multiplier */
+	float accel_crv; /* reciprocal curvalinear acceleration multiplier */
+	float aaccel_adv; /* angular acceleration multiplier */
+	float keypan; /* current pan.  radians */
+	float aaccpan; /* angular acceleration */
+	float adclpan; /* angular decelleration */
 	float keytilt;
+	float aacctilt;
+	float adcltilt;
 	float keyroll;
-	float keyvfwd; /* accelerate summing v_axi * vfwd into v_vel' */
-	float keyvside; /* "" "" cprod(v_axi, v_rel) * vside into v_vel' */
-	float keyvvrt; /* "" "" v_rel * vside into v_vel' */
+	float aaccroll;
+	float adclroll;
+	float keyvfwd; /* current acceleration summing v_axi * vfwd into v_vel' */
+	float accvfwd; /* acceleration */
+	float dclvfwd; /* decelleration */
+	float keyvside; /* cprod(v_axi, v_rel) * vside into v_vel' */
+	float accvside;
+	float dclvside;
+	float keyvvrt; /* v_rel * vside into v_vel' */
+	float accvvrt;
+	float dclvvrt;
 };
 typedef struct interface_display ifdpy_t;
 

@@ -33,7 +33,6 @@
 hmapf_t *
 hmapf_icosahedron_c(session_t *session, float r)
 {
-
 	int icosahedron_c_idx[VRT_ICOSAHEDRON_C_FCOUNT][3] = {
 		{0, 1, 3}, {0, 3, 5}, {0, 5, 4}, {0, 4, 2}, {0, 2, 1},
 		{1, 7, 3}, {3, 7, 9}, {3, 9, 5}, {5, 9, 10}, {4, 5, 10},

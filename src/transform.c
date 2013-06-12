@@ -344,14 +344,13 @@ hmapunwrapf(select_t *sel)
 /*
    make a copy of (for now) a single hmap referenced as first item in
    *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
-   recieving hmap retains name/index, session_filter, position, and kfactord
-   oops: found an error copying hmap index 10 to hmap index 1 */
+   recieving hmap retains name/index, session_filter, position, and kfactord */
 int
 cp_hmapf(select_t *sel)
 {
 	hmapf_t *a, *b;
-	vf_t *v, *w;
-	int i, j, *d, *e;
+	vf_t *av, *bv;
+	int i, *ad, *bd;
 
 	a = *(sel->seta);
 	b = *(sel->setb);
@@ -384,36 +383,85 @@ cp_hmapf(select_t *sel)
 	b->envelope.v_sz.z = a->envelope.v_sz.z;
 	b->envelope.v_sz.m = a->envelope.v_sz.m;
 	b->draw.geom = a->draw.geom;
-	b->vf_total = a->vf_total;
-	free(b->p_data_vf);
-	if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: could not malloc vertice data copying hmap %i to %i\n",
-			__FILE__, __LINE__, a->index, a->index);
-		abort();
+
+	if(a->vf_total) {
+		free(b->p_data_vf);
+		b->p_data_vf = NULL;
+		if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: could not malloc vertice data copying hmap %i to %i\n",
+				__FILE__, __LINE__, a->index, a->index);
+			abort();
+		}
+		av = a->p_data_vf;
+		bv = b->p_data_vf;
+		for(i = 0; i < a->vf_total; i++, av++, bv++) {
+			bv->x = av->x;
+			bv->y = av->y;
+			bv->z = av->z;
+			bv->m = av->m;
+		}
+		b->vf_total = a->vf_total;
 	}
-	v = a->p_data_vf;
-	w = b->p_data_vf;
-	for(i=0;i<a->vf_total;i++, v++) {
-		w->x = v->x;
-		w->y = v->y;
-		w->z = v->z;
-		w->m = v->m;
+
+	if(a->dialog_len) {
+		free(b->p_dialog);
+		b->p_dialog = NULL;
+	   if((b->p_dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: could not malloc dialog data copying hmap %i to %i\n",
+				__FILE__, __LINE__, a->index, b->index);
+			abort();
+		}
+		ad = a->p_dialog;
+		bd = b->p_dialog;
+		for(i = 0; i < a->dialog_len; i++)
+			*bd++ = *ad++;
+		b->dialog_len = a->dialog_len;
 	}
-	free(b->p_dialog);
-    if((b->p_dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: could not malloc dialog data copying hmap %i to %i\n",
-			__FILE__, __LINE__, a->index, b->index);
-		abort();
-	}
-	d = a->p_dialog;
-	e = b->p_dialog;
-	for(j=0;j<a->dialog_len;j++)
-		*e++ = *d++;
+
 	return 0;
 }
 
+/*
+	for c series hmaps, invert surface normals of (for now) a single hmap
+   referenced as first item in *(sel->seta) by inverting the precedence of
+   drawing for each vertice.
+*/
+int
+surfinv_hmapf(select_t *sel)
+{
+	int i;
+	hmapf_t *map;
+	vf_t *org, *cpy;
+
+	map = *(sel->seta);
+	org = map->p_data_vf;
+	if((cpy = (vf_t *) malloc(map->vf_total * sizeof(vf_t))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+		"Error: could not malloc vertice data while inverting hmap %i\n",
+		__FILE__, __LINE__, map->index);
+		abort();
+	}
+
+	for(i = 0; i < map->vf_total; i++) {
+		cpy->x = org->x;
+		cpy->y = org->y;
+		cpy->z = org->z;
+		(cpy++)->m = (org++)->m;
+	}
+
+	org = map->p_data_vf;
+	for(i = map->vf_total; i > 0; i--) {
+		org->x = (--cpy)->x;
+		org->y = cpy->y;
+		org->z = cpy->z;
+		(org++)->m = cpy->m;
+	}
+
+	free(cpy);
+	return 0;
+}
 
 /* functions affecting allocation of hmap data */
 
@@ -435,9 +483,12 @@ alloc_dialog(select_t *sel, int len)
 	return 0;
 }
 
-/* write, append, or insert s into any given hmap dialog thru sel->seta */
+/* write or append s to dialog(for now at end of current dialog) for any given
+   hmap thru sel->seta.  when supported will also insert or delete count at
+   offset to s, where sign of count will determine insert or delete and sense
+   of count will be after offset */
 int
-add_dialog(select_t *sel, char *s, int offset)
+add_dialog(select_t *sel, char *s, int count, int offset)
 {
 	int i, addlen, orglen, newlen, *pti, *pti2, *swap = NULL;
 	char *ptc;

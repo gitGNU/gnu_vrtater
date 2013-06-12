@@ -147,14 +147,9 @@ regenerate_scene(vf_t *vpt)
 		select_t s = { 0, 1, (hmapf_t **)p, 0, NULL };
 		char a_char[] = "dialog: "
 			"pass here and everything is published unless encrypted\n";
-		add_dialog(&s, a_char, strlen(a_char)); /* simulate new dialog */
+		add_dialog(&s, a_char, strlen(a_char), 0);
 		dialog(&s, &genopts);
 	}
-
-	/* test basic hmap dialog editing vs. fov0 currently held by hmap 0 */
-	*p = p_hmapf(0);
-	select_t kbd = { 0, 1, (hmapf_t **)p, 0, NULL };
-	dialog(&kbd, &genopts); /* uses same select_t info */
 
 	/* generator options */
 	if((&genopts)->vobspace_criteria & (
@@ -185,7 +180,6 @@ regenerate_scene(vf_t *vpt)
 	   given gnu timer lib giving back cycles fork_child_timer_callback()
 	   disabled for now, see ifnode**.c for more */
 	/* usleep(33400); */ /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
-//test();
 }
 
 /* a called function has set gen_opts, or was set herein via caller */
@@ -249,7 +243,7 @@ cphmaptest(void)
 
 	/* test copy_hmap() */
 	p = (hmapf_t **)selectf_a;
-	*p = p_hmapf(10);
+	*p = p_hmapf(15);
 	p = (hmapf_t **)selectf_b;
 	*p = p_hmapf(1);
 	select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b};
@@ -274,7 +268,7 @@ void
 test(void)
 {
 	hmapwrap_unwraptst();
-//	cphmaptest(); /* found error copying hmap 10 to 1.  needs tending */
+	cphmaptest();
 }
 
 /* support tug input */
