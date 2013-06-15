@@ -54,7 +54,7 @@ enum { /* attribs_t bits */
 #define VRT_MASK_BUFFER (1 << VRT_ORDINAL_BUFFER)
 	VRT_ORDINAL_VERTICE_MODS, /* unaffix this locally when sending */
 #define VRT_MASK_VERTICE_MODS (1 << VRT_ORDINAL_VERTICE_MODS)
-	VRT_ORDINAL_DIALOG_MODS /* unaffix this locally when sending */
+	VRT_ORDINAL_DIALOG_MODS, /* unaffix this locally when sending */
 #define VRT_MASK_DIALOG_MODS (1 << VRT_ORDINAL_DIALOG_MODS)
 };
 
@@ -147,5 +147,6 @@ extern hmapf_t *selectf_b;
 
 hmapf_t *hmapf(session_t *);
 hmapf_t *p_hmapf(int i);
+unsigned int hmap_count(void);
 
 #endif /* VRT_HMAP_H */

@@ -24,6 +24,7 @@
 unsigned int vrt_hmaps_max; /* external */
 float vrt_render_cyc; /* external */
 int fov0_index;
+
 /* lod envelopes */
 unsigned int sort_perif_ratio = 8; /* sort per n'th pass */
 unsigned int sort_far_ratio = 64;
@@ -58,6 +59,7 @@ init_vohspace(void)
 	int i;
 	hmapf_t *p, **pap_hmap_n;
 
+	hmaps_total = 0;
 	if((a_hmaps = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for a_hmaps\n",
@@ -184,6 +186,7 @@ attach_hmapf(void)
 		if((p->p_data_vf == NULL) && (p->p_dialog == NULL)) {
 			p->index = i; /* caller index */
 			p = &a_hmaps[i];
+			hmaps_total++;
 			return p;
 		}
 	}
@@ -240,6 +243,7 @@ detach_hmapf(hmapf_t *p)
 		p->dialog_len = 0;
 		p->p_data_vf = NULL;
 		free(p->p_dialog);
+		hmaps_total--;
 		return;
 	}
 	__builtin_fprintf(stderr, "vrtater:%s:%d: "
@@ -248,13 +252,14 @@ detach_hmapf(hmapf_t *p)
 		__FILE__, __LINE__);
 }
 
-/* for <= vrt_hmaps_max, in each lod set, sort all hmaps therein, meanwhile
-   sending them to be drawn or rendered apon.  also, shift hmaps into the
-   new lod set implied by their current position.  each lod set is sorted/sent
-   a given 1:sort_*_ratio of times based on proximity to viewpoint(vpt).
-   as the hmap holding fov0 thus vpt is sent directly to proc_hmapf() in
-   advance of this function, it passes here yet does not get proc'd on the
-   second try at proc. */
+/* for <= vrt_hmaps_max, in each lod set, optionally(except for near and based
+   on sort ratio) sort all hmaps therein, meanwhile sending them to be drawn or
+   rendered apon.  also, shift hmaps into a new lod set if implied by their
+   current position given most recent changes.  each lod set is sorted/sent
+   a given 1:sort_*_ratio of times or 1:1 for near one's based on proximity to
+   viewpoint(vpt).  as the hmap holding fov0 thus vpt, is sent directly to
+   proc_hmapf() in advance of this function, it passes here yet does not get
+   proc'd on the second try at proc. */
 void
 sort_proc_hmaps(vf_t *vpt)
 {
@@ -294,14 +299,14 @@ sort_proc_hmaps(vf_t *vpt)
 			(&rel)->z = -vpt->z + (*pp_lr_n)->v_pos.z;
 			(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 			if((&rel)->m <= near_threshf) {
-				proc_hmapf(*pp_lr_n, VRT_MASK_LOD_NEAR);
+				proc_hmapf(*pp_lr_n, VRT_MASK_LOD_NEAR, 1);
 				*(--pp_rl_n) = *(pp_lr_n--); /* move in near */
 			} else {
 				if(dlr_p) { /* move to perif left to right */
-					proc_hmapf(*pp_lr_n, VRT_MASK_LOD_PERIF);
+					proc_hmapf(*pp_lr_n, VRT_MASK_LOD_PERIF, 1);
 					*(++pp_lr_p) = *(pp_lr_n--);
 				} else { /* move to perif right to left */
-					proc_hmapf(*pp_lr_n, VRT_MASK_LOD_PERIF);
+					proc_hmapf(*pp_lr_n, VRT_MASK_LOD_PERIF, 1);
 					*(--pp_rl_p) = *(pp_lr_n--);
 				}
 			}
@@ -324,14 +329,14 @@ sort_proc_hmaps(vf_t *vpt)
 			(&rel)->z = -vpt->z + (*pp_rl_n)->v_pos.z;
 			(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 			if((&rel)->m <= near_threshf) {
-				proc_hmapf(*pp_rl_n, VRT_MASK_LOD_NEAR);
+				proc_hmapf(*pp_rl_n, VRT_MASK_LOD_NEAR, 1);
 				*(++pp_lr_n) = *(pp_rl_n++); /* moves in near */
 			} else {
 				if(dlr_p) { /* moves to perif left to right */
-					proc_hmapf(*pp_rl_n, VRT_MASK_LOD_PERIF);
+					proc_hmapf(*pp_rl_n, VRT_MASK_LOD_PERIF, 1);
 					*(++pp_lr_p) = *(pp_rl_n++);
 				} else { /* moves to perif right to left */
-					proc_hmapf(*pp_rl_n, VRT_MASK_LOD_PERIF);
+					proc_hmapf(*pp_rl_n, VRT_MASK_LOD_PERIF, 1);
 					*(--pp_rl_p) = *(pp_rl_n++);
 				}
 			}
@@ -359,23 +364,23 @@ sort_proc_hmaps(vf_t *vpt)
 				(&rel)->z = -vpt->z + (*pp_lr_p)->v_pos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 				if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
-					proc_hmapf(*pp_lr_p, VRT_MASK_LOD_PERIF);
+					proc_hmapf(*pp_lr_p, VRT_MASK_LOD_PERIF, sort_perif_ratio);
 					*(--pp_rl_p) = *(pp_lr_p--); /* move in perif */
 				} else {
 					if((&rel)->m <= near_threshf) {
 						if(dlr_n) { /* moves to near left to right */
-							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_NEAR);
+							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
 							*(++pp_lr_n) = *(pp_lr_p--);
 						} else { /* moves to near right to left */
-							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_NEAR);
+							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
 							*(--pp_rl_n) = *(pp_lr_p--);
 						}
 					} else { /* far */
 						if(dlr_f) { /* moves to far left to right */
-							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_FAR);
+							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
 							*(++pp_lr_f) = *(pp_lr_p--);
 						} else { /* moves to far right to left */
-							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_FAR);
+							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
 							*(--pp_rl_f) = *(pp_lr_p--);
 						}
 					}
@@ -403,24 +408,24 @@ sort_proc_hmaps(vf_t *vpt)
 				(&rel)->z = -vpt->z + (*pp_rl_p)->v_pos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 				if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
-					proc_hmapf(*pp_rl_p, VRT_MASK_LOD_PERIF);
+					proc_hmapf(*pp_rl_p, VRT_MASK_LOD_PERIF, sort_perif_ratio);
 					*(++pp_lr_p) = *(pp_rl_p++); /* moves in perif */
 				} else {
 					if((&rel)->m <= near_threshf) {
 						if(dlr_n) { /* moves to near left to right */
-							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_NEAR);
+							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
 							*(++pp_lr_n) = *(pp_rl_p++);
 
 						} else { /* moves to near right to left */
-							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_NEAR);
+							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
 							*(--pp_rl_n) = *(pp_rl_p++);
 						}
 					} else { /* far */
 						if(dlr_f) { /* moves to far left to right */
-							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_FAR);
+							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
 							*(++pp_lr_f) = *(pp_rl_p++);
 						} else { /* moves to far right to left */
-							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_FAR);
+							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
 							*(--pp_rl_f) = *(pp_rl_p++);
 						}
 					}
@@ -450,25 +455,25 @@ sort_proc_hmaps(vf_t *vpt)
 				(&rel)->z = -vpt->z + (*pp_lr_f)->v_pos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 				if((&rel)->m > perif_threshf) {
-					proc_hmapf(*pp_lr_f, VRT_MASK_LOD_FAR);
+					proc_hmapf(*pp_lr_f, VRT_MASK_LOD_FAR, sort_far_ratio);
 					*(--pp_rl_f) = *(pp_lr_f--); /* moves in far */
 				} else {
 					/* note: could save cycles heretofore by moving
 					   all non far to perif */
 					if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
 						if(dlr_f) { /* moves to perif left to right */
-							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_PERIF);
+							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
 							*(++pp_lr_p) = *(pp_lr_f--);
 						} else { /* moves to perif right to left */
-							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_PERIF);
+							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
 							*(--pp_rl_p) = *(pp_lr_f--);
 						}
 					} else { /* near */
 						if(dlr_n) { /* moves to near left to right */
-							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_NEAR);
+							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
 							*(++pp_lr_n) = *(pp_lr_f--);
 						} else { /* moves to near right to left */
-							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_NEAR);
+							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
 							*(--pp_rl_n) = *(pp_lr_f--);
 						}
 					}
@@ -496,23 +501,23 @@ sort_proc_hmaps(vf_t *vpt)
 				(&rel)->z = -vpt->z + (*pp_rl_f)->v_pos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 				if((&rel)->m > perif_threshf) {
-					proc_hmapf(*pp_rl_f, VRT_MASK_LOD_FAR);
+					proc_hmapf(*pp_rl_f, VRT_MASK_LOD_FAR, sort_far_ratio);
 					*(++pp_lr_f) = *(pp_rl_f++); /* moves in far */
 				} else {
 					if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
 						if(dlr_f) { /* moves to perif left to right */
-							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_PERIF);
+							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
 							*(++pp_lr_p) = *(pp_rl_f++);
 						} else { /* moves to perif right to left */
-							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_PERIF);
+							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
 							*(--pp_rl_p) = *(pp_rl_f++);
 						}
 					} else { /* near */
 						if(dlr_n) { /* moves to near left to right */
-							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_NEAR);
+							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
 							*(++pp_lr_n) = *(pp_rl_f++);
 						} else { /* moves to near right to left */
-							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_NEAR);
+							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
 							*(--pp_rl_n) = *(pp_rl_f++);
 						}
 					}
@@ -536,17 +541,17 @@ set_lod_envelopef(unsigned int spr, unsigned int sfr, float nrth, float prfth)
 /* per hmap referenced by m, per frame in frequency, process humdrum attribs.
    foreward lod prerequisite to draw function */
 void
-proc_hmapf(hmapf_t *m, int lod)
+proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 {
 
 	vf_t d; /* delta d/t^2 */
 	hmapf_t **a, **b; /* selection buffer */
 
 	/* filter out hmap holding fov0 in alternate passes */
-	if(lod & VRT_MASK_LOD_INF) /* always arrives first */
+	if(lod & VRT_MASK_LOD_INF) /* arrives before sort_proc_hmaps() per frame */
 		fov0_index = m->index;
-	else { /* m->index wont change unless sort_proc_hmaps() changes */
-		if(fov0_index == m->index)
+	else { /* ignore hmap holding fov0 unless it has VRT_MASK_LOD_INF */
+		if(m->index == fov0_index)
 			return;
 	}
 
@@ -591,16 +596,34 @@ flow_over(btoggles_t *balance_criteria)
 	hmapf_t *p = &a_hmaps[0];
 
 	for(i=0;i<vrt_hmaps_max;i++,p++) {
-		if( \
-		(p->attribs.bits & VRT_MASK_FLOW_OVER) & \
-		(p->attribs.balance_filter &= *balance_criteria)) \
-			p->attribs.bits |= VRT_MASK_RECYCLE;
+		if((p->attribs.bits & VRT_MASK_FLOW_OVER) &
+			(p->attribs.balance_filter &= *balance_criteria))
+		p->attribs.bits |= VRT_MASK_RECYCLE;
 	}
 	/* then in positional round these are recycled */
 }
 
-/* search vobspace */
-/* ... */
+/* search vohspace for hmaps holding any of attribits and return references to
+   those in selectf_a.  return number of matches referenced.  until vohspace
+   memory can be resized while running all partials and in-node, this search
+   may be rather suboptimal, as vrt_hmaps_max hmaps are always searched
+   regardless of whether they are attached or not */
+int
+search_vohspace(select_t *sel, int attribits)
+{
+	int i, matches = 0;
+	hmapf_t *hmap, *p = &a_hmaps[0];
+
+	hmap = *(sel->seta);
+	for(i=0;i<vrt_hmaps_max;i++,p++) {
+		if(p->attribs.bits & attribits) {
+			hmap = p;
+			hmap++;
+			matches++;
+		}	
+	}
+	return matches;
+}
 
 /* tag vobspace */
 /* ... */

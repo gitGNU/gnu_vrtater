@@ -30,7 +30,7 @@ int xwin0y = 800;
 GLXContext glxcontext0;
 int dbuff = 1; /* single or double buffer video, will mabye be compile opt */
 ifdpy_t ifdpy0 = {0,
-	.1150, .1, .035,
+	1.150, .1, .035,
 	0, .017453, .65,
 	0, .017453, .55,
 	0, .017453, .9,
@@ -51,11 +51,11 @@ float vrt_render_cyc; /* external */
 
 /* diagnostic */
 hmapf_t *ryg, *ryg1, *diag1, *diag2, *diag3, *diag4, *diag5, *diag6, *diag8;
-vf_t diag = { 0, 1, 0, 1 };
-vf_t isb = { .5,  0,  0, .5 };
-vf_t jsb = {  0, .5,  0, .5 };
-vf_t ksb = {  0,  0, .5, .5 };
-vf_t vrloc8 = { 0, 0, -8, 8 };
+vf_t diag = { 0, 10, 0, 10 };
+vf_t isb = { 5,  0,  0, 5 };
+vf_t jsb = {  0, 5,  0, 5 };
+vf_t ksb = {  0,  0, 5, 5 };
+vf_t vrloc8 = { 0, 0, -80, 80 };
 
 /* pre-alpha dialog */
 hmapf_t *diagtext0; /* hmap to recieve text entry */
@@ -171,7 +171,6 @@ shutdown_dialog_interface(void)
 void
 node(int argc, char **argv)
 {
-
 	/* initialize node */
 
 	setup_glx(argc, argv);
@@ -215,7 +214,7 @@ node(int argc, char **argv)
 	ryg->ang_dpl = 0;
 	set_vf(&(ryg->v_vel), 0, 0, 0, 0);
 	set_vf(&(ryg->v_axi), .707106, .707106, 0, 1);
-	set_vf(&(ryg->v_pos), 0, 49.5, -1, 0);
+	set_vf(&(ryg->v_pos), 0, 495, -10, 0);
 	form_mag_vf(&(ryg->v_pos));
 
 	ryg1 = (hmapf_t *) p_hmapf(2);
@@ -223,7 +222,7 @@ node(int argc, char **argv)
 	ryg1->ang_dpl = 3.141592;
 	set_vf(&(ryg1->v_vel), 0, 0, 0, 0);
 	set_vf(&(ryg1->v_axi), 0, .707106, .707106, 1);
-	set_vf(&(ryg1->v_pos), 0, 49.5, 1, 0);
+	set_vf(&(ryg1->v_pos), 0, 495, 10, 0);
 	form_mag_vf(&(ryg1->v_pos));
 
 	/* diag */
@@ -231,19 +230,19 @@ node(int argc, char **argv)
 	diag1->ang_spd = .000012; 
 	set_vf(&(diag1->v_vel), 0, .1, 0, .1);
 	set_vf(&(diag1->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag1->v_pos), 7.071, 7.071, 7.071, 1);
+	set_vf(&(diag1->v_pos), 70.71, 70.71, 70.71, 10);
 
 	diag2 = (hmapf_t *) p_hmapf(4);
 	diag2->ang_spd = .000010;
 	set_vf(&(diag2->v_vel), 0, .1, 0, .1);
 	set_vf(&(diag2->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag2->v_pos), 7.071, 7.071, -7.071, 1);
+	set_vf(&(diag2->v_pos), 70.71, 70.71, -70.71, 10);
 
 	diag3 = (hmapf_t *) p_hmapf(5);
 	diag3->ang_spd = .000015;
 	set_vf(&(diag3->v_vel), 0, .1, 0, .1);
 	set_vf(&(diag3->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag3->v_pos), 7.071, -7.071, 7.071, 1);
+	set_vf(&(diag3->v_pos), 70.71, -70.71, 70.71, 10);
 
 	/* diag: std basis */
 	diag4 = (hmapf_t *) p_hmapf(6);
@@ -578,6 +577,7 @@ node(int argc, char **argv)
 				break;
 
 				case ButtonPress:
+					;
 				break;
 
 				case ButtonRelease:
@@ -640,7 +640,7 @@ node(int argc, char **argv)
 		
 		/* fov0 is passed and rendered first to set fp_oa */
 		init_next_buffer();
-		proc_hmapf(fov0, VRT_MASK_LOD_INF);
+		proc_hmapf(fov0, VRT_MASK_LOD_INF, 1);
 
 		/* regenerate next frame's worth of hmaps modifying hmap
 		   position vs. v_vel, and (soon rotation/)v_pos through
@@ -660,11 +660,11 @@ node(int argc, char **argv)
 	hmapf_t **p = (hmapf_t **)selectf_a;
 	*p = diagtext0;
 	select_t kbd = { 0, 1, (hmapf_t **)p, 0, NULL };
-	genopts_t genopts;
+	genopts_t genopts; /* btw: this is only valid in generator.c */
 	dialog(&kbd, &genopts);
 
 #define DIAG
-#ifdef DIAG
+#ifdef DIAG_OFF
 		/* diag term output */
 		__builtin_printf("\nfov0\n");
 		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",

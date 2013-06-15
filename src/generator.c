@@ -96,9 +96,9 @@ generate_vohspace(void)
 	/* for now */
 	int i;
 	hmapf_t *p;
-	vf_t d, ptl = { 56, 56, 56, 96.994845 };
+	vf_t d, ptl = { 560, 560, 560, 969.94845 };
 
-	set_vf(&d, 0, .001, -.003, 0);
+	set_vf(&d, 0, .01, -.03, 0);
 	form_mag_vf(&d); 
 
 	/* add hmaps to in-node vs. cfg. should add test for vohspace full.
@@ -109,16 +109,16 @@ generate_vohspace(void)
 		if((p = hmapf_icosahedron_c(&session, .01)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<2;i++)
-		if((p = hmapf_cube_c(&session, .3, .3, .3)))
+		if((p = hmapf_cube_c(&session, 3, 3, 3)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<6;i++)
-		if((p = hmapf_icosahedron_c(&session, .2)))
+		if((p = hmapf_icosahedron_c(&session, 2)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<10;i++)
-		if((p = hmapf_cube_c(&session, 10, 10, 10)))
+		if((p = hmapf_cube_c(&session, 100, 100, 100)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 	for(i=0;i<1;i++)
-		if((p = hmapf_cylinder_c(&session, 1, 25, 1.35, 0)))
+		if((p = hmapf_cylinder_c(&session, 10, 25, 13.5, 0)))
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 }
 
@@ -127,52 +127,68 @@ regenerate_scene(vf_t *vpt)
 {
 	renderer_next_genopts(&genopts);
 
+	/* generator options.  bits in vobspace_criteria have 2 forms.  some
+	   like VRT_MASK_LODSET_EXTERNAL is always cleared after use or it would
+	   cause repeated writing of lod parameters.  others like
+	   VRT_MASK_SHUTDOWN define a relatively infrequent condition awaiting
+	   a response.  this type is continually processed until the response
+	   is realized or until the bit is unset by calling code */
+	if((&genopts)->vobspace_criteria & (
+		VRT_MASK_SHUTDOWN |
+		VRT_MASK_HMAP_MODELING |
+		VRT_MASK_LODSET_EXTERNAL))
+	{
+		if((&genopts)->vobspace_criteria & VRT_MASK_SHUTDOWN)
+		{
+			if((&genopts)->vobspace_criteria & VRT_MASK_DASHF)
+				;
+			else
+				;
+		}
+		else if((&genopts)->vobspace_criteria & VRT_MASK_HMAP_MODELING)
+		{
+			/*  */
+			;
+		}
+		else if((&genopts)->vobspace_criteria & VRT_MASK_LODSET_EXTERNAL)
+		{
+			set_lod_envelopef(
+				(&genopts)->sort_perif_ratio,
+				(&genopts)->sort_far_ratio,
+				(&genopts)->near_threshf,
+				(&genopts)->perif_threshf);
+			(&genopts)->vobspace_criteria &= (-1 ^ VRT_MASK_LODSET_EXTERNAL);
+		}
+	}
+
 	/* sort hmaps and cue them for drawing */
 	sort_proc_hmaps(vpt);
 
-	/* cycle network */
+	/* cycle network
+	   fill selectf_a with ref's to hmaps to be transfered */
 	session_sync();
-	/* collect_off_node_vobs() */
+
+	/* enumerate incoming vobs that session.c retrieves from other nodes
+	   and then references in selectf_b.  meanwhile write references for
+	   incoming hmaps with new dialog into selectf_a */
 	/* ... */
 
-	/* pass on-node hmaps with modified dialog to dialog().
-	   pass all in-node and in-node partial hmaps to dialog if
-	   VRT_MASK_HMAP_MODELING is set.
-	   diag: for now, simulate case where some in-node dialog, newly
-	   created by modeling transforms, has been generated in hmap 15 */
+	/* modeling
+	   any dialog introduced by modeling functions is sent directly to dialog()
+	   directly, and will have VRT_MASK_HMAP_MODELING set.  any dialog
+	   written by code in dialog.c itself is implicit.  for now, simulate
+	   case where some in-node dialog, newly created by modeling transforms,
+	   has been generated in hmap 15 */
 	hmapf_t **p = (hmapf_t **)selectf_a;
 	static int recurrant = 0;
 	if(!recurrant++) {
 		*p = p_hmapf(15);
 		select_t s = { 0, 1, (hmapf_t **)p, 0, NULL };
-		char a_char[] = "dialog: "
-			"pass here and everything is published unless encrypted\n";
+		char a_char[] = "dialog: pass here and "
+			"everything is published unless encrypted\n";
 		add_dialog(&s, a_char, strlen(a_char), 0);
+		(*p)->attribs.bits |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
 		dialog(&s, &genopts);
-	}
-
-	/* generator options */
-	if((&genopts)->vobspace_criteria & (
-		VRT_MASK_SHUTDOWN |
-		VRT_MASK_HMAP_MODELING |
-		VRT_MASK_LODSET_EXTERNAL)
-	) {
-		switch((&genopts)->vobspace_criteria) {
-
-			case VRT_MASK_SHUTDOWN:
-			break;
-
-			case VRT_MASK_SHUTDOWN & VRT_MASK_DASHF:
-			break;
-
-			case VRT_MASK_HMAP_MODELING:
-			break;
-
-			case VRT_MASK_LODSET_EXTERNAL:
-			set_lod_envelopef(2, 4, 1000.0, 10000.0);
-			(&genopts)->vobspace_criteria &= (-1 ^ VRT_MASK_LODSET_EXTERNAL);
-			break;
-		}
 	}
 
 	/* timer

@@ -9,6 +9,8 @@
 #include "progscope.h"
 #include "attribs.h"
 
+unsigned int vrt_hmaps_max; /* external */
+
 /* attach an empty hmap to given session */
 hmapf_t *
 hmapf(session_t *session)
@@ -26,8 +28,8 @@ hmapf(session_t *session)
 	}
 	/* append hmap index to session name */
 	p->name = *session | (session_t)p->index;
-	__builtin_printf("generated hmap %x (%i)\n",
-		(int)p->name, p->index);
+	__builtin_printf("generated hmap %x (index %i, free maps %u/%u)\n",
+		(int)p->name, p->index, vrt_hmaps_max - hmap_count(), vrt_hmaps_max);
 	return p;
 }
 
@@ -35,4 +37,10 @@ hmapf_t *
 p_hmapf(int i)
 {
 	return &a_hmaps[i];
+}
+
+unsigned int
+hmap_count(void)
+{
+	return hmaps_total;
 }

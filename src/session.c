@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include "progscope.h"
+#include "hmap.h"
 
 /* for now */
 session_desc_t a_all_sessions[VRT_MAX_CUED_SESSIONS];
@@ -26,7 +27,14 @@ init_sessions(void)
 		(&a_prev_caller_sessions[i])->session = 0;
 }
 
-/* statefully retrieve and proc for remote node session responces */
+/* statefully send to, retrieve from, and proc remote node session responces.
+   outbound hmaps are referenced in selectf_a, and inbound one's are referenced
+   out of selectf_b by caller.  outbound hmaps include all partial(non-in-node)
+   hmaps with any changes.  these could be sent in reduced form and restored
+   apon reception.  examples of hmaps with data dropable before send are: hmaps
+   with positional data changes and no data changes(see: hmap->attribs bits
+   VRT_MASK_VERTICE_MODS and VRT_MASK_DIALOG_MODS), magnitudes of vectors,
+   hmap index and pointers to data(useless outside of node) ... */
 void
 session_sync(void)
 {

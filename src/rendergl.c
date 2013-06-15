@@ -13,7 +13,14 @@
 #include "hmap.h"
 
 hmapf_t *fov0;
-vf_t oa_fp, *vpt = &oa_fp; 
+vf_t oa_fp, *vpt = &oa_fp;
+
+/* generator options */
+int genopts_changed = 0;
+unsigned int sp_ratio = 1;
+unsigned int sf_ratio = 15;
+float near_thresh = 10000.0;
+float perif_thresh = 100000.0;
 
 void
 init_renderer(void)
@@ -29,7 +36,7 @@ init_renderer(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	/* left, right, bottom, top, near, far */
-	glFrustum(-.03, .03, -.03, .03, .03, 10000.0); /* for now */
+	glFrustum(-.3, .3, -.3, .3, .3, 10000.0); /* for now */
 
 	/* assume modeling transforms */
 	glMatrixMode(GL_MODELVIEW);
@@ -48,18 +55,25 @@ init_next_buffer(void)
 	glColor3f(.1,.5,0);
 }
 
-/* called after hmap holding fov0 is sent */
+/* called after hmap holding fov0 is sent yet before sort_proc_hmaps() */
 void
 renderer_next_genopts(genopts_t *genopts)
 {
-	;
+	if(genopts_changed) {
+		/* lod */
+		genopts->vobspace_criteria |= VRT_MASK_LODSET_EXTERNAL;
+		genopts->sort_perif_ratio = sp_ratio;
+		genopts->sort_far_ratio = sf_ratio;
+		genopts->near_threshf = near_thresh;
+		genopts->perif_threshf = perif_thresh;
+		genopts_changed = 0;
+	}
 }
 
 /* called per hmap per frame vs. DRAWGEOM, draw hmaps where format supported */
 void
 render_hmapf(hmapf_t *hmap, int lod)
 {
-
 	int i, j;
 	vf_t v, nv, edge, plane, *data_vf = hmap->p_data_vf;
 	GLfloat glv[3][3], gln[3];
@@ -74,7 +88,6 @@ render_hmapf(hmapf_t *hmap, int lod)
 		case VRT_MASK_LOD_INF:
 		fov0 = hmap; /* vs. filter in proc_hmapf() sent once, first */
 		vpt = &(hmap->v_pos);
-		//__builtin_printf("vpt rend %f %f %f\n", vpt->x, vpt->y, vpt->z);
 		break;
 
 		case VRT_MASK_LOD_NEAR:

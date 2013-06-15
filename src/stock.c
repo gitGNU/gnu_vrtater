@@ -33,28 +33,9 @@
 hmapf_t *
 hmapf_icosahedron_c(session_t *session, float r)
 {
-	int icosahedron_c_idx[VRT_ICOSAHEDRON_C_FCOUNT][3] = {
-		{0, 1, 3}, {0, 3, 5}, {0, 5, 4}, {0, 4, 2}, {0, 2, 1},
-		{1, 7, 3}, {3, 7, 9}, {3, 9, 5}, {5, 9, 10}, {4, 5, 10},
-		{4, 10, 8}, {2, 4, 8}, {2, 8, 6}, {1, 2, 6}, {1, 6, 7},
-		{6, 11, 7}, {7, 11, 9}, {9, 11, 10}, {8, 10, 11}, {6, 8, 11}
-	};
+	int icosahedron_c_idx[VRT_ICOSAHEDRON_C_FCOUNT][3] = {{0, 1, 3}, {0, 3, 5}, {0, 5, 4}, {0, 4, 2}, {0, 2, 1}, {1, 7, 3}, {3, 7, 9}, {3, 9, 5}, {5, 9, 10}, {4, 5, 10}, {4, 10, 8}, {2, 4, 8}, {2, 8, 6}, {1, 2, 6}, {1, 6, 7}, {6, 11, 7}, {7, 11, 9}, {9, 11, 10}, {8, 10, 11}, {6, 8, 11}};
 
-	float a_icosahedron_c[12][3] = {
-					{0, ISL2+ENDH, 0}, /* 0 */
-
-					{0, ISL2, ATIP}, /* 1 */
-		{-LNK, ISL2, WKY}, /* 2 */			{LNK, ISL2, WKY}, /* 3 */
-
-			{-ETIP, ISL2, -AEDG}, /* 4 */	{ETIP, ISL2, -AEDG}, /* 5 */
-
-			{-ETIP, -ISL2, AEDG}, /* 6 */	{ETIP, -ISL2, AEDG}, /* 7 */
-
-		{-LNK, -ISL2, -WKY}, /* 8 */			{LNK, -ISL2, -WKY}, /* 9 */
-					{0, -ISL2, -ATIP}, /* 10 */
-
-					{0, -ISL2-ENDH, 0} /* 11 */
-	};
+	float a_icosahedron_c[12][3] = {{0, ISL2+ENDH, 0}, {0, ISL2, ATIP}, {-LNK, ISL2, WKY}, {LNK, ISL2, WKY}, {-ETIP, ISL2, -AEDG}, {ETIP, ISL2, -AEDG}, {-ETIP, -ISL2, AEDG}, {ETIP, -ISL2, AEDG}, {-LNK, -ISL2, -WKY}, {LNK, -ISL2, -WKY}, {0, -ISL2, -ATIP}, {0, -ISL2-ENDH, 0}};
 
 	int i, j;
 	vf_t av[3], *tri;
@@ -107,19 +88,9 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 {
 	int i, j;
 
-	int cube_c_idx[VRT_CUBE_C_FCOUNT][3] = {
-		{2, 3, 1}, {1, 0, 2}, {6, 7, 3}, {3, 2, 6}, {7, 5, 1}, {1, 3, 7},
-		{5, 4, 0}, {0, 1, 5}, {4, 6, 2}, {2, 0, 4}, {4, 5, 7}, {7, 6, 4}
-	};
+	int cube_c_idx[VRT_CUBE_C_FCOUNT][3] = {{2, 3, 1}, {1, 0, 2}, {6, 7, 3}, {3, 2, 6}, {7, 5, 1}, {1, 3, 7}, {5, 4, 0}, {0, 1, 5}, {4, 6, 2}, {2, 0, 4}, {4, 5, 7}, {7, 6, 4}};
 
-	float a_cube_c[8][3] = {
-		{-QDR_SZ, QDR_SZ, -QDR_SZ}, /* 0 */ {QDR_SZ, QDR_SZ, -QDR_SZ}, /* 1 */
-	   {-QDR_SZ, QDR_SZ, QDR_SZ}, /* 2 */		{QDR_SZ, QDR_SZ, QDR_SZ}, /* 3 */
-
-		{-QDR_SZ, -QDR_SZ, -QDR_SZ}, /* 4 */ {QDR_SZ, -QDR_SZ, -QDR_SZ}, /* 5 */
-
-	   {-QDR_SZ, -QDR_SZ, QDR_SZ}, /* 6 */		{QDR_SZ, -QDR_SZ, QDR_SZ} /* 7 */
-	};
+	float a_cube_c[8][3] = {{-QDR_SZ, QDR_SZ, -QDR_SZ}, {QDR_SZ, QDR_SZ, -QDR_SZ}, {-QDR_SZ, QDR_SZ, QDR_SZ}, {QDR_SZ, QDR_SZ, QDR_SZ}, {-QDR_SZ, -QDR_SZ, -QDR_SZ}, {QDR_SZ, -QDR_SZ, -QDR_SZ}, {-QDR_SZ, -QDR_SZ, QDR_SZ}, {QDR_SZ, -QDR_SZ, QDR_SZ}};
 
 	vf_t av[3], *tri;
 
@@ -168,30 +139,30 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 
 /* enscribe a cylinder_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
    r radius, e capedges, l length, and t threads per that length.  t may be 0.
-	the first and last threads have end taper's adding an extra thread length.
-	n length/(threads + 1) sized lengths are created, the threads and the taper
-	set contained therein them.  return null pointer if vohspace full */
+   the first and last threads have end taper's adding an extra thread length.
+   n length/(threads + 1) sized lengths are created, the threads and the taper
+   set contained therein them.  return null pointer if vohspace full */
 hmapf_t *
 hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 {
 	int i, j;
-	float yoffset = l / 2;							/* scaling vs. y axis of hmap */
-	float halfa = 2 * M_PI / e;					/* half corner angle */
-	float lpthread = l / (t + 1);					/* cylinder length per thread */
-	float incthread = lpthread / e;				/* increment sum for thread */
-	vf_t a, b, c, *itr, *tri;						/* vrtater coords */
+	float yoffset = l / 2; /* scaling vs. y axis of hmap */
+	float halfa = 2 * M_PI / e; /* half corner angle */
+	float lpthread = l / (t + 1); /* cylinder length per thread */
+	float incthread = lpthread / e; /* increment sum for thread */
+	vf_t a, b, c, *itr, *tri; /* vrtater coords */
 
 #define CYL_MORE_IMPLEMENTED_SOMETIME
 #ifdef CYL_MORE_IMPLEMENTED
-	float ledge = r * 2 * sin(M_PI / e);		/* length of polygon edge */
-	float tprhyp = ledge * e;						/* taper hyptoenuse */
-	float pitcha = atan(lpthread / tprhyp);	/* pitch angle of thread */
-	float pitchhyp = tprhyp / cos(pitcha);		/* pitch hypotenuse */
-	float tpradj = tprhyp * cos(pitcha);		/* taper adjacent */
-	float spanbase = e * (1 /(e - .5));			/* span triangle base */
-	float threadspan = tprhyp * sin(pitcha);	/* thread span */
+	float ledge = r * 2 * sin(M_PI / e); /* length of polygon edge */
+	float tprhyp = ledge * e; /* taper hyptoenuse */
+	float pitcha = atan(lpthread / tprhyp); /* pitch angle of thread */
+	float pitchhyp = tprhyp / cos(pitcha); /* pitch hypotenuse */
+	float tpradj = tprhyp * cos(pitcha); /* taper adjacent */
+	float spanbase = e * (1 /(e - .5)); /* span triangle base */
+	float threadspan = tprhyp * sin(pitcha); /* thread span */
 	float tprend = sin(spanbase * e) - tprhyp; /* taper endpiece */
-	float tproffs = tprend / e;					/* taper offset */
+	float tproffs = tprend / e; /* taper offset */
 #endif
 
 	hmapf_t *hmap;

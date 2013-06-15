@@ -424,7 +424,7 @@ cp_hmapf(select_t *sel)
 }
 
 /*
-	for c series hmaps, invert surface normals of (for now) a single hmap
+   for c series hmaps, invert surface normals of (for now) a single hmap
    referenced as first item in *(sel->seta) by inverting the precedence of
    drawing for each vertice.
 */
