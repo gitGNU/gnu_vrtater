@@ -22,7 +22,6 @@
 #include "rendergl.h"
 #endif /* VRT_RENDER_GL */
 
-genopts_t genopts;
 unsigned int vrt_hmaps_max; /* external */
 
 /* selection buffer */
@@ -125,42 +124,6 @@ generate_vohspace(void)
 void
 regenerate_scene(vf_t *vpt)
 {
-	renderer_next_genopts(&genopts);
-
-	/* generator options.  bits in vobspace_criteria have 2 forms.  some
-	   like VRT_MASK_LODSET_EXTERNAL is always cleared after use or it would
-	   cause repeated writing of lod parameters.  others like
-	   VRT_MASK_SHUTDOWN define a relatively infrequent condition awaiting
-	   a response.  this type is continually processed until the response
-	   is realized or until the bit is unset by calling code */
-	if((&genopts)->vobspace_criteria & (
-		VRT_MASK_SHUTDOWN |
-		VRT_MASK_HMAP_MODELING |
-		VRT_MASK_LODSET_EXTERNAL))
-	{
-		if((&genopts)->vobspace_criteria & VRT_MASK_SHUTDOWN)
-		{
-			if((&genopts)->vobspace_criteria & VRT_MASK_DASHF)
-				;
-			else
-				;
-		}
-		else if((&genopts)->vobspace_criteria & VRT_MASK_HMAP_MODELING)
-		{
-			/*  */
-			;
-		}
-		else if((&genopts)->vobspace_criteria & VRT_MASK_LODSET_EXTERNAL)
-		{
-			set_lod_envelopef(
-				(&genopts)->sort_perif_ratio,
-				(&genopts)->sort_far_ratio,
-				(&genopts)->near_threshf,
-				(&genopts)->perif_threshf);
-			(&genopts)->vobspace_criteria &= (-1 ^ VRT_MASK_LODSET_EXTERNAL);
-		}
-	}
-
 	/* sort hmaps and cue them for drawing */
 	sort_proc_hmaps(vpt);
 
@@ -188,7 +151,7 @@ regenerate_scene(vf_t *vpt)
 			"everything is published unless encrypted\n";
 		add_dialog(&s, a_char, strlen(a_char), 0);
 		(*p)->attribs.bits |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
-		dialog(&s, &genopts);
+		dialog(&s);
 	}
 
 	/* timer

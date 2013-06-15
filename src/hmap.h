@@ -148,5 +148,6 @@ extern hmapf_t *selectf_b;
 hmapf_t *hmapf(session_t *);
 hmapf_t *p_hmapf(int i);
 unsigned int hmap_count(void);
+void set_lod_envelopef(float near_thresh, float perif_thresh, unsigned int sp_ratio, unsigned int sf_ratio);
 
 #endif /* VRT_HMAP_H */

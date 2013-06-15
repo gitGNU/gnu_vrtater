@@ -9,7 +9,7 @@
 #include "progscope.h"
 #include "hmap.h"
 
-void dialog(select_t *, genopts_t *);
+void dialog(select_t *);
 int write_dialog(select_t *, char *);
 int append_dialog(select_t *, char *);
 

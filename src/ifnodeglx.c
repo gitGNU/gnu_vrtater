@@ -660,11 +660,10 @@ node(int argc, char **argv)
 	hmapf_t **p = (hmapf_t **)selectf_a;
 	*p = diagtext0;
 	select_t kbd = { 0, 1, (hmapf_t **)p, 0, NULL };
-	genopts_t genopts; /* btw: this is only valid in generator.c */
-	dialog(&kbd, &genopts);
+	dialog(&kbd);
 
-#define DIAG
-#ifdef DIAG_OFF
+#define DIAG_OFF
+#ifdef DIAG
 		/* diag term output */
 		__builtin_printf("\nfov0\n");
 		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",

@@ -25,12 +25,6 @@ unsigned int vrt_hmaps_max; /* external */
 float vrt_render_cyc; /* external */
 int fov0_index;
 
-/* lod envelopes */
-unsigned int sort_perif_ratio = 8; /* sort per n'th pass */
-unsigned int sort_far_ratio = 64;
-float near_threshf = 10000.0; /* represent 10000m */
-float perif_threshf  = 100000.0;
-
 /* hmap memory, sorting */
 hmapf_t *ap_hmap_near;
 hmapf_t *ap_hmap_perif;
@@ -154,6 +148,12 @@ init_vohspace(void)
 		p->p_dialog = NULL;
 		p->dialog_len = 0;
 	}
+
+	/* lod envelope defaults for sort_proc_hmaps(), for now */
+	sort_perif_ratio = 1; /* render decomplextimates */
+	sort_far_ratio = 15; /* approx once per 1/2 second */
+	near_threshf = 10000.0; /* represent 10000m */
+	perif_threshf  = 100000.0;
 }
 
 /* free all dynamic memory associated with vohspace and selection buffer */
@@ -526,16 +526,6 @@ sort_proc_hmaps(vf_t *vpt)
 			dlr_f = (dlr_f + 1) % 2; /* flip direction */
 		}
 	}
-}
-
-/* set lod envelopes */
-void
-set_lod_envelopef(unsigned int spr, unsigned int sfr, float nrth, float prfth)
-{
-	sort_perif_ratio = spr;
-	sort_far_ratio = sfr;
-	near_threshf = nrth;
-	perif_threshf = prfth;
 }
 
 /* per hmap referenced by m, per frame in frequency, process humdrum attribs.

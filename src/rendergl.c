@@ -55,21 +55,6 @@ init_next_buffer(void)
 	glColor3f(.1,.5,0);
 }
 
-/* called after hmap holding fov0 is sent yet before sort_proc_hmaps() */
-void
-renderer_next_genopts(genopts_t *genopts)
-{
-	if(genopts_changed) {
-		/* lod */
-		genopts->vobspace_criteria |= VRT_MASK_LODSET_EXTERNAL;
-		genopts->sort_perif_ratio = sp_ratio;
-		genopts->sort_far_ratio = sf_ratio;
-		genopts->near_threshf = near_thresh;
-		genopts->perif_threshf = perif_thresh;
-		genopts_changed = 0;
-	}
-}
-
 /* called per hmap per frame vs. DRAWGEOM, draw hmaps where format supported */
 void
 render_hmapf(hmapf_t *hmap, int lod)

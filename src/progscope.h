@@ -89,41 +89,6 @@ enum {
 #define VRT_MASK_LOD_FAR (1 << VRT_ORDINAL_LOD_FAR)
 };
 
-/* generator_opts_t
-   generator.c includes dialog*.h and render*.h both recieving &genopts.  when
-   given criteria are turned off, code in generator.c will try to maintain
-   reasonable values for all options here otherwise specified.  said code will
-   also tend to any implicit considerations when these options are chosen vs.
-   given associated values if any, based on determination thru haptic qualities
-   of hmaps vs. vohspace.  also, balance_criteria is still in the works, and
-   may be proposed as some hybrid of bits vs. a quantity once needed */
-struct generator_opts {
-	/* may be used by caller and called */
-	btoggles_t balance_criteria; /* balance_filter options */
-	btoggles_t vobspace_criteria; /* context options */
-	int why; /* fail, ... */
-	int what; /* shutdown, ... */
-	double when; /* shutdown, ... */
-	int sort_perif_ratio; /* lod envelope */
-	int sort_far_ratio;
-	float near_threshf;
-	float perif_threshf;
-};
-typedef struct generator_opts genopts_t;
-
-/* gen_opts_t vobspace_criteria.  effective while held high, some of these
-   where noted, will be cleared by generator after use */
-enum {
-	VRT_ORDINAL_SHUTDOWN,
-#define VRT_MASK_SHUTDOWN (1 << VRT_ORDINAL_SHUTDOWN)
-	VRT_ORDINAL_DASHF,
-#define VRT_MASK_DASHF (1 << VRT_ORDINAL_DASHF)
-	VRT_ORDINAL_HMAP_MODELING,
-#define VRT_MASK_HMAP_MODELING (1 << VRT_ORDINAL_HMAP_MODELING)
-	VRT_ORDINAL_LODSET_EXTERNAL
-#define VRT_MASK_LODSET_EXTERNAL (1 << VRT_ORDINAL_LODSET_EXTERNAL)
-};
-
 /* rvals */
 #define LVAL_TRUE 1
 #define LVAL_FALSE 0

@@ -19,7 +19,6 @@
 
 void init_renderer(void);
 void init_next_buffer(void);
-void renderer_next_genopts(genopts_t *genopts);
 void render_hmapf(hmapf_t *, int lodval);
 void render_vobspace(int);
 

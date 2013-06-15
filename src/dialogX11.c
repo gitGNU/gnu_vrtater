@@ -23,7 +23,7 @@ int read_dialog_set(select_t *);
 /* passthrough function per frame
    given sel(dialog in hmapf's via selectf_a[] or b[]) and o(generator opts). */
 void
-dialog(select_t *sel, genopts_t *o)
+dialog(select_t *sel)
 {
 	/* ui: retrieve local dialog */
 	dialog_with_local_user();
@@ -34,8 +34,11 @@ dialog(select_t *sel, genopts_t *o)
 	   presented are simulated test case's of varied in-node vob's affected
 	   by modeling.  for now function as a pre-alpha version diagnostic for
 	   dialog and simply write first element of selectf_a to stdout. */
+#define DIAG_OFF
+#ifdef DIAG
 	select_t totty = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
 	read_dialog_set(&totty);
+#endif
 
 	/* retreive dialog with remote users via given dialog in their
 	   hmapf's(if any).  hmapf's have count and arrive in seta.

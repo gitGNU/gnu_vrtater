@@ -10,14 +10,19 @@
 #include "vectors.h"
 
 hmapf_t *a_hmaps;
-unsigned int hmaps_total;
+unsigned int hmaps_total;  /* maintained by attach_hmapf() and detach_hmapf() */
+
+/* lod envelopes */
+unsigned int sort_perif_ratio; /* sort per n'th pass */
+unsigned int sort_far_ratio;
+float near_threshf;
+float perif_threshf;
 
 void init_vohspace(void);
 void free_vohspace_memory(void);
 hmapf_t *attach_hmapf(void);
 void detach_hmapf(hmapf_t *);
 void sort_proc_hmaps(vf_t *viewpoint);
-void set_lod_envelopef(unsigned int perifratio, unsigned int farratio, float nearthreshhold, float perifthreshold);
 void proc_hmapf(hmapf_t *, int lodval, int sort_ratio);
 int search_vohspace(select_t *, int attrib);
 void nportf(hmapf_t *, vf_t *);

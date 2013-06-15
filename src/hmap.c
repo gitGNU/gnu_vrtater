@@ -44,3 +44,14 @@ hmap_count(void)
 {
 	return hmaps_total;
 }
+
+/* set lod envelopes */
+void
+set_lod_envelopef(float near, float perif, unsigned int sp_ratio, unsigned int sf_ratio)
+{
+	near_threshf = near;
+	perif_threshf = perif;
+	sort_perif_ratio = sp_ratio;
+	sort_far_ratio = sf_ratio;
+}
+
