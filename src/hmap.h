@@ -6,9 +6,10 @@
 #ifndef VRT_HMAP_H
 #define VRT_HMAP_H
 
-#include "progscope.h"
 #include "bittoggles.h"
 #include "vectors.h"
+
+typedef long long unsigned int session_t; /* 2^16 * n = 2^bitcount */
 
 struct attributes {
 	btoggles_t bits;
@@ -34,10 +35,10 @@ enum { /* attribs_t bits */
 #define VRT_MASK_RECYCLE (1 << VRT_ORDINAL_RECYCLE)
 	VRT_ORDINAL_SESSION_FILTER,
 #define VRT_MASK_SESSION_FILTER (1 << VRT_ORDINAL_SESSION_FILTER)
-	VRT_ORDINAL_ATTACH_BY_FILTER,
-#define VRT_MASK_ATTACH_BY_FILTER (1 << VRT_ORDINAL_ATTACH_BY_FILTER)
-	VRT_ORDINAL_ATTACH_ANY,
-#define VRT_MASK_ATTACH_ANY (1 << VRT_ORDINAL_ATTACH_ANY)
+	VRT_ORDINAL_EXTEND_BY_FILTER,
+#define VRT_MASK_EXTEND_BY_FILTER (1 << VRT_ORDINAL_EXTEND_BY_FILTER)
+	VRT_ORDINAL_EXTEND_ANY,
+#define VRT_MASK_EXTEND_ANY (1 << VRT_ORDINAL_EXTEND_ANY)
 	VRT_ORDINAL_BALANCE_FILTER,
 #define VRT_MASK_BALANCE_FILTER (1 << VRT_ORDINAL_BALANCE_FILTER)
 	VRT_ORDINAL_PUBLISHED,
@@ -56,11 +57,13 @@ enum { /* attribs_t bits */
 #define VRT_MASK_VERTICE_MODS (1 << VRT_ORDINAL_VERTICE_MODS)
 	VRT_ORDINAL_DIALOG_MODS, /* unaffix this locally when sending */
 #define VRT_MASK_DIALOG_MODS (1 << VRT_ORDINAL_DIALOG_MODS)
+	VRT_ORDINAL_ATTACHED /* true when hmap is not detached */
+#define VRT_MASK_ATTACHED (1 << VRT_ORDINAL_ATTACHED)
 };
 
 enum { /* attribs_t modifiers */
-	VRT_ORDINAL_ATTACH_SEAMLESS,
-#define VRT_MASK_ATTACH_SEAMLESS (1 << VRT_ORDINAL_ATTACH_SEAMLESS)
+	VRT_ORDINAL_EXTEND_SEAMLESS,
+#define VRT_MASK_EXTEND_SEAMLESS (1 << VRT_ORDINAL_EXTEND_SEAMLESS)
 	VRT_ORDINAL_WALL_TYPEA
 #define VRT_MASK_WALL_TYPEA (1 << VRT_ORDINAL_WALL_TYPEA)
 };
@@ -85,10 +88,11 @@ struct draw_format {
 };
 typedef struct draw_format draw_t;
 
-enum { /* draw_t geom */
+enum { /* draw_t geom.  note precedence follows n edges */
 	VRT_DRAWGEOM_NONE,
-	VRT_DRAWGEOM_TRIANGLES,
-	VRT_DRAWGEOM_LINES
+	VRT_DRAWGEOM_POINTS,
+	VRT_DRAWGEOM_LINES,
+	VRT_DRAWGEOM_TRIANGLES
 };
 
 struct hmapf {
@@ -139,6 +143,22 @@ enum { /* select_t specbits */
 #define VRT_MASK_MOD_BOTH (1 << VRT_ORDINAL_MOD_BOTH)
 	VRT_ORDINAL_SRCH_BKW
 #define VRT_MASK_SRCH_BKW (1 << VRT_ORDINAL_SRCH_BKW)
+};
+
+/* enumerated levels of detail
+   these are used by attribs.c for sorting hmaps and generator.c for selecting
+   a set of lod envelopes desireable vs. positional code.  they also provide
+   render*.c with a determined average distance of hmaps from viewpoint(vpt)
+   given */
+enum {
+	VRT_ORDINAL_LOD_INF,
+#define VRT_MASK_LOD_INF (1 << VRT_ORDINAL_LOD_INF)
+	VRT_ORDINAL_LOD_NEAR,
+#define VRT_MASK_LOD_NEAR (1 << VRT_ORDINAL_LOD_NEAR)
+	VRT_ORDINAL_LOD_PERIF,
+#define VRT_MASK_LOD_PERIF (1 << VRT_ORDINAL_LOD_PERIF)
+	VRT_ORDINAL_LOD_FAR
+#define VRT_MASK_LOD_FAR (1 << VRT_ORDINAL_LOD_FAR)
 };
 
 /* selection buffers */

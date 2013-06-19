@@ -6,7 +6,6 @@
 #ifndef VRT_STOCK_H
 #define VRT_STOCK_H
 
-#include "progscope.h"
 #include "vectors.h"
 #include "hmap.h"
 

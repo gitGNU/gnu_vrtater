@@ -4,7 +4,7 @@
 */
 
 #include <math.h>
-#include "progscope.h"
+#include "vectors.h"
 
 /* given a 3d vector orgin be that place where it would have 0 magnitude,
    rotate v around axi by dpl, where v and axi share the same orgin

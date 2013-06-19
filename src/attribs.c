@@ -4,13 +4,10 @@
 */
 
 #include <math.h>
-#include <stddef.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "attribs.h"
-#include "hmap.h"
-#include "vectors.h"
+#include "progscope.h"
 #include "transform.h"
 
 #ifdef VRT_RENDERER_GL
@@ -53,7 +50,7 @@ init_vohspace(void)
 	int i;
 	hmapf_t *p, **pap_hmap_n;
 
-	hmaps_total = 0;
+	attached_hmaps = 0;
 	if((a_hmaps = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for a_hmaps\n",
@@ -102,16 +99,16 @@ init_vohspace(void)
 	dlr_f = 1;
 
 	/* put vrt_hmaps_max hmap pointers in near buf */
-	for(i=0;i<vrt_hmaps_max;i++, ++pp_lr_n, pap_hmap_n++)
+	for(i = 0; i < vrt_hmaps_max; i++, ++pp_lr_n, pap_hmap_n++)
 		*pap_hmap_n = p++;
 	/* set hmaps to null default */
 	p = a_hmaps;
-	for(i=0;i<vrt_hmaps_max;i++, p++) {
+	for(i = 0; i < vrt_hmaps_max; i++, p++) {
 		p->name = (session_t)0;
 		p->v_pos.x = 0;
 		p->v_pos.y = 0;
 		p->v_pos.z = 0;
-		p->v_pos.m = perif_threshf + 1;
+		p->v_pos.m = 0x7f7fffff; /* max float */
 		p->v_vel.x = 0;
 		p->v_vel.y = 0;
 		p->v_vel.z = 0;
@@ -161,7 +158,7 @@ void
 free_vohspace_memory(void)
 {
 	int i;
-	for(i=0;i<vrt_hmaps_max;i++) {
+	for(i = 0; i < vrt_hmaps_max; i++) {
 		free((&a_hmaps[i])->p_data_vf);
 		(&a_hmaps[i])->p_data_vf = NULL;
 		free((&a_hmaps[i])->p_dialog);
@@ -182,11 +179,11 @@ attach_hmapf(void)
 	int i;
 	hmapf_t *p = a_hmaps;
 
-	for(i=0;i<vrt_hmaps_max;i++,p++) {
-		if((p->p_data_vf == NULL) && (p->p_dialog == NULL)) {
+	for(i = 0; i < vrt_hmaps_max; i++, p++) {
+		if(!(p->attribs.bits &= VRT_MASK_ATTACHED)) {
 			p->index = i; /* caller index */
-			p = &a_hmaps[i];
-			hmaps_total++;
+			p->attribs.bits |= VRT_MASK_ATTACHED;
+			attached_hmaps++;
 			return p;
 		}
 	}
@@ -205,7 +202,7 @@ detach_hmapf(hmapf_t *p)
 		p->v_pos.x = 0;
 		p->v_pos.y = 0;
 		p->v_pos.z = 0;
-		p->v_pos.m = 0;
+		p->v_pos.m = 0x7f7fffff;
 		p->v_vel.x = 0;
 		p->v_vel.y = 0;
 		p->v_vel.z = 0;
@@ -243,13 +240,14 @@ detach_hmapf(hmapf_t *p)
 		p->dialog_len = 0;
 		p->p_data_vf = NULL;
 		free(p->p_dialog);
-		hmaps_total--;
+		attached_hmaps--;
 		return;
 	}
 	__builtin_fprintf(stderr, "vrtater:%s:%d: "
 		"Error: Can not detach hmap\n "
 		"Pointer reference NULL or outside of buffer\n",
 		__FILE__, __LINE__);
+	abort();
 }
 
 /* for <= vrt_hmaps_max, in each lod set, optionally(except for near and based
@@ -292,7 +290,7 @@ sort_proc_hmaps(vf_t *vpt)
 		pp_rl_n = pp_e_n + 1;
 
 		/* sort */
-		for(i=0;i<count;i++) {
+		for(i = 0; i < count; i++) {
 			/* move relative lod orgin */
 			(&rel)->x = -vpt->x + (*pp_lr_n)->v_pos.x;
 			(&rel)->y = -vpt->y + (*pp_lr_n)->v_pos.y;
@@ -322,7 +320,7 @@ sort_proc_hmaps(vf_t *vpt)
 		pp_lr_n = pp_b_n - 1;
 
 		/* sort */
-		for(i=0;i<count;i++) {
+		for(i = 0; i < count; i++) {
 			/* move relative lod orgin */
 			(&rel)->x = -vpt->x + (*pp_rl_n)->v_pos.x;
 			(&rel)->y = -vpt->y + (*pp_rl_n)->v_pos.y;
@@ -357,7 +355,7 @@ sort_proc_hmaps(vf_t *vpt)
 			pp_rl_p = pp_e_p + 1;
 
 			/* sort */
-			for(i=0;i<count;i++) {
+			for(i = 0; i < count; i++) {
 				/* move relative lod orgin */
 				(&rel)->x = -vpt->x + (*pp_lr_p)->v_pos.x;
 				(&rel)->y = -vpt->y + (*pp_lr_p)->v_pos.y;
@@ -401,7 +399,7 @@ sort_proc_hmaps(vf_t *vpt)
 			pp_lr_p = pp_b_p - 1;
 
 			/* sort */
-			for(i=0;i<count;i++) {
+			for(i = 0; i < count; i++) {
 				/* move relative lod orgin */
 				(&rel)->x = -vpt->x + (*pp_rl_p)->v_pos.x;
 				(&rel)->y = -vpt->y + (*pp_rl_p)->v_pos.y;
@@ -448,7 +446,7 @@ sort_proc_hmaps(vf_t *vpt)
 			pp_rl_f = pp_e_f + 1;
 
 			/* sort */
-			for(i=0;i<count;i++) {
+			for(i = 0; i < count; i++) {
 				/* move relative lod orgin */
 				(&rel)->x = -vpt->x + (*pp_lr_f)->v_pos.x;
 				(&rel)->y = -vpt->y + (*pp_lr_f)->v_pos.y;
@@ -494,7 +492,7 @@ sort_proc_hmaps(vf_t *vpt)
 			pp_lr_f = pp_b_f - 1;
 
 			/* sort */
-			for(i=0;i<count;i++) {
+			for(i = 0; i < count; i++) {
 				/* move relative lod orgin */
 				(&rel)->x = -vpt->x + (*pp_rl_f)->v_pos.x;
 				(&rel)->y = -vpt->y + (*pp_rl_f)->v_pos.y;
@@ -538,7 +536,7 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	hmapf_t **a, **b; /* selection buffer */
 
 	/* filter out hmap holding fov0 in alternate passes */
-	if(lod & VRT_MASK_LOD_INF) /* arrives before sort_proc_hmaps() per frame */
+	if(lod & VRT_MASK_LOD_INF) /* arrives pre sort_proc_hmaps() per frame */
 		fov0_index = m->index;
 	else { /* ignore hmap holding fov0 unless it has VRT_MASK_LOD_INF */
 		if(m->index == fov0_index)
@@ -585,7 +583,7 @@ flow_over(btoggles_t *balance_criteria)
 	int i;
 	hmapf_t *p = &a_hmaps[0];
 
-	for(i=0;i<vrt_hmaps_max;i++,p++) {
+	for(i = 0; i < vrt_hmaps_max; i++, p++) {
 		if((p->attribs.bits & VRT_MASK_FLOW_OVER) &
 			(p->attribs.balance_filter &= *balance_criteria))
 		p->attribs.bits |= VRT_MASK_RECYCLE;
@@ -605,7 +603,7 @@ search_vohspace(select_t *sel, int attribits)
 	hmapf_t *hmap, *p = &a_hmaps[0];
 
 	hmap = *(sel->seta);
-	for(i=0;i<vrt_hmaps_max;i++,p++) {
+	for(i = 0; i < vrt_hmaps_max; i++, p++) {
 		if(p->attribs.bits & attribits) {
 			hmap = p;
 			hmap++;
@@ -649,7 +647,7 @@ nportf(hmapf_t *p, vf_t *loc)
 
 /* for now, guestimate for hmap p, a proportion vs. where it were the same
    volume and reshaped as a sphere, needed to calculate rotation /w a radius
-   this will be moved transform and expanded to guess bound */
+   this will be moved to transform and expanded to guess bound */
 float
 estimate_radiusf(hmapf_t *p)
 {
@@ -664,7 +662,7 @@ estimate_radiusf(hmapf_t *p)
 		break;
 
 		case VRT_BOUND_CYLINDER:
-		r = 0;
+		r = p->envelope.v_sz.x * p->envelope.v_sz.y;
 		break;
 
 		case VRT_BOUND_RCUBOID:
@@ -675,7 +673,8 @@ estimate_radiusf(hmapf_t *p)
 		break;
 
 		case VRT_BOUND_CUBE:
-		r = 0;
+		r = M_SQRT1_2 * sqrt(
+			p->envelope.v_sz.x * p->envelope.v_sz.x * 3);
 		break;
 	}
 	return r;

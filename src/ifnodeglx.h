@@ -6,7 +6,6 @@
 #ifndef VRT_IFNODEGLX_H
 #define VRT_IFNODEGLX_H
 
-#include <X11/X.h>
 #include "progscope.h"
 
 struct interface_display {

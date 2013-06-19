@@ -8,6 +8,14 @@
 
 #include "hmap.h"
 
+/* meta_u */
+union meta_unit_u {
+	char c;
+	int i;
+	float f;
+};
+typedef union meta_unit_u meta_u;
+
 int hapticNormill(select_t *);
 int intersection(select_t *);
 int group_hmaps(select_t *);

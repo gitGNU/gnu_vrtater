@@ -4,8 +4,7 @@
 */
 
 #include <stdlib.h>
-#include "progscope.h"
-#include "hmap.h"
+#include "session.h"
 
 /* for now */
 session_desc_t a_all_sessions[VRT_MAX_CUED_SESSIONS];
@@ -21,9 +20,9 @@ void
 init_sessions(void)
 {
 	int i;
-	for(i=0;i<VRT_MAX_CUED_SESSIONS;i++)
+	for(i = 0; i < VRT_MAX_CUED_SESSIONS; i++)
 		(&a_all_sessions[i])->session = 0;
-	for(i=0;i<VRT_MAX_PREV_CALLER_SESSIONS;i++)
+	for(i = 0; i < VRT_MAX_PREV_CALLER_SESSIONS; i++)
 		(&a_prev_caller_sessions[i])->session = 0;
 }
 
@@ -78,7 +77,7 @@ list_nodes(char *desc)
 }
 
 /* this may cue a session for given list_nodes() remote node */
-void
+int
 call_session(char *address)
 {
 	/* try to cue on remote with previous and current session numbers
@@ -86,6 +85,7 @@ call_session(char *address)
 	   statefull maintainance function will need to poll input for
 	   responce */
 	/* ... */
+	return 0;
 }
 
 int
@@ -99,7 +99,7 @@ match_vs_all_sessions(session_t *session_num)
 {
 	session_desc_t *p = a_all_sessions;
 	int i;
-	for(i=0;i<VRT_MAX_CUED_SESSIONS;i++, p++)
+	for(i = 0; i < VRT_MAX_CUED_SESSIONS; i++, p++)
 		if((p->session == *session_num) | (p->session == 0))
 			return p;
 	__builtin_printf("session.c: non 0 terminated a_all_sessions[]");

@@ -3,11 +3,11 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include <X11/X.h>
-#include <string.h>
+#include <X11/X.h> /* ... */
+#include <string.h> /* ... */
+#include "dialogX11.h"
 #include "progscope.h"
-#include "hmap.h"
-#include "transform.h"
+#include "transform.h" /* ... */
 
 #ifdef VRT_RENDERER_GL
 #include "rendergl.h"
@@ -38,6 +38,7 @@ dialog(select_t *sel)
 #ifdef DIAG
 	select_t totty = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
 	read_dialog_set(&totty);
+#undef DIAG
 #endif
 
 	/* retreive dialog with remote users via given dialog in their
@@ -96,7 +97,7 @@ read_dialog_set(select_t *sel)
 
 	/* for now, print all selected dialog from seta */
 	m = (sel->seta);
-	for(i=0;i<sel->counta;i++, m++)
+	for(i = 0; i < sel->counta; i++, m++)
 		for(j=0;j<(*m)->dialog_len;j++)
 			__builtin_printf("%s", (char *)
 				(*m)->p_dialog + (j * sizeof(int)));

@@ -6,7 +6,6 @@
 #ifndef VRT_RENDERGL_H
 #define VRT_RENDERGL_H
 
-#include "progscope.h"
 #include "hmap.h"
 
 /* diag palette for now */

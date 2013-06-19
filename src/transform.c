@@ -3,14 +3,13 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "hmap.h"
+#include "transform.h"
 #include "vectors.h"
-#include "stock.h"
+#include "stock.h" /* ... */
 
 float vrt_render_cyc; /* external */
 
@@ -130,6 +129,7 @@ intersection(select_t *sel)
 		__builtin_printf("    mvb: %f\n\n", mvb);
 		usleep(10000);
 	}
+#undef DIAG
 #endif /* DIAG */
 
 	return 0;
@@ -300,7 +300,7 @@ hmapunwrapf(select_t *sel)
 	__builtin_printf("draw geom: %i\n", (int)*in++); fl++;
 	int vf_total = (int)*in;
 	__builtin_printf("vf_total: %i\n", (int)*in++); fl++;
-	i=0;
+	i = 0;
 	while(i < vf_total) {
 		__builtin_printf("vf %i: %f", i + 1, (float)*fl++); in++;
 		__builtin_printf(" %f", (float)*fl++); in++;
@@ -310,7 +310,7 @@ hmapunwrapf(select_t *sel)
 	}
 	int dialog_len = (int)*in;
 	__builtin_printf("dialog_len: %i\n", (int)*in++); fl++;
-	i=0;
+	i = 0;
 	__builtin_printf("dialog:\n");
 	while(i < dialog_len) {
 		/* print !last char 1 thru 7 of rows of 8 chars */
@@ -389,7 +389,8 @@ cp_hmapf(select_t *sel)
 		b->p_data_vf = NULL;
 		if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
-				"Error: could not malloc vertice data copying hmap %i to %i\n",
+				"Error: could not malloc vertice data "
+				"copying hmap %i to %i\n",
 				__FILE__, __LINE__, a->index, a->index);
 			abort();
 		}
@@ -439,7 +440,7 @@ surfinv_hmapf(select_t *sel)
 	org = map->p_data_vf;
 	if((cpy = (vf_t *) malloc(map->vf_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-		"Error: could not malloc vertice data while inverting hmap %i\n",
+		"Error: Could not malloc vertice data when inverting hmap %i\n",
 		__FILE__, __LINE__, map->index);
 		abort();
 	}
@@ -509,7 +510,7 @@ add_dialog(select_t *sel, char *s, int count, int offset)
 		/* put original hmap dialog in swap */
 		pti = (*sel->seta)->p_dialog;
 		pti2 = swap;
-		for(i=0;i<orglen;i++)
+		for(i = 0; i < orglen; i++)
 			*pti2++ = *pti++;
 
 		/* (re-)allocate memory for dialog with append */
@@ -519,7 +520,7 @@ add_dialog(select_t *sel, char *s, int count, int offset)
 		/* write original string from swap */
 		pti = (*sel->seta)->p_dialog;
 		pti2 = swap;
-		for(i=0;i<orglen;i++)
+		for(i = 0; i < orglen; i++)
 			*pti++ = *pti2++;
 		free(swap);
 	} else {
@@ -530,7 +531,7 @@ add_dialog(select_t *sel, char *s, int count, int offset)
 
 	/* write new string */
 	ptc = s;
-	for(i=0;i<addlen;i++)
+	for(i = 0; i < addlen; i++)
 		*pti++ = *ptc++;
 	*pti = '\0';
 
@@ -563,7 +564,7 @@ write_dialog(select_t *sel, char *s)
 	/* write */
 	p = s;
 	d = (*sel->seta)->p_dialog;
-	for(i=0;i<len;i++)
+	for(i = 0; i < len; i++)
 		*d++ = *p++;
 	*d = '\0';
 

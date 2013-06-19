@@ -10,7 +10,7 @@
 #include "vectors.h"
 
 hmapf_t *a_hmaps;
-unsigned int hmaps_total;  /* maintained by attach_hmapf() and detach_hmapf() */
+unsigned int attached_hmaps;  /* maintained by attach_hmapf(), detach_hmapf() */
 
 /* lod envelopes */
 unsigned int sort_perif_ratio; /* sort per n'th pass */

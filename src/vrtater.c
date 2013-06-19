@@ -151,7 +151,7 @@ main(int argc, char **argv)
 	}
 
 	/* read defaults */
-	vrt_hmaps_max = 20;
+	vrt_hmaps_max = 30;
 
 	/* vrtater */
 	node(argc, argv); /* is a state machine */

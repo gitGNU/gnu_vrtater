@@ -3,24 +3,23 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include <X11/X.h>
+#include <X11/X.h> /* ... */
 #include <GL/glx.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include "progscope.h"
 #include "ifnodeglx.h"
-#include "transform.h"
-#include "session.h"
-#include "attribs.h"
-#include "generator.h"
-#include "rendergl.h"
-#include "rotation.h"
 #include "tug.h"
+#include "generator.h"
+#include "vectors.h"
+#include "rotation.h"
 #include "hmap.h"
+#include "session.h"
 #include "dialogX11.h"
+#include "rendergl.h"
+#include "transform.h"
+#include "attribs.h"
 
 Display *dpy0, *dpy_dialog;
 XVisualInfo *xvinf0, *xvinf_dialog;
@@ -114,7 +113,7 @@ setup_glx(int argc, char **argv)
 				__FILE__, __LINE__);
 			__builtin_exit(1);
 		}
-		dbuff = LVAL_FALSE;
+		dbuff = 0;
 	}
 
 	/* create X colormap */
@@ -686,6 +685,7 @@ node(int argc, char **argv)
 			"dialog\n",
 			(&ifdpy0)->keyroll, (&ifdpy0)->keypan, (&ifdpy0)->keytilt,
 			(&ifdpy0)->keyvfwd, (&ifdpy0)->keyvvrt);
+#undef DIAG
 #endif /* DIAG */
 #define DIAG_TIME_OFF
 #ifdef DIAG_TIME

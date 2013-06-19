@@ -4,13 +4,9 @@
 */
 
 #include <math.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "progscope.h"
 #include "stock.h"
-#include "vectors.h"
-#include "hmap.h"
 
 /* icosahedron_c */
 #define WKY 0.26286555606 /* width of key triangle */
@@ -68,7 +64,7 @@ hmapf_icosahedron_c(session_t *session, float r)
 	vf_t **ppd = &pd;
 	*ppd = hmap->p_data_vf;
 
-	for(i=0; i<VRT_ICOSAHEDRON_C_FCOUNT; i++) {
+	for(i = 0; i < VRT_ICOSAHEDRON_C_FCOUNT; i++) {
 		for(j=0, tri=av; j<3; j++, tri++) {
 			tri->x = a_icosahedron_c[icosahedron_c_idx[i][j]][0] * r;
 			tri->y = a_icosahedron_c[icosahedron_c_idx[i][j]][1] * r;
@@ -124,7 +120,7 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 	vf_t **ppd = &pd;
 	*ppd = hmap->p_data_vf;
 
-	for(i=0; i<VRT_CUBE_C_FCOUNT; i++) {
+	for(i = 0; i < VRT_CUBE_C_FCOUNT; i++) {
 		for(j=0, tri=av; j<3; j++, tri++) {
 			tri->x = a_cube_c[cube_c_idx[i][j]][0] * l;
 			tri->y = a_cube_c[cube_c_idx[i][j]][1] * w;
@@ -340,7 +336,7 @@ add_tri_to_hmapf(vf_t *av, vf_t **ppd)
 	vf_t *p;
 
 	p = av;
-	for(i=0; i<3; i++, p++, (*ppd)++) {
+	for(i = 0; i < 3; i++, p++, (*ppd)++) {
 		(*ppd)->x = p->x;
 		(*ppd)->y = p->y;
 		(*ppd)->z = p->z;

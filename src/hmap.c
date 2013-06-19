@@ -3,10 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include "progscope.h"
+#include "hmap.h"
 #include "attribs.h"
 
 unsigned int vrt_hmaps_max; /* external */
@@ -42,7 +40,7 @@ p_hmapf(int i)
 unsigned int
 hmap_count(void)
 {
-	return hmaps_total;
+	return attached_hmaps;
 }
 
 /* set lod envelopes */
@@ -54,4 +52,3 @@ set_lod_envelopef(float near, float perif, unsigned int sp_ratio, unsigned int s
 	sort_perif_ratio = sp_ratio;
 	sort_far_ratio = sf_ratio;
 }
-

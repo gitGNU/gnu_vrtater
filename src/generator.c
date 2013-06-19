@@ -3,12 +3,11 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h> /* for now */
-#include "hmap.h"
-#include "vectors.h"
+#include <string.h>
+#include "generator.h"
+#include "progscope.h"
 #include "transform.h"
 #include "attribs.h"
 #include "session.h"
@@ -23,28 +22,24 @@
 #endif /* VRT_RENDER_GL */
 
 unsigned int vrt_hmaps_max; /* external */
+session_t in_node;
 
 /* selection buffer */
 hmapf_t *selectf_a; /* external */
 hmapf_t *selectf_b; /* external */
-
-/* current session */
-session_t session;
 
 void init_selection_buffers(void);
 void generate_vohspace(void);
 void callback_close_vobspace(void);
 
 /* diag */
-void cphmaptest(void);
-void hmapwrap_unwraptst(void);
-void test(void);
+void cphmaptest(hmapf_t *, hmapf_t *);
+void hmapwrap_unwraptst(hmapf_t *);
 
 void
 init_selection_buffers(void)
 {
-	/* allocate hmapf selection buffers
-	   note: dont talk about double number calls :-| */
+	/* allocate hmapf selection buffers */
 	selectf_a = NULL;
 	if((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
@@ -64,21 +59,22 @@ init_selection_buffers(void)
 int
 generate_node(void)
 {
-	int lval;
+	int lval = -1;
 
 	/* init generator */
 	init_selection_buffers();
+
 	/* init attribs.  hmap arrays, pointers thereto */
 	init_vohspace();
 
-	/* get session '0'(primary 'in-node' session name) */
-	if((lval = in_node_session(&session)) != SUCCESS) {
+	/* get 'session 0' name defining 'in-node' space */
+	if((lval = in_node_session(&in_node)) != 0) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Attemped session failed to generate node\n",
 			__FILE__, __LINE__);
 		return lval;
 	}
-	__builtin_printf("generator: new session name %llu\n", session);
+	__builtin_printf("generated in-node %x\n", (int)in_node);
 
 	/* put configured set of hmaps into vohspace */
 	generate_vohspace();
@@ -104,20 +100,20 @@ generate_vohspace(void)
 	   from file */
 	/* ... */
 	/* for now */
-	for(i=0;i<1;i++)
-		if((p = hmapf_icosahedron_c(&session, .01)))
+	for(i = 0; i < 1; i++)
+		if((p = hmapf_icosahedron_c(&in_node, .01)) != NULL)
 			nportf(p, sum_vf(&d, &ptl, &ptl));
-	for(i=0;i<2;i++)
-		if((p = hmapf_cube_c(&session, 3, 3, 3)))
+	for(i = 0; i < 2; i++)
+		if((p = hmapf_cube_c(&in_node, 3, 3, 3)) != NULL)
 			nportf(p, sum_vf(&d, &ptl, &ptl));
-	for(i=0;i<6;i++)
-		if((p = hmapf_icosahedron_c(&session, 2)))
+	for(i = 0; i < 6; i++)
+		if((p = hmapf_icosahedron_c(&in_node, 2)) != NULL)
 			nportf(p, sum_vf(&d, &ptl, &ptl));
-	for(i=0;i<10;i++)
-		if((p = hmapf_cube_c(&session, 100, 100, 100)))
+	for(i = 0; i < 10; i++)
+		if((p = hmapf_cube_c(&in_node, 100, 100, 100)) != NULL)
 			nportf(p, sum_vf(&d, &ptl, &ptl));
-	for(i=0;i<1;i++)
-		if((p = hmapf_cylinder_c(&session, 10, 25, 13.5, 0)))
+	for(i = 0; i < 1; i++)
+		if((p = hmapf_cylinder_c(&in_node, 10, 25, 13.5, 0)) != NULL)
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 }
 
@@ -131,17 +127,17 @@ regenerate_scene(vf_t *vpt)
 	   fill selectf_a with ref's to hmaps to be transfered */
 	session_sync();
 
-	/* enumerate incoming vobs that session.c retrieves from other nodes
+	/* enumerate incoming hmaps that session.c retrieves from other nodes
 	   and then references in selectf_b.  meanwhile write references for
 	   incoming hmaps with new dialog into selectf_a */
 	/* ... */
 
 	/* modeling
-	   any dialog introduced by modeling functions is sent directly to dialog()
-	   directly, and will have VRT_MASK_HMAP_MODELING set.  any dialog
-	   written by code in dialog.c itself is implicit.  for now, simulate
-	   case where some in-node dialog, newly created by modeling transforms,
-	   has been generated in hmap 15 */
+	   any dialog introduced by modeling functions is sent directly to
+	   dialog() directly, and will have VRT_MASK_HMAP_MODELING set.  any
+	   dialog written by code in dialog.c itself is implicit.  for now,
+	   simulate case where some in-node dialog, newly created by modeling
+	   transforms, has been generated in hmap 15 */
 	hmapf_t **p = (hmapf_t **)selectf_a;
 	static int recurrant = 0;
 	if(!recurrant++) {
@@ -161,7 +157,7 @@ regenerate_scene(vf_t *vpt)
 	/* usleep(33400); */ /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
 }
 
-/* a called function has set gen_opts, or was set herein via caller */
+/* called thru ifnode */
 void
 close_vobspace(double when)
 {
@@ -216,38 +212,31 @@ resize_node(int size, int keep_connected)
 }
 
 void
-cphmaptest(void)
+cphmaptest(hmapf_t *a, hmapf_t *b)
 {
 	hmapf_t **p;
 
 	/* test copy_hmap() */
 	p = (hmapf_t **)selectf_a;
-	*p = p_hmapf(15);
+	*p = a;
 	p = (hmapf_t **)selectf_b;
-	*p = p_hmapf(1);
+	*p = b;
 	select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, (hmapf_t **)selectf_b};
 	__builtin_printf("cphmaptest()\n");
 	cp_hmapf(&t);
 }
 
 void
-hmapwrap_unwraptst(void)
+hmapwrap_unwraptst(hmapf_t *map)
 {
 	hmapf_t **p = (hmapf_t **)selectf_a;
-	*(p++) = p_hmapf(10);
+	*(p++) = map;
 	*p = NULL;
 	select_t s = { VRT_MASK_NULL_TERMINATED, 0, (hmapf_t **)selectf_a, 0, NULL};
 	__builtin_printf("hmapwrapf() test\n");
 	hmapwrapf(&s); /* from selection buf to file */
 	__builtin_printf("hmapunwrapf() test\n");
 	hmapunwrapf(&s); /* from file to vobspace or selection buf */
-}
-
-void
-test(void)
-{
-	hmapwrap_unwraptst();
-	cphmaptest();
 }
 
 /* support tug input */

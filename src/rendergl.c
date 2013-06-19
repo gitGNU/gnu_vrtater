@@ -3,14 +3,10 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include <math.h>
 #include <GL/gl.h>
-#include <stdlib.h>
-#include "progscope.h"
 #include "rendergl.h"
 #include "vectors.h"
 #include "rotation.h"
-#include "hmap.h"
 
 hmapf_t *fov0;
 vf_t oa_fp, *vpt = &oa_fp;
@@ -161,7 +157,7 @@ render_hmapf(hmapf_t *hmap, int lod)
 		break;
 
 		case VRT_DRAWGEOM_LINES:
-		for(i=0;i<hmap->vf_total;i++) {
+		for(i = 0; i < hmap->vf_total; i++) {
 			;
 		}
 		break;
