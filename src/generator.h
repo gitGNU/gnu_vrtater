@@ -32,8 +32,21 @@ enum {
 #define VRT_MASK_DASHF (1 << VRT_ORDINAL_DASHF)
 };
 
+/* partial */
+struct partial_space {
+	session_t session; /* entering from in-node, hmaps take this name */
+	char *desc; /* set when calling mk_partial() */
+	hmapf_t *nodemap; /* hmap describing the volume of given partial */
+	hmapf_t *hmaps; /* list of hmaps in given partial <= vrt_hmaps_max */
+	int partial_hmaps; /* number of hmaps in given partial */
+};
+typedef struct partial_space partial_t;
+
 int generate_node(void);
 void regenerate_scene(vf_t *);
+partial_t *mk_partial(char *desc, hmapf_t *map);
+void rm_partial(partial_t *partial);
+void test_ls_partial(void);
 void close_vobspace(double time_till_closed);
 void close_node(void);
 int resize_node(int, int);

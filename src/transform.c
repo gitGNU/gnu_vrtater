@@ -147,22 +147,31 @@ group_hmaps(select_t *sel)
 }
 
 /*
-   join given hmaps
+   extend given hmaps by joining them together
 */
 int
-join_hmaps(select_t *sel)
+extend_hmaps(select_t *sel)
 {
 	return 0;
 }
 
 /*
-   send vobs to recycler.
+   recycle counta hmaps given in select_a.  for now just detach these.
    the recycler could be written to function as undo stack per vob
    dependant on session name
 */
 int
-recycler(select_t *sel)
+recycle(select_t *sel)
 {
+	int i;
+	hmapf_t *map;
+
+	map = *(sel->seta);
+	for(i = 0; i < sel->counta; i++, map++) {
+		__builtin_printf(" recycling: %x\n", (int)map->name);
+		map->attribs.bits |= VRT_MASK_DETACH;
+	}
+
 	return 0;
 }
 

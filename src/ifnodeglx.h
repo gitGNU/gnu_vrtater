@@ -22,7 +22,7 @@ struct interface_display {
 	float keyroll;
 	float aaccroll;
 	float adclroll;
-	float keyvfwd; /* current acceleration summing v_axi * vfwd into v_vel' */
+	float keyvfwd; /* current acceleration sum, v_axi * vfwd into v_vel' */
 	float accvfwd; /* acceleration */
 	float dclvfwd; /* decelleration */
 	float keyvside; /* cprod(v_axi, v_rel) * vside into v_vel' */

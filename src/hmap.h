@@ -31,7 +31,7 @@ enum { /* attribs_t bits */
 #define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
 	VRT_ORDINAL_LEFT_IN_TUNNEL, /* send to recycler(), 'may be deleted' */
 #define VRT_MASK_LEFT_IN_TUNNEL (1 << VRT_ORDINAL_LEFT_IN_TUNNEL)
-	VRT_ORDINAL_RECYCLE,
+	VRT_ORDINAL_RECYCLE, /* send to recycler */
 #define VRT_MASK_RECYCLE (1 << VRT_ORDINAL_RECYCLE)
 	VRT_ORDINAL_SESSION_FILTER,
 #define VRT_MASK_SESSION_FILTER (1 << VRT_ORDINAL_SESSION_FILTER)
@@ -57,8 +57,10 @@ enum { /* attribs_t bits */
 #define VRT_MASK_VERTICE_MODS (1 << VRT_ORDINAL_VERTICE_MODS)
 	VRT_ORDINAL_DIALOG_MODS, /* unaffix this locally when sending */
 #define VRT_MASK_DIALOG_MODS (1 << VRT_ORDINAL_DIALOG_MODS)
-	VRT_ORDINAL_ATTACHED /* true when hmap is not detached */
+	VRT_ORDINAL_ATTACHED, /* true when hmap is not detached */
 #define VRT_MASK_ATTACHED (1 << VRT_ORDINAL_ATTACHED)
+	VRT_ORDINAL_DETACH /* code in generator.c will detach this hmap */
+#define VRT_MASK_DETACH (1 << VRT_ORDINAL_DETACH)
 };
 
 enum { /* attribs_t modifiers */

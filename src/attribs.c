@@ -543,6 +543,15 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 			return;
 	}
 
+	/* filter to tend to attribs.bits */
+	if(m->attribs.bits & VRT_MASK_DETACH) {
+		__builtin_printf("detaching hmap %x "
+			"(index %i, free maps %u/%u)\n",
+			(int)m->name, m->index,
+			vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);
+		detach_hmapf(m);
+	}
+
 	/* adjust hmap via kbase if set */
 	/* ... */
 
