@@ -127,8 +127,8 @@ init_vohspace(void)
 		p->v_pre.m = 0;
 		p->ang_spd = 0; /* radians/second */
 		p->ang_dpl = 0; /* radians */
-		p->attribs.bits = VRT_MASK_FLOW_OVER;
-		p->attribs.modifiers = 0;
+		p->attribs.bits = 0;
+		p->attribs.modifiers = VRT_MASK_FLOW_OVER;
 		p->attribs.session_filter = 0;
 		p->attribs.balance_filter = 0;
 		p->attribs.kg = 0;
@@ -180,9 +180,9 @@ attach_hmapf(void)
 	hmapf_t *p = a_hmaps;
 
 	for(i = 0; i < vrt_hmaps_max; i++, p++) {
-		if(!(p->attribs.bits &= VRT_MASK_ATTACHED)) {
+		if(!(p->attribs.modifiers &= VRT_MASK_ATTACHED)) {
 			p->index = i; /* caller index */
-			p->attribs.bits |= VRT_MASK_ATTACHED;
+			p->attribs.modifiers |= VRT_MASK_ATTACHED;
 			attached_hmaps++;
 			return p;
 		}
@@ -221,8 +221,8 @@ detach_hmapf(hmapf_t *p)
 		p->v_pre.m = 0;
 		p->ang_spd = 0;
 		p->ang_dpl = 0;
-		p->attribs.bits = VRT_MASK_FLOW_OVER;
-		p->attribs.modifiers = 0;
+		p->attribs.bits = 0;
+		p->attribs.modifiers = VRT_MASK_FLOW_OVER;
 		p->attribs.session_filter = 0;
 		p->attribs.balance_filter = 0;
 		p->attribs.kg = 0;
@@ -593,7 +593,7 @@ flow_over(btoggles_t *balance_criteria)
 	hmapf_t *p = &a_hmaps[0];
 
 	for(i = 0; i < vrt_hmaps_max; i++, p++) {
-		if((p->attribs.bits & VRT_MASK_FLOW_OVER) &
+		if((p->attribs.modifiers & VRT_MASK_FLOW_OVER) &
 			(p->attribs.balance_filter &= *balance_criteria))
 		p->attribs.bits |= VRT_MASK_RECYCLE;
 	}
