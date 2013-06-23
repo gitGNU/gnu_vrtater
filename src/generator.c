@@ -196,12 +196,14 @@ regenerate_scene(vf_t *vpt)
 	   incoming hmaps with new dialog into selectf_a */
 	/* ... */
 
-	/* modeling
-	   any dialog introduced by modeling functions is sent directly to
-	   dialog() directly, and will have VRT_MASK_HMAP_MODELING set.  any
-	   dialog written by code in dialog.c itself is implicit.  for now,
-	   simulate case where some in-node dialog, newly created by modeling
-	   transforms, has been generated in hmap 15 */
+	/* reading from selectf_a, send any new dialog off the network to
+	   dialog().  any dialog introduced by modeling transforms is sent to
+	   dialog() directly, and will have VRT_MASK_HMAP_MODELING set high.
+	   along with any dialog representing the person runing the node and
+	   written thru transform.c by code in dialog.c, these are the sum of
+	   the ways that new dialog will be introduced.  for now, simulate case
+	   where some in-node dialog, newly created by modeling transforms, is
+	   generated in hmap 15 */
 	hmapf_t **p = (hmapf_t **)selectf_a;
 	static int recurrant = 0;
 	if(!recurrant++) {

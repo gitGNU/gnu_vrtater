@@ -546,8 +546,7 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	/* filter to tend to attribs.bits */
 	if(m->attribs.bits & VRT_MASK_DETACH) {
 		__builtin_printf("detaching hmap %x "
-			"(index %i, free maps %u/%u)\n",
-			(int)m->name, m->index,
+			"(index %i, free maps %u/%u)\n", (int)m->name, m->index,
 			vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);
 		detach_hmapf(m);
 	}
@@ -570,12 +569,13 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 
 	/* sum velocity into position for this frame */
 	cp_vf(&(m->v_vel), &d); /* take a copy of direction/velocity */
-	factor_vf(&d, &d, vrt_render_cyc); /* create delta vector given freq */
+	factor_vf(&d, &d, vrt_render_cyc * sort_ratio); /* delta given freq */
 	sum_vf(&(m->v_pos), &d, &(m->v_pos)); /* new pos = delta vector + pos */
 
 	/* set vob angular displacement
 	   note: v_ang_vel will be pseudovector.  on fly calc moreso optimal */
-	m->ang_dpl += m->ang_spd * vrt_render_cyc;
+	m->ang_dpl += m->ang_spd * vrt_render_cyc * sort_ratio;
+
 	/* wraparound for 2 * M_PI, without this a glitch occurs on wrap */
 	if(fabs(m->ang_dpl) >= 2 * M_PI)
 		m->ang_dpl = fmodf(m->ang_dpl, 2 * M_PI);

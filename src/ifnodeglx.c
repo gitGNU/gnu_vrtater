@@ -644,10 +644,11 @@ node(int argc, char **argv)
 		/* regenerate next frame's worth of hmaps modifying hmap
 		   position vs. v_vel, and (soon rotation/)v_pos through
 		   intersection of hmaps.  lod envelopes are centered around
-		   fov0->v_pos' */
+		   fov0->v_pos'.  hmap fov0 has already been processed vs. the
+		   near lod envelope so it is skipped in regenerate_scene() */
 		regenerate_scene(&(fov0->v_pos));
 
-		/* rotate scene rendered around fov0->v_pos'(set in last call */
+		/* rotate scene rendered vs. fov0->v_pos'(set in last call) */
 		glRotatef((&ifdpy0)->keyroll * 180 / M_PI,
 			fov0->v_axi.x, fov0->v_axi.y, fov0->v_axi.z);
 		glRotatef(-(&ifdpy0)->keypan * 180 / M_PI,
