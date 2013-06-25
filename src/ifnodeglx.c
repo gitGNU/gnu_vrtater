@@ -644,7 +644,7 @@ node(int argc, char **argv)
 		/* regenerate next frame's worth of hmaps modifying hmap
 		   position vs. v_vel, and (soon rotation/)v_pos through
 		   intersection of hmaps.  lod envelopes are centered around
-		   fov0->v_pos'.  hmap fov0 has already been processed vs. the
+		   fov0->v_pos'.  just above, hmap fov0 was processed vs. the
 		   near lod envelope so it is skipped in regenerate_scene() */
 		regenerate_scene(&(fov0->v_pos));
 
@@ -656,15 +656,8 @@ node(int argc, char **argv)
 		glRotatef(-(&ifdpy0)->keytilt * 180 / M_PI,
 			side.x, side.y, side.z);
 
-	/* diagnostic for pre-alpha dialog */
-	hmapf_t **p = (hmapf_t **)selectf_a;
-	*p = diagtext0;
-	select_t kbd = { 0, 1, (hmapf_t **)p, 0, NULL };
-	dialog(&kbd);
-
-#define DIAG_OFF
-#ifdef DIAG
-		/* diag term output */
+#ifdef DIAG_INTERFACE
+		/* positional */
 		__builtin_printf("\nfov0\n");
 		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",
 			fov0->v_pos.x, fov0->v_pos.y,
@@ -676,19 +669,24 @@ node(int argc, char **argv)
 			acc.x, acc.y, acc.z, acc.m);
 		__builtin_printf("  vside: x %f y %f z %f m %f\n",
 			acc2.x, acc2.y, acc2.z, acc2.m);
-		__builtin_printf("   vvrt: x %f y %f z %f m %f\n",
+		__builtin_printf("   vvrt: x %f y %f z %f m %f\n\n",
 			acc3.x, acc3.y, acc3.z, acc3.m);
 
 		__builtin_printf("kbd\n");
 		__builtin_printf("   roll(k/;) %f  pan(a/d) %f tilt(o/l) %f\n"
-			"   vfwd(w/s) %f vvrt(p/,) %f decel(space)\n"
-			"   dialog(\\) pre-alpha exit(esc)\n\n"
-			"dialog\n",
-			(&ifdpy0)->keyroll, (&ifdpy0)->keypan, (&ifdpy0)->keytilt,
-			(&ifdpy0)->keyvfwd, (&ifdpy0)->keyvvrt);
-#undef DIAG
-#endif /* DIAG */
-#define DIAG_TIME_OFF
+			"   vfwd(w/s) %f vvrt(p/,) %f vside(z/c) %f\n"
+			"   decel(space) dialog(\\) pre-alpha exit(esc)\n\n"
+			"dialog\n", (&ifdpy0)->keyroll, (&ifdpy0)->keypan,
+			(&ifdpy0)->keytilt, (&ifdpy0)->keyvfwd,
+			(&ifdpy0)->keyvvrt, (&ifdpy0)->keyvside);
+
+		/* pre-alpha dialog */
+		hmapf_t **p = (hmapf_t **)selectf_a;
+		*p = diagtext0;
+		select_t kbd = { 0, 1, (hmapf_t **)p, 0, NULL };
+		dialog(&kbd);
+#endif
+
 #ifdef DIAG_TIME
 		/* fps: sample interval sfreq, set above, should be proportional
 		   considering the sample granularity used.  at the moment this
@@ -715,7 +713,7 @@ node(int argc, char **argv)
 		__builtin_printf("time\n    fps: %f cyc: %f reads: %i/%i\n\n",
 			1 / vrt_render_cyc, vrt_render_cyc,
 			reads, reads + infcount);
-#endif /* DIAG_TIME */
+#endif
 
 		/* renderer renders apon, inside of, and outside of hmaps */
 		glPushMatrix();

@@ -7,6 +7,7 @@
 #include "rendergl.h"
 #include "vectors.h"
 #include "rotation.h"
+#include "progscope.h" /* ... */
 
 hmapf_t *fov0;
 vf_t oa_fp, *vpt = &oa_fp;
@@ -132,8 +133,7 @@ render_hmapf(hmapf_t *hmap, int lod)
 					if(hmap->index == 5)
 						VLT();
 				} else { GRN(); }
-#define DIAG_EFFECT0
-#ifdef DIAG_EFFECT0
+#ifdef DIAG_EFFECT
 				if((hmap->index >= 20) & (hmap->index <= 23)) {
 					static int osc = 0;
 					if((osc++) % 2) {

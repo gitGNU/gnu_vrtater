@@ -10,6 +10,7 @@
 #include "transform.h"
 #include "vectors.h"
 #include "stock.h" /* ... */
+#include "progscope.h"
 
 float vrt_render_cyc; /* external */
 
@@ -86,8 +87,7 @@ intersection(select_t *sel)
 		sum_vf(&vaccb, vvelb, vvelb);
 	}
 
-#define DIAG_OFF
-#ifdef DIAG
+#ifdef DIAG_INTERSECTION
 	if(hmapb->index == 7) {
 		__builtin_printf("\n\nindex a: %i\n", hmapa->index);
 		__builtin_printf("  vposa: x %f y %f z %f m %f\n",
@@ -129,8 +129,7 @@ intersection(select_t *sel)
 		__builtin_printf("    mvb: %f\n\n", mvb);
 		usleep(10000);
 	}
-#undef DIAG
-#endif /* DIAG */
+#endif /* DIAG_ISECTION */
 
 	return 0;
 }
