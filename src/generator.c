@@ -34,6 +34,15 @@ void init_selection_buffers(void);
 void generate_vohspace(void);
 void callback_close_vobspace(void);
 
+/* diag partial */
+#define DIAG_PARTIAL
+#ifdef DIAG_PARTIAL
+char thenode_message[] = "thenode.";
+partial_t *thenode;
+char nicenode_message[] = "the really nice node.";
+partial_t *nicenode;
+#endif
+
 /* diag */
 void cphmaptest(hmapf_t *, hmapf_t *);
 void hmapwrap_unwraptst(hmapf_t *);
@@ -118,9 +127,8 @@ generate_vohspace(void)
 		if((p = hmapf_cylinder_c(&in_node, 10, 25, 13.5, 0)) != NULL)
 			nportf(p, sum_vf(&d, &ptl, &ptl));
 
-#define DIAG
-#ifdef DIAG
-	/* make 2 partials then remove them */
+#ifdef DIAG_PARTIAL
+	/* make 2 partials then remove them below on close_node() */
 	hmapf_t **buffer;
 
 	/* outer hmap for in-node */
@@ -145,9 +153,7 @@ generate_vohspace(void)
 	select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, NULL};
 	surfinv_hmapf(&t);
 
-	char message[] = "thenode.";
-	partial_t *thenode;
-	thenode = mk_partial(message, p);
+	thenode = mk_partial(thenode_message, p);
 
 	/* next partial */
 	if((p = hmapf_cylinder_c(&in_node, 80.5, 25, 112, 0)) != NULL) {
@@ -168,17 +174,10 @@ generate_vohspace(void)
 	*buffer = p;
 	surfinv_hmapf(&t);
 
-	char hellostring[] = "the really nice node.";
-	partial_t *nicenode;
-	nicenode = mk_partial(hellostring, p);
+	nicenode = mk_partial(nicenode_message, p);
 
 	test_ls_partial();
-	rm_partial(thenode);
-	test_ls_partial();
-	rm_partial(nicenode);
-	test_ls_partial();
-#undef DIAG
-#endif
+#endif /* DIAG_PARTIAL */
 }
 
 void
@@ -222,6 +221,7 @@ regenerate_scene(vf_t *vpt)
 	   disabled for now, see ifnode**.c for more */
 	/* usleep(33400); */ /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
 }
+
 /* generate connection point to merge node vobspaces in a peer to peers network.
    given desc, a max 80 chars + NULL reference to a description for a partial
    vobspace, and map, a refrence to an hmap delimiting the partial space.
@@ -427,6 +427,13 @@ callback_close_vobspace(void)
 void
 close_node(void)
 {
+	int i;
+	partial_t **p = (partial_t **)partials_list;
+
+	for(i = partials_count; i > 0; i--) {
+		rm_partial(*p);
+	}
+
 	free_vohspace_memory();
 }
 
