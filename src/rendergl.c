@@ -132,6 +132,19 @@ render_hmapf(hmapf_t *hmap, int lod)
 					if(hmap->index == 5)
 						VLT();
 				} else { GRN(); }
+#define DIAG_EFFECT0
+#ifdef DIAG_EFFECT0
+				if((hmap->index >= 20) & (hmap->index <= 23)) {
+					static int osc = 0;
+					if((osc++) % 2) {
+						GRN();
+						glPolygonMode(GL_FRONT, GL_LINE);
+					} else {
+						RED();
+						glPolygonMode(GL_FRONT, GL_FILL);
+					}
+				}
+#endif
 			}
 
 			/* set surface normal */
