@@ -72,7 +72,7 @@ enum { /* attribs_t modifiers, tested in context based functions */
 
 struct bounds {
 	int geom;
-	vf_t v_sz;
+	vf_t vsz;
 };
 typedef struct bounds envelope_t;
 

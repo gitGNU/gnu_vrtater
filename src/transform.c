@@ -60,7 +60,7 @@ intersection(select_t *sel)
 	scale = .00005;
 
 	dif_vf(&(hmapa->vpos), &(hmapb->vpos), &vdist);
-	touch = hmapa->envelope.v_sz.x + hmapb->envelope.v_sz.x;
+	touch = hmapa->envelope.vsz.x + hmapb->envelope.vsz.x;
 
 	if(hmapb->attribs.kg && (&vdist)->m < touch) {
 
@@ -106,7 +106,7 @@ intersection(select_t *sel)
 		/* todo:
 		   mass not assigned correctly */
 		//__builtin_printf("   kg a: %f\n", ma);
-		__builtin_printf("    sza: %f\n", hmapa->envelope.v_sz.x);
+		__builtin_printf("    sza: %f\n", hmapa->envelope.vsz.x);
 		__builtin_printf("    mva: %f\n\n", mva);
 		__builtin_printf("  inter: %f\n", inter);
 		__builtin_printf("  touch: %f\n", touch);
@@ -125,7 +125,7 @@ intersection(select_t *sel)
 			hmapb->vaxi.x, hmapb->vaxi.y,
 			hmapb->vaxi.z, hmapb->vaxi.m);
 		 //__builtin_printf("   kg b: %f\n", mb);
-		__builtin_printf("    szb: %f\n", hmapb->envelope.v_sz.x);
+		__builtin_printf("    szb: %f\n", hmapb->envelope.vsz.x);
 		__builtin_printf("    mvb: %f\n\n", mvb);
 		usleep(10000);
 	}
@@ -234,10 +234,10 @@ hmapwrapf(select_t *sel)
 	*pi++ = h->attribs.kfactord;
 	*pi++ = h->envelope.geom;
 	pf = (float *)pi;
-	*pf++ = h->envelope.v_sz.x;
-	*pf++ = h->envelope.v_sz.y;
-	*pf++ = h->envelope.v_sz.z;
-	*pf++ = h->envelope.v_sz.m;
+	*pf++ = h->envelope.vsz.x;
+	*pf++ = h->envelope.vsz.y;
+	*pf++ = h->envelope.vsz.z;
+	*pf++ = h->envelope.vsz.m;
 	pi = (int *)pf;
 	*pi++ = h->draw.geom;
 	*pi++ = h->vmap_total;
@@ -386,10 +386,10 @@ cp_hmapf(select_t *sel)
 	b->attribs.kg = a->attribs.kg;
 	b->attribs.kfactorm = a->attribs.kfactorm;
 	b->envelope.geom = a->envelope.geom;
-	b->envelope.v_sz.x = a->envelope.v_sz.x;
-	b->envelope.v_sz.y = a->envelope.v_sz.y;
-	b->envelope.v_sz.z = a->envelope.v_sz.z;
-	b->envelope.v_sz.m = a->envelope.v_sz.m;
+	b->envelope.vsz.x = a->envelope.vsz.x;
+	b->envelope.vsz.y = a->envelope.vsz.y;
+	b->envelope.vsz.z = a->envelope.vsz.z;
+	b->envelope.vsz.m = a->envelope.vsz.m;
 	b->draw.geom = a->draw.geom;
 
 	if(a->vmap_total) {

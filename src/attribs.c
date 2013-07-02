@@ -135,10 +135,10 @@ init_vohspace(void)
 		p->attribs.kfactorm = 1;
 		p->attribs.kfactord = 1;
 		p->envelope.geom = VRT_BOUND_NONE;
-		p->envelope.v_sz.x = 0;
-		p->envelope.v_sz.z = 0;
-		p->envelope.v_sz.y = 0;
-		p->envelope.v_sz.m = 0;
+		p->envelope.vsz.x = 0;
+		p->envelope.vsz.z = 0;
+		p->envelope.vsz.y = 0;
+		p->envelope.vsz.m = 0;
 		p->draw.geom = VRT_DRAWGEOM_NONE;
 		p->vmap = NULL;
 		p->vmap_total = 0;
@@ -229,10 +229,10 @@ detach_hmapf(hmapf_t *p)
 		p->attribs.kfactorm = 1;
 		p->attribs.kfactord = 1;
 		p->envelope.geom = VRT_BOUND_NONE;
-		p->envelope.v_sz.x = 0;
-		p->envelope.v_sz.z = 0;
-		p->envelope.v_sz.y = 0;
-		p->envelope.v_sz.m = 0;
+		p->envelope.vsz.x = 0;
+		p->envelope.vsz.z = 0;
+		p->envelope.vsz.y = 0;
+		p->envelope.vsz.m = 0;
 		p->draw.geom = VRT_DRAWGEOM_NONE;
 		p->vmap_total = 0;
 		free(p->vmap);
@@ -667,23 +667,23 @@ estimate_radiusf(hmapf_t *p)
 		break;
 
 		case VRT_BOUND_SPHERE:
-		r = p->envelope.v_sz.x;
+		r = p->envelope.vsz.x;
 		break;
 
 		case VRT_BOUND_CYLINDER:
-		r = p->envelope.v_sz.x * p->envelope.v_sz.y;
+		r = p->envelope.vsz.x * p->envelope.vsz.y;
 		break;
 
 		case VRT_BOUND_RCUBOID:
 		r = M_SQRT1_2 * sqrt(
-			p->envelope.v_sz.x * p->envelope.v_sz.x +
-			p->envelope.v_sz.y * p->envelope.v_sz.y +
-			p->envelope.v_sz.z * p->envelope.v_sz.z);
+			p->envelope.vsz.x * p->envelope.vsz.x +
+			p->envelope.vsz.y * p->envelope.vsz.y +
+			p->envelope.vsz.z * p->envelope.vsz.z);
 		break;
 
 		case VRT_BOUND_CUBE:
 		r = M_SQRT1_2 * sqrt(
-			p->envelope.v_sz.x * p->envelope.v_sz.x * 3);
+			p->envelope.vsz.x * p->envelope.vsz.x * 3);
 		break;
 	}
 	return r;

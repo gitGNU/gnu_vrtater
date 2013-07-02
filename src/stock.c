@@ -44,8 +44,8 @@ hmapf_icosahedron_c(session_t *session, float r)
 	/* hmap attribs */
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
 	hmap->envelope.geom = VRT_BOUND_SPHERE;
-	hmap->envelope.v_sz.x = ICOSAHEDRON_C_BOUND0 * r;
-	form_mag_vf(&(hmap->envelope.v_sz));
+	hmap->envelope.vsz.x = ICOSAHEDRON_C_BOUND0 * r;
+	form_mag_vf(&(hmap->envelope.vsz));
 	hmap->attribs.kg = 4.18879020479 * r * r * r;
 
 	/* allocate for hmap data */
@@ -98,10 +98,10 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 	/* hmap attribs */
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
 	hmap->envelope.geom = VRT_BOUND_RCUBOID;
-	hmap->envelope.v_sz.x = CUBE_C_BOUND0 * w / 2;
-	hmap->envelope.v_sz.y = CUBE_C_BOUND0 * h / 2;
-	hmap->envelope.v_sz.z = CUBE_C_BOUND0 * l / 2;
-	form_mag_vf(&(hmap->envelope.v_sz));
+	hmap->envelope.vsz.x = CUBE_C_BOUND0 * w / 2;
+	hmap->envelope.vsz.y = CUBE_C_BOUND0 * h / 2;
+	hmap->envelope.vsz.z = CUBE_C_BOUND0 * l / 2;
+	form_mag_vf(&(hmap->envelope.vsz));
 	hmap->attribs.kg = l * w * h;
 
 	/* allocate for hmap data */
@@ -167,10 +167,10 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
 	hmap->envelope.geom = VRT_BOUND_CYLINDER;
-	hmap->envelope.v_sz.x = r;
-	hmap->envelope.v_sz.y = l / 2;
-	hmap->envelope.v_sz.z = 0;
-	form_mag_vf(&(hmap->envelope.v_sz));
+	hmap->envelope.vsz.x = r;
+	hmap->envelope.vsz.y = l / 2;
+	hmap->envelope.vsz.z = 0;
+	form_mag_vf(&(hmap->envelope.vsz));
 
 	hmap->vmap_total = 3 * ((e * 2 * (3 + t)) - 2);
 
