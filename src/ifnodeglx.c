@@ -133,7 +133,7 @@ setup_glx(int argc, char **argv)
 
 	/* set gl X rendering context */
 	if((glxcontext0 = glXCreateContext(dpy0, xvinf0, NULL, GL_TRUE)) == NULL)
- 		__builtin_exit(1);
+		__builtin_exit(1);
 
 	/* make Xwindow current and map it */
 	glXMakeCurrent(dpy0, xwin0, glxcontext0)   ;
@@ -594,16 +594,15 @@ node(int argc, char **argv)
 			(fov0->vvel.m + (fov0->vvel.m * (&ifdpy0)->accel_crv)));
 
 		/* accelerate, summing d/t/t with d/t for (+/-)fwd, side */
-                vf_t acc, acc2, acc3;
-                tele_magz_vf(&(fov0->vaxi), &acc, (&ifdpy0)->keyvfwd);
-                sum_vf(&acc, &(fov0->vvel), &(fov0->vvel));
-		tele_magz_vf(&(fov0->vvel), &(fov0->vvel), fov0->vvel.m);
+		vf_t dpl, dpl2, dpl3;
+		tele_magz_vf(&(fov0->vaxi), &dpl, (&ifdpy0)->keyvfwd);
+		sum_vf(&dpl, &(fov0->vvel), &(fov0->vvel));
 
-		cprod_vf(&(fov0->vaxi), &(fov0->vrel), &acc2);
-                tele_magz_vf(&acc2, &acc2, (&ifdpy0)->keyvside);
-                sum_vf(&(fov0->vvel), &acc2, &(fov0->vvel));
-                tele_magz_vf(&(fov0->vrel), &acc3, (&ifdpy0)->keyvvrt);
-                sum_vf(&(fov0->vvel), &acc3, &(fov0->vvel));
+		cprod_vf(&(fov0->vaxi), &(fov0->vrel), &dpl2);
+		tele_magz_vf(&dpl2, &dpl2, (&ifdpy0)->keyvside);
+		sum_vf(&(fov0->vvel), &dpl2, &(fov0->vvel));
+		tele_magz_vf(&(fov0->vrel), &dpl3, (&ifdpy0)->keyvvrt);
+		sum_vf(&(fov0->vvel), &dpl3, &(fov0->vvel));
 
 		/* further adjust interfaced hmaps while representing node
 		   output.  per display(dpy) per frame, set the field of view
@@ -662,15 +661,18 @@ node(int argc, char **argv)
 		__builtin_printf("  vpos: x %f y %f z %f m %f\n",
 			fov0->vpos.x, fov0->vpos.y,
 			fov0->vpos.z, fov0->vpos.m);
+		__builtin_printf("  vaxi: x %f y %f z %f m %f\n\n",
+			fov0->vaxi.x, fov0->vaxi.y,
+			fov0->vaxi.z, fov0->vaxi.m);
 		__builtin_printf("  vvel: x %f y %f z %f m %f\n",
 			fov0->vvel.x, fov0->vvel.y,
 			fov0->vvel.z, fov0->vvel.m);
 		__builtin_printf("   vfwd: x %f y %f z %f m %f\n",
-			acc.x, acc.y, acc.z, acc.m);
+			dpl.x, dpl.y, dpl.z, dpl.m);
 		__builtin_printf("  vside: x %f y %f z %f m %f\n",
-			acc2.x, acc2.y, acc2.z, acc2.m);
+			dpl2.x, dpl2.y, dpl2.z, dpl2.m);
 		__builtin_printf("   vvrt: x %f y %f z %f m %f\n\n",
-			acc3.x, acc3.y, acc3.z, acc3.m);
+			dpl3.x, dpl3.y, dpl3.z, dpl3.m);
 
 		__builtin_printf("kbd\n");
 		__builtin_printf("   roll(k/;) %f  pan(a/d) %f tilt(o/l) %f\n"

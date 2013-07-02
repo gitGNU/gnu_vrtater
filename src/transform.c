@@ -31,11 +31,11 @@ hapticNormill(select_t *sel)
 }
 
 /*
-   transform vob paths on hmap intersection.
-   where hmap bound vol geom's intersected, calculate intersection. adjust
-   attribs of both hmaps accordingly.
-   for now, given 2 spherical hmap vob's in sel a and b respectively.
-   notes: cheat by assuming equality between attributes of represented solids
+   given reference to 2 hmaps in sel a and b respectively, transform path
+   attributes of these apon hmap intersection.  for now, simply uses spherical
+   bounding volumes per the hmaps to calculate this feature for the purposes
+   of setting values for the frustum.  note: representation of mass is
+   proportional to volume.
 */
 int
 intersection(select_t *sel)
