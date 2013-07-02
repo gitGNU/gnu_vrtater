@@ -100,20 +100,20 @@ enum { /* draw_t geom.  note precedence follows n edges */
 struct hmapf {
 	session_t name; /* network id */
 	int index; /* in-node id */
-	vf_t v_pos; /* position vector from node orgin to hmap orgin */
-	vf_t v_vel; /* direction of travel/velocity vector */
-	vf_t v_axi; /* pole bias along hmap vob rotational axis vs. vobspace */
-	vf_t v_rel; /* optional use relative frame of reference */
-	vf_t v_pre; /* axis of mass distribution vs. v_axi precession */
+	vf_t vpos; /* position vector from node orgin to hmap orgin */
+	vf_t vvel; /* direction of travel/velocity vector */
+	vf_t vaxi; /* pole bias along hmap vob rotational axis vs. vobspace */
+	vf_t vrel; /* relative frame of reference, if any */
+	vf_t vpre; /* axis of mass distribution vs. vaxi precession */
 	float ang_spd; /* (r/s), angular speed about rotational axes */
 	float ang_dpl; /* (r), angular displacement about rotational axes */
 	attribs_t attribs; /* attribs, session and balance filters */
 	envelope_t envelope; /* bounding volume */
 	draw_t draw; /* format vs. stock/display support */
-	int vf_total; /* total hmap vertices of vf_t */
-	vf_t *p_data_vf; /* if p_data_vf->m == 0, has other vobspace data */
+	int vmap_total; /* total hmap vertices of vf_t */
+	vf_t *vmap; /* if vmap->m == 0, has other vobspace data */
 	int dialog_len; /* as per strlen(), does not count trailing '\0' */
-	int *p_dialog;
+	int *dialog;
 };
 typedef struct hmapf hmapf_t;
 

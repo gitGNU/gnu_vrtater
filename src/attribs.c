@@ -105,26 +105,26 @@ init_vohspace(void)
 	p = a_hmaps;
 	for(i = 0; i < vrt_hmaps_max; i++, p++) {
 		p->name = (session_t)0;
-		p->v_pos.x = 0;
-		p->v_pos.y = 0;
-		p->v_pos.z = 0;
-		p->v_pos.m = 0x7f7fffff; /* max float */
-		p->v_vel.x = 0;
-		p->v_vel.y = 0;
-		p->v_vel.z = 0;
-		p->v_vel.m = 0;
-		p->v_axi.x = 0;
-		p->v_axi.y = 0;
-		p->v_axi.z = 0;
-		p->v_axi.m = 0;
-		p->v_rel.x = 0;
-		p->v_rel.y = 0;
-		p->v_rel.z = 0;
-		p->v_rel.m = 0;
-		p->v_pre.x = 0;
-		p->v_pre.y = 0;
-		p->v_pre.z = 0;
-		p->v_pre.m = 0;
+		p->vpos.x = 0;
+		p->vpos.y = 0;
+		p->vpos.z = 0;
+		p->vpos.m = 0x7f7fffff; /* max float */
+		p->vvel.x = 0;
+		p->vvel.y = 0;
+		p->vvel.z = 0;
+		p->vvel.m = 0;
+		p->vaxi.x = 0;
+		p->vaxi.y = 0;
+		p->vaxi.z = 0;
+		p->vaxi.m = 0;
+		p->vrel.x = 0;
+		p->vrel.y = 0;
+		p->vrel.z = 0;
+		p->vrel.m = 0;
+		p->vpre.x = 0;
+		p->vpre.y = 0;
+		p->vpre.z = 0;
+		p->vpre.m = 0;
 		p->ang_spd = 0; /* radians/second */
 		p->ang_dpl = 0; /* radians */
 		p->attribs.bits = 0;
@@ -140,9 +140,9 @@ init_vohspace(void)
 		p->envelope.v_sz.y = 0;
 		p->envelope.v_sz.m = 0;
 		p->draw.geom = VRT_DRAWGEOM_NONE;
-		p->p_data_vf = NULL;
-		p->vf_total = 0;
-		p->p_dialog = NULL;
+		p->vmap = NULL;
+		p->vmap_total = 0;
+		p->dialog = NULL;
 		p->dialog_len = 0;
 	}
 
@@ -159,10 +159,10 @@ free_vohspace_memory(void)
 {
 	int i;
 	for(i = 0; i < vrt_hmaps_max; i++) {
-		free((&a_hmaps[i])->p_data_vf);
-		(&a_hmaps[i])->p_data_vf = NULL;
-		free((&a_hmaps[i])->p_dialog);
-		(&a_hmaps[i])->p_dialog = NULL;
+		free((&a_hmaps[i])->vmap);
+		(&a_hmaps[i])->vmap = NULL;
+		free((&a_hmaps[i])->dialog);
+		(&a_hmaps[i])->dialog = NULL;
 	}
 	free(a_hmaps);
 	free(ap_hmap_near);
@@ -199,26 +199,26 @@ detach_hmapf(hmapf_t *p)
 
 	if((p >= sb) && (p <= eb)) {
 		p->name = (session_t)0;
-		p->v_pos.x = 0;
-		p->v_pos.y = 0;
-		p->v_pos.z = 0;
-		p->v_pos.m = 0x7f7fffff;
-		p->v_vel.x = 0;
-		p->v_vel.y = 0;
-		p->v_vel.z = 0;
-		p->v_vel.m = 0;
-		p->v_axi.x = 0;
-		p->v_axi.y = 0;
-		p->v_axi.z = 0;
-		p->v_axi.m = 0;
-		p->v_rel.x = 0;
-		p->v_rel.y = 0;
-		p->v_rel.z = 0;
-		p->v_rel.m = 0;
-		p->v_pre.x = 0;
-		p->v_pre.y = 0;
-		p->v_pre.z = 0;
-		p->v_pre.m = 0;
+		p->vpos.x = 0;
+		p->vpos.y = 0;
+		p->vpos.z = 0;
+		p->vpos.m = 0x7f7fffff;
+		p->vvel.x = 0;
+		p->vvel.y = 0;
+		p->vvel.z = 0;
+		p->vvel.m = 0;
+		p->vaxi.x = 0;
+		p->vaxi.y = 0;
+		p->vaxi.z = 0;
+		p->vaxi.m = 0;
+		p->vrel.x = 0;
+		p->vrel.y = 0;
+		p->vrel.z = 0;
+		p->vrel.m = 0;
+		p->vpre.x = 0;
+		p->vpre.y = 0;
+		p->vpre.z = 0;
+		p->vpre.m = 0;
 		p->ang_spd = 0;
 		p->ang_dpl = 0;
 		p->attribs.bits = 0;
@@ -234,12 +234,12 @@ detach_hmapf(hmapf_t *p)
 		p->envelope.v_sz.y = 0;
 		p->envelope.v_sz.m = 0;
 		p->draw.geom = VRT_DRAWGEOM_NONE;
-		p->vf_total = 0;
-		free(p->p_data_vf);
-		p->p_dialog = NULL;
+		p->vmap_total = 0;
+		free(p->vmap);
+		p->dialog = NULL;
 		p->dialog_len = 0;
-		p->p_data_vf = NULL;
-		free(p->p_dialog);
+		p->vmap = NULL;
+		free(p->dialog);
 		attached_hmaps--;
 		return;
 	}
@@ -292,9 +292,9 @@ sort_proc_hmaps(vf_t *vpt)
 		/* sort */
 		for(i = 0; i < count; i++) {
 			/* move relative lod orgin */
-			(&rel)->x = -vpt->x + (*pp_lr_n)->v_pos.x;
-			(&rel)->y = -vpt->y + (*pp_lr_n)->v_pos.y;
-			(&rel)->z = -vpt->z + (*pp_lr_n)->v_pos.z;
+			(&rel)->x = -vpt->x + (*pp_lr_n)->vpos.x;
+			(&rel)->y = -vpt->y + (*pp_lr_n)->vpos.y;
+			(&rel)->z = -vpt->z + (*pp_lr_n)->vpos.z;
 			(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 			if((&rel)->m <= near_threshf) {
 				proc_hmapf(*pp_lr_n, VRT_MASK_LOD_NEAR, 1);
@@ -322,9 +322,9 @@ sort_proc_hmaps(vf_t *vpt)
 		/* sort */
 		for(i = 0; i < count; i++) {
 			/* move relative lod orgin */
-			(&rel)->x = -vpt->x + (*pp_rl_n)->v_pos.x;
-			(&rel)->y = -vpt->y + (*pp_rl_n)->v_pos.y;
-			(&rel)->z = -vpt->z + (*pp_rl_n)->v_pos.z;
+			(&rel)->x = -vpt->x + (*pp_rl_n)->vpos.x;
+			(&rel)->y = -vpt->y + (*pp_rl_n)->vpos.y;
+			(&rel)->z = -vpt->z + (*pp_rl_n)->vpos.z;
 			(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 			if((&rel)->m <= near_threshf) {
 				proc_hmapf(*pp_rl_n, VRT_MASK_LOD_NEAR, 1);
@@ -357,9 +357,9 @@ sort_proc_hmaps(vf_t *vpt)
 			/* sort */
 			for(i = 0; i < count; i++) {
 				/* move relative lod orgin */
-				(&rel)->x = -vpt->x + (*pp_lr_p)->v_pos.x;
-				(&rel)->y = -vpt->y + (*pp_lr_p)->v_pos.y;
-				(&rel)->z = -vpt->z + (*pp_lr_p)->v_pos.z;
+				(&rel)->x = -vpt->x + (*pp_lr_p)->vpos.x;
+				(&rel)->y = -vpt->y + (*pp_lr_p)->vpos.y;
+				(&rel)->z = -vpt->z + (*pp_lr_p)->vpos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 				if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
 					proc_hmapf(*pp_lr_p, VRT_MASK_LOD_PERIF, sort_perif_ratio);
@@ -401,9 +401,9 @@ sort_proc_hmaps(vf_t *vpt)
 			/* sort */
 			for(i = 0; i < count; i++) {
 				/* move relative lod orgin */
-				(&rel)->x = -vpt->x + (*pp_rl_p)->v_pos.x;
-				(&rel)->y = -vpt->y + (*pp_rl_p)->v_pos.y;
-				(&rel)->z = -vpt->z + (*pp_rl_p)->v_pos.z;
+				(&rel)->x = -vpt->x + (*pp_rl_p)->vpos.x;
+				(&rel)->y = -vpt->y + (*pp_rl_p)->vpos.y;
+				(&rel)->z = -vpt->z + (*pp_rl_p)->vpos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 				if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
 					proc_hmapf(*pp_rl_p, VRT_MASK_LOD_PERIF, sort_perif_ratio);
@@ -448,9 +448,9 @@ sort_proc_hmaps(vf_t *vpt)
 			/* sort */
 			for(i = 0; i < count; i++) {
 				/* move relative lod orgin */
-				(&rel)->x = -vpt->x + (*pp_lr_f)->v_pos.x;
-				(&rel)->y = -vpt->y + (*pp_lr_f)->v_pos.y;
-				(&rel)->z = -vpt->z + (*pp_lr_f)->v_pos.z;
+				(&rel)->x = -vpt->x + (*pp_lr_f)->vpos.x;
+				(&rel)->y = -vpt->y + (*pp_lr_f)->vpos.y;
+				(&rel)->z = -vpt->z + (*pp_lr_f)->vpos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 				if((&rel)->m > perif_threshf) {
 					proc_hmapf(*pp_lr_f, VRT_MASK_LOD_FAR, sort_far_ratio);
@@ -494,9 +494,9 @@ sort_proc_hmaps(vf_t *vpt)
 			/* sort */
 			for(i = 0; i < count; i++) {
 				/* move relative lod orgin */
-				(&rel)->x = -vpt->x + (*pp_rl_f)->v_pos.x;
-				(&rel)->y = -vpt->y + (*pp_rl_f)->v_pos.y;
-				(&rel)->z = -vpt->z + (*pp_rl_f)->v_pos.z;
+				(&rel)->x = -vpt->x + (*pp_rl_f)->vpos.x;
+				(&rel)->y = -vpt->y + (*pp_rl_f)->vpos.y;
+				(&rel)->z = -vpt->z + (*pp_rl_f)->vpos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
 				if((&rel)->m > perif_threshf) {
 					proc_hmapf(*pp_rl_f, VRT_MASK_LOD_FAR, sort_far_ratio);
@@ -568,9 +568,9 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	intersection(&sel);
 
 	/* sum velocity into position for this frame */
-	cp_vf(&(m->v_vel), &d); /* take a copy of direction/velocity */
+	cp_vf(&(m->vvel), &d); /* take a copy of direction/velocity */
 	factor_vf(&d, &d, vrt_render_cyc * sort_ratio); /* delta given freq */
-	sum_vf(&(m->v_pos), &d, &(m->v_pos)); /* new pos = delta vector + pos */
+	sum_vf(&(m->vpos), &d, &(m->vpos)); /* new pos = delta vector + pos */
 
 	/* set vob angular displacement
 	   note: v_ang_vel will be pseudovector.  on fly calc moreso optimal */
@@ -580,7 +580,7 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	if(fabs(m->ang_dpl) >= 2 * M_PI)
 		m->ang_dpl = fmodf(m->ang_dpl, 2 * M_PI);
 
-	if(m->p_data_vf)
+	if(m->vmap)
 		render_hmapf(m, lod);
 }
 
@@ -644,8 +644,8 @@ nportf(hmapf_t *p, vf_t *loc)
 	/* ... */
 
 	/* nport */
-	cp_vf(loc, &(p->v_pos));
-	form_mag_vf(&(p->v_pos));
+	cp_vf(loc, &(p->vpos));
+	form_mag_vf(&(p->vpos));
 
 	/* arrival(), for now */
 	r = estimate_radiusf(p);
@@ -690,7 +690,7 @@ estimate_radiusf(hmapf_t *p)
 }
 
 /* set vob in hmap referenced by p to arbitrary but energy factored initial
-   conditions vs. given energy e.  v_vel, v_axi, v_pre, ang_spd, and ang_dpl,
+   conditions vs. given energy e.  vvel, vaxi, vpre, ang_spd, and ang_dpl,
    are set vs. given determinate or estimated radius r and given mass m.
    note: now that e, r, and m are easily derived from an hmap, this will be
    moved to transform.  also could needs a re-write */
@@ -722,35 +722,35 @@ wanderf(hmapf_t *p, float e, float m, float r)
 
 	/* arbitrary direction vector */
 	rnd = (double)rand() * SMALLRANDOM;
-	p->v_vel.x = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
+	p->vvel.x = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_vel.x = copysign(p->v_vel.x, sign);
-	p->v_vel.y = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
+	p->vvel.x = copysign(p->vvel.x, sign);
+	p->vvel.y = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_vel.y = copysign(p->v_vel.y, sign);
-	p->v_vel.z = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
+	p->vvel.y = copysign(p->vvel.y, sign);
+	p->vvel.z = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_vel.z = copysign(p->v_vel.z, sign);
-	normz_vf(&(p->v_vel), &(p->v_vel));
+	p->vvel.z = copysign(p->vvel.z, sign);
+	normz_vf(&(p->vvel), &(p->vvel));
 
 	/* velocity thereapon */
-	tele_magz_vf(&(p->v_vel), &(p->v_vel), avg_orginv_ke); /* m/s */
+	tele_magz_vf(&(p->vvel), &(p->vvel), avg_orginv_ke); /* m/s */
 
-	/* arbitrary v_pre vector axis of mass distribution */
-	p->v_pre.x = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
+	/* arbitrary vpre vector axis of mass distribution */
+	p->vpre.x = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_pre.x = copysign(p->v_pre.x, sign);
-	p->v_pre.y = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
+	p->vpre.x = copysign(p->vpre.x, sign);
+	p->vpre.y = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_pre.y = copysign(p->v_pre.y, sign);
-	p->v_pre.z = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
+	p->vpre.y = copysign(p->vpre.y, sign);
+	p->vpre.z = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
 	if(((int)rnd) % 2) { sign = sign * -1.0; }
-	p->v_pre.z = copysign(p->v_pre.z, sign);
-	normz_vf(&(p->v_pre), &(p->v_pre));
+	p->vpre.z = copysign(p->vpre.z, sign);
+	normz_vf(&(p->vpre), &(p->vpre));
 
-	/* arbitrary v_axi and thus relative rotation/sense when v_axi is
-	   combined with ang_dpl.  for now v_pre is unused, so use that */
-	cp_vf(&(p->v_pre), &(p->v_axi));
+	/* arbitrary vaxi and thus relative rotation/sense when vaxi is
+	   combined with ang_dpl.  for now vpre is unused, so use that */
+	cp_vf(&(p->vpre), &(p->vaxi));
 
 	/* arbitrary signed rotation speed and initial displacement */
 	p->ang_spd = ANG_AFS * avg_tangentv_ke / r; /* r/s */

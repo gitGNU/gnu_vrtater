@@ -57,7 +57,7 @@ void
 render_hmapf(hmapf_t *hmap, int lod)
 {
 	int i, j;
-	vf_t v, nv, edge, plane, *data_vf = hmap->p_data_vf;
+	vf_t v, nv, edge, plane, *data_vf = hmap->vmap;
 	GLfloat glv[3][3], gln[3];
 
 	/* if kbase set, magnify rendered vs. node hugeorgin */
@@ -69,7 +69,7 @@ render_hmapf(hmapf_t *hmap, int lod)
 
 		case VRT_MASK_LOD_INF:
 		fov0 = hmap; /* vs. filter in proc_hmapf() sent once, first */
-		vpt = &(hmap->v_pos);
+		vpt = &(hmap->vpos);
 		break;
 
 		case VRT_MASK_LOD_NEAR:
@@ -93,17 +93,17 @@ render_hmapf(hmapf_t *hmap, int lod)
 
 		case VRT_DRAWGEOM_TRIANGLES:
 		
-		for(i = 0; i < hmap->vf_total / 3; i++) {
+		for(i = 0; i < hmap->vmap_total / 3; i++) {
 			for(j = 0; j < 3; j++, data_vf++) {
 
 				/* rotate verticies for rendering */
 				cp_vf(data_vf, &v);
-				rotate_vf(&v, &(hmap->v_axi), hmap->ang_dpl);
+				rotate_vf(&v, &(hmap->vaxi), hmap->ang_dpl);
 
 				/* format vertices for rendering */
-				glv[j][0] = (GLfloat)(&v)->x + hmap->v_pos.x;
-				glv[j][1] = (GLfloat)(&v)->y + hmap->v_pos.y;
-				glv[j][2] = (GLfloat)(&v)->z + hmap->v_pos.z;
+				glv[j][0] = (GLfloat)(&v)->x + hmap->vpos.x;
+				glv[j][1] = (GLfloat)(&v)->y + hmap->vpos.y;
+				glv[j][2] = (GLfloat)(&v)->z + hmap->vpos.z;
 
 				/* diag */
 				if((hmap->index >= 0) && (hmap->index <= 5)) {
@@ -170,7 +170,7 @@ render_hmapf(hmapf_t *hmap, int lod)
 		break;
 
 		case VRT_DRAWGEOM_LINES:
-		for(i = 0; i < hmap->vf_total; i++) {
+		for(i = 0; i < hmap->vmap_total; i++) {
 			;
 		}
 		break;

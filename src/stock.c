@@ -49,20 +49,20 @@ hmapf_icosahedron_c(session_t *session, float r)
 	hmap->attribs.kg = 4.18879020479 * r * r * r;
 
 	/* allocate for hmap data */
-	hmap->vf_total = VRT_ICOSAHEDRON_C_FCOUNT * 3;
+	hmap->vmap_total = VRT_ICOSAHEDRON_C_FCOUNT * 3;
 	vf_t *data_vf;
-	if((data_vf = (vf_t *) malloc(hmap->vf_total * sizeof(vf_t))) == NULL) {
+	if((data_vf = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
 		abort();
 	}
-	hmap->p_data_vf = data_vf; /* maintain p_data_vf in hmap */
+	hmap->vmap = data_vf; /* maintain data_vf in hmap */
 
 	/* fill in hmap data */
 	vf_t *pd;
 	vf_t **ppd = &pd;
-	*ppd = hmap->p_data_vf;
+	*ppd = hmap->vmap;
 
 	for(i = 0; i < VRT_ICOSAHEDRON_C_FCOUNT; i++) {
 		for(j=0, tri=av; j<3; j++, tri++) {
@@ -105,20 +105,20 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 	hmap->attribs.kg = l * w * h;
 
 	/* allocate for hmap data */
-	hmap->vf_total = VRT_CUBE_C_FCOUNT * 3;
+	hmap->vmap_total = VRT_CUBE_C_FCOUNT * 3;
 	vf_t *data_vf;
-	if((data_vf = (vf_t *) malloc(hmap->vf_total * sizeof(vf_t))) == NULL) {
+	if((data_vf = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
 		abort();
 	}
-	hmap->p_data_vf = data_vf; /* maintain p_data_vf in hmap */
+	hmap->vmap = data_vf; /* maintain data_vf in hmap */
 
 	/* fill in hmap data */
 	vf_t *pd;
 	vf_t **ppd = &pd;
-	*ppd = hmap->p_data_vf;
+	*ppd = hmap->vmap;
 
 	for(i = 0; i < VRT_CUBE_C_FCOUNT; i++) {
 		for(j=0, tri=av; j<3; j++, tri++) {
@@ -172,17 +172,17 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	hmap->envelope.v_sz.z = 0;
 	form_mag_vf(&(hmap->envelope.v_sz));
 
-	hmap->vf_total = 3 * ((e * 2 * (3 + t)) - 2);
+	hmap->vmap_total = 3 * ((e * 2 * (3 + t)) - 2);
 
 	/* allocate for hmap's vf data(if any) */
 	vf_t *data_vf;
-	if((data_vf = (vf_t *) malloc(hmap->vf_total * sizeof(vf_t))) == NULL) {
+	if((data_vf = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
 		abort();
 	}
-	hmap->p_data_vf = data_vf; /* maintain p_data_vf in hmap */
+	hmap->vmap = data_vf; /* maintain data_vf in hmap */
 
 	/* fill in hmap data */
 

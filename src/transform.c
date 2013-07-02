@@ -59,7 +59,7 @@ intersection(select_t *sel)
 
 	scale = .00005;
 
-	dif_vf(&(hmapa->v_pos), &(hmapb->v_pos), &vdist);
+	dif_vf(&(hmapa->vpos), &(hmapb->vpos), &vdist);
 	touch = hmapa->envelope.v_sz.x + hmapb->envelope.v_sz.x;
 
 	if(hmapb->attribs.kg && (&vdist)->m < touch) {
@@ -69,7 +69,7 @@ intersection(select_t *sel)
 		inter = touch - (&vdist)->m; /* -intersection */
 
 		/* tend to hmap a */
-		vvela = &(hmapa->v_vel);
+		vvela = &(hmapa->vvel);
 		/* m*v for now */
 		mva = (ma * vvela->m) ? ma * vvela->m : .000001;
 		/* here calculate angle of reflection */
@@ -80,7 +80,7 @@ intersection(select_t *sel)
 		sum_vf(&vacca, vvela, vvela);
 
 		/* tend to hmap b */
-		vvelb = &(hmapb->v_vel);
+		vvelb = &(hmapb->vvel);
 		mvb = (mb * vvelb->m) ? mb * vvelb->m: .000001;
 		tele_magz_vf(&vdist, &vaccb,
 			scale * inter * ma / mvb);
@@ -91,18 +91,18 @@ intersection(select_t *sel)
 	if(hmapb->index == 7) {
 		__builtin_printf("\n\nindex a: %i\n", hmapa->index);
 		__builtin_printf("  vposa: x %f y %f z %f m %f\n",
-			hmapa->v_pos.x, hmapa->v_pos.y,
-			hmapa->v_pos.z, hmapa->v_pos.m);
+			hmapa->vpos.x, hmapa->vpos.y,
+			hmapa->vpos.z, hmapa->vpos.m);
 		__builtin_printf("  vvela: x %f y %f z %f m %f\n",
-			hmapa->v_vel.x, hmapa->v_vel.y,
-			hmapa->v_vel.z, hmapa->v_vel.m);
+			hmapa->vvel.x, hmapa->vvel.y,
+			hmapa->vvel.z, hmapa->vvel.m);
 		__builtin_printf("  vacca: x %f y %f z %f m %f\n",
 			(&vacca)->x, (&vacca)->y, (&vacca)->z, (&vacca)->m);
 		__builtin_printf("  vdist: x %f y %f z %f m %f\n",
 			(&vdist)->x, (&vdist)->y, (&vdist)->z, (&vdist)->m);
 		__builtin_printf("  vaxia: x %f y %f z %f m %f\n\n",
-			hmapa->v_axi.x, hmapa->v_axi.y,
-			hmapa->v_axi.z, hmapa->v_axi.m);
+			hmapa->vaxi.x, hmapa->vaxi.y,
+			hmapa->vaxi.z, hmapa->vaxi.m);
 		/* todo:
 		   mass not assigned correctly */
 		//__builtin_printf("   kg a: %f\n", ma);
@@ -114,16 +114,16 @@ intersection(select_t *sel)
 		/* hmap other */
 		__builtin_printf("index b: %i\n", hmapb->index);
 		__builtin_printf("  vposb: x %f y %f z %f m %f\n",
-			hmapb->v_pos.x, hmapb->v_pos.y,
-			hmapb->v_pos.z, hmapb->v_pos.m);
+			hmapb->vpos.x, hmapb->vpos.y,
+			hmapb->vpos.z, hmapb->vpos.m);
 		__builtin_printf("  vvelb: x %f y %f z %f m %f\n",
-			hmapb->v_vel.x, hmapb->v_vel.y,
-			hmapb->v_vel.z, hmapb->v_vel.m);
+			hmapb->vvel.x, hmapb->vvel.y,
+			hmapb->vvel.z, hmapb->vvel.m);
 		__builtin_printf("  vaccb: x %f y %f z %f m %f\n",
 			(&vaccb)->x, (&vaccb)->y, (&vaccb)->z, (&vaccb)->m);
 		__builtin_printf("  vaxib: x %f y %f z %f m %f\n\n",
-			hmapb->v_axi.x, hmapb->v_axi.y,
-			hmapb->v_axi.z, hmapb->v_axi.m);
+			hmapb->vaxi.x, hmapb->vaxi.y,
+			hmapb->vaxi.z, hmapb->vaxi.m);
 		 //__builtin_printf("   kg b: %f\n", mb);
 		__builtin_printf("    szb: %f\n", hmapb->envelope.v_sz.x);
 		__builtin_printf("    mvb: %f\n\n", mvb);
@@ -200,26 +200,26 @@ hmapwrapf(select_t *sel)
 	*pi++ = (int)(h->name & 0xffff);
 	*pi++ = h->index;
 	pf = (float *)pi;
-	*pf++ = h->v_pos.x;
-	*pf++ = h->v_pos.y;
-	*pf++ = h->v_pos.z;
-	*pf++ = h->v_pos.m;
-	*pf++ = h->v_vel.x;
-	*pf++ = h->v_vel.y;
-	*pf++ = h->v_vel.z;
-	*pf++ = h->v_vel.m;
-	*pf++ = h->v_axi.x;
-	*pf++ = h->v_axi.y;
-	*pf++ = h->v_axi.z;
-	*pf++ = h->v_axi.m;
-	*pf++ = h->v_rel.x;
-	*pf++ = h->v_rel.y;
-	*pf++ = h->v_rel.z;
-	*pf++ = h->v_rel.m;
-	*pf++ = h->v_pre.x;
-	*pf++ = h->v_pre.y;
-	*pf++ = h->v_pre.z;
-	*pf++ = h->v_pre.m;
+	*pf++ = h->vpos.x;
+	*pf++ = h->vpos.y;
+	*pf++ = h->vpos.z;
+	*pf++ = h->vpos.m;
+	*pf++ = h->vvel.x;
+	*pf++ = h->vvel.y;
+	*pf++ = h->vvel.z;
+	*pf++ = h->vvel.m;
+	*pf++ = h->vaxi.x;
+	*pf++ = h->vaxi.y;
+	*pf++ = h->vaxi.z;
+	*pf++ = h->vaxi.m;
+	*pf++ = h->vrel.x;
+	*pf++ = h->vrel.y;
+	*pf++ = h->vrel.z;
+	*pf++ = h->vrel.m;
+	*pf++ = h->vpre.x;
+	*pf++ = h->vpre.y;
+	*pf++ = h->vpre.z;
+	*pf++ = h->vpre.m;
 	*pf++ = h->ang_spd;
 	*pf++ = h->ang_dpl;
 	pi = (int *)pf;
@@ -240,10 +240,10 @@ hmapwrapf(select_t *sel)
 	*pf++ = h->envelope.v_sz.m;
 	pi = (int *)pf;
 	*pi++ = h->draw.geom;
-	*pi++ = h->vf_total;
+	*pi++ = h->vmap_total;
 	pf = (float *)pi;
-	v = h->p_data_vf;
-	while(i++ < h->vf_total) {
+	v = h->vmap;
+	while(i++ < h->vmap_total) {
 		*pf++ = v->x;
 		*pf++ = v->y;
 		*pf++ = v->z;
@@ -252,7 +252,7 @@ hmapwrapf(select_t *sel)
 	}
 	pi = (int *)pf;
 	*pi++ = h->dialog_len;
-	d = h->p_dialog;
+	d = h->dialog;
 	while(j++ < h->dialog_len)
 		*pi++ = *d++;
 	*pb = abs((int)pi - (int)pb) / sizeof(int);
@@ -362,22 +362,22 @@ cp_hmapf(select_t *sel)
 
 	a = *(sel->seta);
 	b = *(sel->setb);
-	b->v_vel.x = a->v_vel.x;
-	b->v_vel.y = a->v_vel.y;
-	b->v_vel.z = a->v_vel.z;
-	b->v_vel.m = a->v_vel.m;
-	b->v_axi.x = a->v_axi.x;
-	b->v_axi.y = a->v_axi.y;
-	b->v_axi.z = a->v_axi.z;
-	b->v_axi.m = a->v_axi.m;
-	b->v_rel.x = a->v_rel.x;
-	b->v_rel.y = a->v_rel.y;
-	b->v_rel.z = a->v_rel.z;
-	b->v_rel.m = a->v_rel.m;
-	b->v_pre.x = a->v_pre.x;
-	b->v_pre.y = a->v_pre.y;
-	b->v_pre.z = a->v_pre.z;
-	b->v_pre.m = a->v_pre.m;
+	b->vvel.x = a->vvel.x;
+	b->vvel.y = a->vvel.y;
+	b->vvel.z = a->vvel.z;
+	b->vvel.m = a->vvel.m;
+	b->vaxi.x = a->vaxi.x;
+	b->vaxi.y = a->vaxi.y;
+	b->vaxi.z = a->vaxi.z;
+	b->vaxi.m = a->vaxi.m;
+	b->vrel.x = a->vrel.x;
+	b->vrel.y = a->vrel.y;
+	b->vrel.z = a->vrel.z;
+	b->vrel.m = a->vrel.m;
+	b->vpre.x = a->vpre.x;
+	b->vpre.y = a->vpre.y;
+	b->vpre.z = a->vpre.z;
+	b->vpre.m = a->vpre.m;
 	b->ang_spd = a->ang_spd;
 	b->ang_dpl = a->ang_dpl;
 	b->attribs.bits = a->attribs.bits;
@@ -392,38 +392,38 @@ cp_hmapf(select_t *sel)
 	b->envelope.v_sz.m = a->envelope.v_sz.m;
 	b->draw.geom = a->draw.geom;
 
-	if(a->vf_total) {
-		free(b->p_data_vf);
-		b->p_data_vf = NULL;
-		if((b->p_data_vf = (vf_t *) malloc(a->vf_total * sizeof(vf_t))) == NULL) {
+	if(a->vmap_total) {
+		free(b->vmap);
+		b->vmap = NULL;
+		if((b->vmap = (vf_t *) malloc(a->vmap_total * sizeof(vf_t))) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
 				"Error: could not malloc vertice data "
 				"copying hmap %i to %i\n",
 				__FILE__, __LINE__, a->index, a->index);
 			abort();
 		}
-		av = a->p_data_vf;
-		bv = b->p_data_vf;
-		for(i = 0; i < a->vf_total; i++, av++, bv++) {
+		av = a->vmap;
+		bv = b->vmap;
+		for(i = 0; i < a->vmap_total; i++, av++, bv++) {
 			bv->x = av->x;
 			bv->y = av->y;
 			bv->z = av->z;
 			bv->m = av->m;
 		}
-		b->vf_total = a->vf_total;
+		b->vmap_total = a->vmap_total;
 	}
 
 	if(a->dialog_len) {
-		free(b->p_dialog);
-		b->p_dialog = NULL;
-	   if((b->p_dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
+		free(b->dialog);
+		b->dialog = NULL;
+	   if((b->dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
 				"Error: could not malloc dialog data copying hmap %i to %i\n",
 				__FILE__, __LINE__, a->index, b->index);
 			abort();
 		}
-		ad = a->p_dialog;
-		bd = b->p_dialog;
+		ad = a->dialog;
+		bd = b->dialog;
 		for(i = 0; i < a->dialog_len; i++)
 			*bd++ = *ad++;
 		b->dialog_len = a->dialog_len;
@@ -445,23 +445,23 @@ surfinv_hmapf(select_t *sel)
 	vf_t *org, *cpy;
 
 	map = *(sel->seta);
-	org = map->p_data_vf;
-	if((cpy = (vf_t *) malloc(map->vf_total * sizeof(vf_t))) == NULL) {
+	org = map->vmap;
+	if((cpy = (vf_t *) malloc(map->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 		"Error: Could not malloc vertice data when inverting hmap %i\n",
 		__FILE__, __LINE__, map->index);
 		abort();
 	}
 
-	for(i = 0; i < map->vf_total; i++) {
+	for(i = 0; i < map->vmap_total; i++) {
 		cpy->x = org->x;
 		cpy->y = org->y;
 		cpy->z = org->z;
 		(cpy++)->m = (org++)->m;
 	}
 
-	org = map->p_data_vf;
-	for(i = map->vf_total; i > 0; i--) {
+	org = map->vmap;
+	for(i = map->vmap_total; i > 0; i--) {
 		org->x = (--cpy)->x;
 		org->y = cpy->y;
 		org->z = cpy->z;
@@ -480,15 +480,15 @@ surfinv_hmapf(select_t *sel)
 int
 alloc_dialog(select_t *sel, int len)
 {
-	(*sel->seta)->p_dialog = NULL;
-	if(((*sel->seta)->p_dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
+	(*sel->seta)->dialog = NULL;
+	if(((*sel->seta)->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for given dialog\n",
 			__FILE__, __LINE__);
 		abort();
 	}
 	(*sel->seta)->dialog_len = 0;
-	*(*sel->seta)->p_dialog = '\0';
+	*(*sel->seta)->dialog = '\0';
 	return 0;
 }
 
@@ -502,7 +502,7 @@ add_dialog(select_t *sel, char *s, int count, int offset)
 	int i, addlen, orglen, newlen, *pti, *pti2, *swap = NULL;
 	char *ptc;
 
-	if((*sel->seta)->p_dialog) {
+	if((*sel->seta)->dialog) {
 		/* allocate swap, memory to hold previous dialog */
 		if((swap = (int *) malloc((*sel->seta)->dialog_len * sizeof(int))) == NULL) {
 			__builtin_fprintf(stderr,  "vrtater:%s:%d: "
@@ -516,17 +516,17 @@ add_dialog(select_t *sel, char *s, int count, int offset)
 		newlen = orglen + addlen;
 
 		/* put original hmap dialog in swap */
-		pti = (*sel->seta)->p_dialog;
+		pti = (*sel->seta)->dialog;
 		pti2 = swap;
 		for(i = 0; i < orglen; i++)
 			*pti2++ = *pti++;
 
 		/* (re-)allocate memory for dialog with append */
-		free((*sel->seta)->p_dialog);
+		free((*sel->seta)->dialog);
 		alloc_dialog(sel, newlen);
 
 		/* write original string from swap */
-		pti = (*sel->seta)->p_dialog;
+		pti = (*sel->seta)->dialog;
 		pti2 = swap;
 		for(i = 0; i < orglen; i++)
 			*pti++ = *pti2++;
@@ -534,7 +534,7 @@ add_dialog(select_t *sel, char *s, int count, int offset)
 	} else {
 		newlen = addlen = strlen(s);
 		alloc_dialog(sel, addlen);
-		pti = (*sel->seta)->p_dialog;
+		pti = (*sel->seta)->dialog;
 	}
 
 	/* write new string */
@@ -557,12 +557,12 @@ write_dialog(select_t *sel, char *s)
 	char *p;
 
 	/* free previous */
-	free((*sel->seta)->p_dialog);
-	(*sel->seta)->p_dialog = NULL;
+	free((*sel->seta)->dialog);
+	(*sel->seta)->dialog = NULL;
 
 	/* allocate */
 	len = strlen(s);
-	if(((*sel->seta)->p_dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
+	if(((*sel->seta)->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for given dialog\n",
 			__FILE__, __LINE__);
@@ -571,7 +571,7 @@ write_dialog(select_t *sel, char *s)
 
 	/* write */
 	p = s;
-	d = (*sel->seta)->p_dialog;
+	d = (*sel->seta)->dialog;
 	for(i = 0; i < len; i++)
 		*d++ = *p++;
 	*d = '\0';

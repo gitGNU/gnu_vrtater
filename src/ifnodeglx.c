@@ -201,77 +201,77 @@ node(int argc, char **argv)
 	/* hmap with fov for dpy0 */
 	fov0->ang_spd = 0; /* for now not used for fov hmap */
 	fov0->ang_dpl = 0; /* for now not used for fov hmap */
-	set_vf(&(fov0->v_vel), 0, 0, 0, 0);
-	set_vf(&(fov0->v_axi), 0, 0, -1, 1); /* oa */
-	set_vf(&(fov0->v_rel), 0, 1, 0, 1); /* up locally */
-	set_vf(&(fov0->v_pos), 0, 0, 0, 0); /* oa@fp */
+	set_vf(&(fov0->vvel), 0, 0, 0, 0);
+	set_vf(&(fov0->vaxi), 0, 0, -1, 1); /* oa */
+	set_vf(&(fov0->vrel), 0, 1, 0, 1); /* up locally */
+	set_vf(&(fov0->vpos), 0, 0, 0, 0); /* oa@fp */
 
 
 	/* diag */
 	ryg = (hmapf_t *) p_hmapf(1);
 	ryg->ang_spd = .25;
 	ryg->ang_dpl = 0;
-	set_vf(&(ryg->v_vel), 0, 0, 0, 0);
-	set_vf(&(ryg->v_axi), .707106, .707106, 0, 1);
-	set_vf(&(ryg->v_pos), 0, 495, -10, 0);
-	form_mag_vf(&(ryg->v_pos));
+	set_vf(&(ryg->vvel), 0, 0, 0, 0);
+	set_vf(&(ryg->vaxi), .707106, .707106, 0, 1);
+	set_vf(&(ryg->vpos), 0, 495, -10, 0);
+	form_mag_vf(&(ryg->vpos));
 
 	ryg1 = (hmapf_t *) p_hmapf(2);
 	ryg1->ang_spd = .25;
 	ryg1->ang_dpl = 3.141592;
-	set_vf(&(ryg1->v_vel), 0, 0, 0, 0);
-	set_vf(&(ryg1->v_axi), 0, .707106, .707106, 1);
-	set_vf(&(ryg1->v_pos), 0, 495, 10, 0);
-	form_mag_vf(&(ryg1->v_pos));
+	set_vf(&(ryg1->vvel), 0, 0, 0, 0);
+	set_vf(&(ryg1->vaxi), 0, .707106, .707106, 1);
+	set_vf(&(ryg1->vpos), 0, 495, 10, 0);
+	form_mag_vf(&(ryg1->vpos));
 
 	/* diag */
 	diag1 = (hmapf_t *) p_hmapf(3);
 	diag1->ang_spd = .000012; 
-	set_vf(&(diag1->v_vel), 0, .1, 0, .1);
-	set_vf(&(diag1->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag1->v_pos), 70.71, 70.71, 70.71, 10);
+	set_vf(&(diag1->vvel), 0, .1, 0, .1);
+	set_vf(&(diag1->vaxi), 0, 0, -1.0, 1);
+	set_vf(&(diag1->vpos), 70.71, 70.71, 70.71, 10);
 
 	diag2 = (hmapf_t *) p_hmapf(4);
 	diag2->ang_spd = .000010;
-	set_vf(&(diag2->v_vel), 0, .1, 0, .1);
-	set_vf(&(diag2->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag2->v_pos), 70.71, 70.71, -70.71, 10);
+	set_vf(&(diag2->vvel), 0, .1, 0, .1);
+	set_vf(&(diag2->vaxi), 0, 0, -1.0, 1);
+	set_vf(&(diag2->vpos), 70.71, 70.71, -70.71, 10);
 
 	diag3 = (hmapf_t *) p_hmapf(5);
 	diag3->ang_spd = .000015;
-	set_vf(&(diag3->v_vel), 0, .1, 0, .1);
-	set_vf(&(diag3->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag3->v_pos), 70.71, -70.71, 70.71, 10);
+	set_vf(&(diag3->vvel), 0, .1, 0, .1);
+	set_vf(&(diag3->vaxi), 0, 0, -1.0, 1);
+	set_vf(&(diag3->vpos), 70.71, -70.71, 70.71, 10);
 
 	/* diag: std basis */
 	diag4 = (hmapf_t *) p_hmapf(6);
 	diag4->ang_spd = 0;
-	set_vf(&(diag4->v_vel), 0, 0, 0, 0);
-	set_vf(&(diag4->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag4->v_pos), 0, 0, 0, 0);
-	cp_vf(&isb, &(diag4->v_pos));
+	set_vf(&(diag4->vvel), 0, 0, 0, 0);
+	set_vf(&(diag4->vaxi), 0, 0, -1.0, 1);
+	set_vf(&(diag4->vpos), 0, 0, 0, 0);
+	cp_vf(&isb, &(diag4->vpos));
 
 	diag5 = (hmapf_t *) p_hmapf(7);
 	diag5->ang_spd = 0;
-	set_vf(&(diag5->v_vel), 0, 0, 0, 0);
-	set_vf(&(diag5->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag5->v_pos), 0, 0, 0, 0);
-	cp_vf(&jsb, &(diag5->v_pos));
+	set_vf(&(diag5->vvel), 0, 0, 0, 0);
+	set_vf(&(diag5->vaxi), 0, 0, -1.0, 1);
+	set_vf(&(diag5->vpos), 0, 0, 0, 0);
+	cp_vf(&jsb, &(diag5->vpos));
 
 	diag6 = (hmapf_t *) p_hmapf(8);
 	diag6->ang_spd = 0;
-	set_vf(&(diag6->v_vel), 0, 0, 0, 0);
-	set_vf(&(diag6->v_axi), 0, 0, -1.0, 1);
-	set_vf(&(diag6->v_pos), 0, 0, 0, 0);
-	cp_vf(&ksb, &(diag6->v_pos));
+	set_vf(&(diag6->vvel), 0, 0, 0, 0);
+	set_vf(&(diag6->vaxi), 0, 0, -1.0, 1);
+	set_vf(&(diag6->vpos), 0, 0, 0, 0);
+	cp_vf(&ksb, &(diag6->vpos));
 
 	diag8 = (hmapf_t *) p_hmapf(19);
 	diag8->ang_spd = 0;
 	diag8->ang_dpl = M_PI_2;
-	set_vf(&(diag8->v_vel), 0, 0, 0, 0);
-	set_vf(&(diag8->v_axi), 0, .707106, .707106, 1);
-	set_vf(&(diag8->v_pos), 0, 0, 0, 0);
-	cp_vf(&vrloc8, &(diag8->v_pos));
+	set_vf(&(diag8->vvel), 0, 0, 0, 0);
+	set_vf(&(diag8->vaxi), 0, .707106, .707106, 1);
+	set_vf(&(diag8->vpos), 0, 0, 0, 0);
+	cp_vf(&vrloc8, &(diag8->vpos));
 
 	/* interface node
 	   all events since last frame are summed, the new frame is drawn */
@@ -589,82 +589,82 @@ node(int argc, char **argv)
 
 		/* adjust interfaced hmaps per any node input
 		   sum in curvilinear fore/backwards acceleration feedback */
-		tele_magz_vf(&(fov0->v_vel), &(fov0->v_vel),
-			(fov0->v_vel.m * fov0->v_vel.m) /
-			(fov0->v_vel.m + (fov0->v_vel.m * (&ifdpy0)->accel_crv)));
+		tele_magz_vf(&(fov0->vvel), &(fov0->vvel),
+			(fov0->vvel.m * fov0->vvel.m) /
+			(fov0->vvel.m + (fov0->vvel.m * (&ifdpy0)->accel_crv)));
 
 		/* accelerate, summing d/t/t with d/t for (+/-)fwd, side */
                 vf_t acc, acc2, acc3;
-                tele_magz_vf(&(fov0->v_axi), &acc, (&ifdpy0)->keyvfwd);
-                sum_vf(&acc, &(fov0->v_vel), &(fov0->v_vel));
-		tele_magz_vf(&(fov0->v_vel), &(fov0->v_vel), fov0->v_vel.m);
+                tele_magz_vf(&(fov0->vaxi), &acc, (&ifdpy0)->keyvfwd);
+                sum_vf(&acc, &(fov0->vvel), &(fov0->vvel));
+		tele_magz_vf(&(fov0->vvel), &(fov0->vvel), fov0->vvel.m);
 
-		cprod_vf(&(fov0->v_axi), &(fov0->v_rel), &acc2);
+		cprod_vf(&(fov0->vaxi), &(fov0->vrel), &acc2);
                 tele_magz_vf(&acc2, &acc2, (&ifdpy0)->keyvside);
-                sum_vf(&(fov0->v_vel), &acc2, &(fov0->v_vel));
-                tele_magz_vf(&(fov0->v_rel), &acc3, (&ifdpy0)->keyvvrt);
-                sum_vf(&(fov0->v_vel), &acc3, &(fov0->v_vel));
+                sum_vf(&(fov0->vvel), &acc2, &(fov0->vvel));
+                tele_magz_vf(&(fov0->vrel), &acc3, (&ifdpy0)->keyvvrt);
+                sum_vf(&(fov0->vvel), &acc3, &(fov0->vvel));
 
 		/* further adjust interfaced hmaps while representing node
 		   output.  per display(dpy) per frame, set the field of view
 		   (fov) per the hmap's holding any.  a focal plane is
-		   represented by vectors v_rel and side, and an optical axis
-		   by vector v_axi.  roll is represented by a combination of
-		   v_rel and side.  v_pos is represented when applied by the
+		   represented by vectors vrel and side, and an optical axis
+		   by vector vaxi.  roll is represented by a combination of
+		   vrel and side.  vpos is represented when applied by the
 		   renderer to a matrix translation of the inverse of
-		   fov0->v_pos before rendering, and back again before
+		   fov0->vpos before rendering, and back again before
 		   returning. */
 
 		/* calculate a basis vector for tilt */
 		vf_t side;
-		cprod_vf(&(fov0->v_axi), &(fov0->v_rel), &side);
+		cprod_vf(&(fov0->vaxi), &(fov0->vrel), &side);
 		normz_vf(&side, &side);
 
 		/* roll rel and side around axial */
-		rotate_vf(&(fov0->v_rel), &(fov0->v_axi), (&ifdpy0)->keyroll);
-		rotate_vf(&side, &(fov0->v_axi), (&ifdpy0)->keyroll);
+		rotate_vf(&(fov0->vrel), &(fov0->vaxi), (&ifdpy0)->keyroll);
+		rotate_vf(&side, &(fov0->vaxi), (&ifdpy0)->keyroll);
 
 		/* pan side and axial around rel */
-		rotate_vf(&side, &(fov0->v_rel), -(&ifdpy0)->keypan);
-		rotate_vf(&(fov0->v_axi), &(fov0->v_rel), -(&ifdpy0)->keypan);
+		rotate_vf(&side, &(fov0->vrel), -(&ifdpy0)->keypan);
+		rotate_vf(&(fov0->vaxi), &(fov0->vrel), -(&ifdpy0)->keypan);
 
 		/* tilt axial and rel around side */
-		rotate_vf(&(fov0->v_axi), &side, -(&ifdpy0)->keytilt);
-		rotate_vf(&(fov0->v_rel), &side, -(&ifdpy0)->keytilt);
+		rotate_vf(&(fov0->vaxi), &side, -(&ifdpy0)->keytilt);
+		rotate_vf(&(fov0->vrel), &side, -(&ifdpy0)->keytilt);
 
 		/* base's are maintained in their normalized form */
-		normz_vf(&(fov0->v_axi), &(fov0->v_axi));
-		normz_vf(&(fov0->v_rel), &(fov0->v_rel));
+		normz_vf(&(fov0->vaxi), &(fov0->vaxi));
+		normz_vf(&(fov0->vrel), &(fov0->vrel));
 
-		
+
 		/* fov0 is passed and rendered first to set fp_oa */
 		init_next_buffer();
 		proc_hmapf(fov0, VRT_MASK_LOD_INF, 1);
 
 		/* regenerate next frame's worth of hmaps modifying hmap
-		   position vs. v_vel, and (soon rotation/)v_pos through
+		   position vs. vvel, and (soon rotation/)vpos through
 		   intersection of hmaps.  lod envelopes are centered around
-		   fov0->v_pos'.  just above, hmap fov0 was processed vs. the
+		   fov0->vpos'.  just above, hmap fov0 was processed vs. the
 		   near lod envelope so it is skipped in regenerate_scene() */
-		regenerate_scene(&(fov0->v_pos));
+		regenerate_scene(&(fov0->vpos));
 
-		/* rotate scene rendered vs. fov0->v_pos'(set in last call) */
+		/* rotate scene rendered vs. fov0->vpos'(set in last call) */
 		glRotatef((&ifdpy0)->keyroll * 180 / M_PI,
-			fov0->v_axi.x, fov0->v_axi.y, fov0->v_axi.z);
+			fov0->vaxi.x, fov0->vaxi.y, fov0->vaxi.z);
 		glRotatef(-(&ifdpy0)->keypan * 180 / M_PI,
-			fov0->v_rel.x, fov0->v_rel.y, fov0->v_rel.z);
+			fov0->vrel.x, fov0->vrel.y, fov0->vrel.z);
 		glRotatef(-(&ifdpy0)->keytilt * 180 / M_PI,
 			side.x, side.y, side.z);
 
 #ifdef DIAG_INTERFACE
 		/* positional */
 		__builtin_printf("\nfov0\n");
-		__builtin_printf("  v_pos: x %f y %f z %f m %f\n",
-			fov0->v_pos.x, fov0->v_pos.y,
-			fov0->v_pos.z, fov0->v_pos.m);
-		__builtin_printf("  v_vel: x %f y %f z %f m %f\n",
-			fov0->v_vel.x, fov0->v_vel.y,
-			fov0->v_vel.z, fov0->v_vel.m);
+		__builtin_printf("  vpos: x %f y %f z %f m %f\n",
+			fov0->vpos.x, fov0->vpos.y,
+			fov0->vpos.z, fov0->vpos.m);
+		__builtin_printf("  vvel: x %f y %f z %f m %f\n",
+			fov0->vvel.x, fov0->vvel.y,
+			fov0->vvel.z, fov0->vvel.m);
 		__builtin_printf("   vfwd: x %f y %f z %f m %f\n",
 			acc.x, acc.y, acc.z, acc.m);
 		__builtin_printf("  vside: x %f y %f z %f m %f\n",

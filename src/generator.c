@@ -135,18 +135,18 @@ generate_vohspace(void)
 	if((p = hmapf_cylinder_c(&in_node, 80.5, 25, 112, 0)) != NULL) {
 		p->ang_spd = 0;
 		p->ang_dpl = .761799;
-		set_vf(&(p->v_vel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(p->v_axi), -.5, 1, 0, 0));
-		form_mag_vf(set_vf(&(p->v_pos), -200, 500, 0, 0));
+		set_vf(&(p->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(p->vaxi), -.5, 1, 0, 0));
+		form_mag_vf(set_vf(&(p->vpos), -200, 500, 0, 0));
 	}
 
 	/* inner hmap, to be attached to other nodes */
 	if((p = hmapf_cylinder_c(&in_node, 80, 25, 111.5, 0)) != NULL) {
 		p->ang_spd = 0;
 		p->ang_dpl = .761799;
-		set_vf(&(p->v_vel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(p->v_axi), -.5, 1, 0, 0));
-		form_mag_vf(set_vf(&(p->v_pos), -200, 500, 0, 0));
+		set_vf(&(p->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(p->vaxi), -.5, 1, 0, 0));
+		form_mag_vf(set_vf(&(p->vpos), -200, 500, 0, 0));
 	}
 	buffer = (hmapf_t **)selectf_a;
 	*buffer = p;
@@ -159,17 +159,17 @@ generate_vohspace(void)
 	if((p = hmapf_cylinder_c(&in_node, 80.5, 25, 112, 0)) != NULL) {
 		p->ang_spd = 0;
 		p->ang_dpl = -.761799;
-		set_vf(&(p->v_vel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(p->v_axi), .5, 1, 0, 0));
-		form_mag_vf(set_vf(&(p->v_pos), 200, 500, 0, 0));
+		set_vf(&(p->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(p->vaxi), .5, 1, 0, 0));
+		form_mag_vf(set_vf(&(p->vpos), 200, 500, 0, 0));
 	}
 
 	if((p = hmapf_cylinder_c(&in_node, 80, 25, 111.5, 0)) != NULL) {
 		p->ang_spd = 0;
 		p->ang_dpl = -.761799;
-		set_vf(&(p->v_vel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(p->v_axi), .5, 1, 0, 0));
-		form_mag_vf(set_vf(&(p->v_pos), 200, 500, 0, 0));
+		set_vf(&(p->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(p->vaxi), .5, 1, 0, 0));
+		form_mag_vf(set_vf(&(p->vpos), 200, 500, 0, 0));
 	}
 	*buffer = p;
 	surfinv_hmapf(&t);

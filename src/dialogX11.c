@@ -96,7 +96,7 @@ read_dialog_set(select_t *sel)
 	for(i = 0; i < sel->counta; i++, m++)
 		for(j=0;j<(*m)->dialog_len;j++)
 			__builtin_printf("%s", (char *)
-				(*m)->p_dialog + (j * sizeof(int)));
+				(*m)->dialog + (j * sizeof(int)));
 	__builtin_printf("\n");
 	return 0;
 }
