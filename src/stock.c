@@ -50,14 +50,14 @@ hmapf_icosahedron_c(session_t *session, float r)
 
 	/* allocate for hmap data */
 	hmap->vmap_total = VRT_ICOSAHEDRON_C_FCOUNT * 3;
-	vf_t *data_vf;
-	if((data_vf = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	vf_t *vmap;
+	if((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
 		abort();
 	}
-	hmap->vmap = data_vf; /* maintain data_vf in hmap */
+	hmap->vmap = vmap; /* maintain vmap in hmap */
 
 	/* fill in hmap data */
 	vf_t *pd;
@@ -106,14 +106,14 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 
 	/* allocate for hmap data */
 	hmap->vmap_total = VRT_CUBE_C_FCOUNT * 3;
-	vf_t *data_vf;
-	if((data_vf = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	vf_t *vmap;
+	if((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
 		abort();
 	}
-	hmap->vmap = data_vf; /* maintain data_vf in hmap */
+	hmap->vmap = vmap; /* maintain vmap in hmap */
 
 	/* fill in hmap data */
 	vf_t *pd;
@@ -175,19 +175,19 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	hmap->vmap_total = 3 * ((e * 2 * (3 + t)) - 2);
 
 	/* allocate for hmap's vf data(if any) */
-	vf_t *data_vf;
-	if((data_vf = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	vf_t *vmap;
+	if((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
 		abort();
 	}
-	hmap->vmap = data_vf; /* maintain data_vf in hmap */
+	hmap->vmap = vmap; /* maintain vmap in hmap */
 
 	/* fill in hmap data */
 
 	/* cylinder top */
-	itr = tri = (vf_t *) data_vf;
+	itr = tri = (vf_t *) vmap;
 	form_mag_vf(set_vf(&a, 0, yoffset, 0, 0));
 	form_mag_vf(set_vf(&b, 0, yoffset, r, 0));
 	for(i = 1; i <= e; i++) {
@@ -233,7 +233,7 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 
 	/* thread */
 	for(i = 0; i < t; i++) {
-		itr = (vf_t *) data_vf;
+		itr = (vf_t *) vmap;
 		for(j = 0; j < e; j++) {
 
 			/* top thread face */
@@ -271,7 +271,7 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	}
 
 	/* bottom taper */
-	itr = (vf_t *) data_vf;
+	itr = (vf_t *) vmap;
 	j = e - 1;
 	for(i = 0; i < e; i++) {
 		if(i < j) { /* last has only bottom face */
@@ -307,7 +307,7 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	}
 
 	/* cylinder bottom */
-	itr = (vf_t *) data_vf;
+	itr = (vf_t *) vmap;
 	for(i = 0; i < e; i++) {
 
 		itr++; /* b */

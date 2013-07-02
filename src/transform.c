@@ -306,10 +306,10 @@ hmapunwrapf(select_t *sel)
 		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
 	in++; in++; in++; in++;	
 	__builtin_printf("draw geom: %i\n", (int)*in++); fl++;
-	int vf_total = (int)*in;
-	__builtin_printf("vf_total: %i\n", (int)*in++); fl++;
+	int vmap_total = (int)*in;
+	__builtin_printf("vmap_total: %i\n", (int)*in++); fl++;
 	i = 0;
-	while(i < vf_total) {
+	while(i < vmap_total) {
 		__builtin_printf("vf %i: %f", i + 1, (float)*fl++); in++;
 		__builtin_printf(" %f", (float)*fl++); in++;
 		__builtin_printf(" %f", (float)*fl++); in++;

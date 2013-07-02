@@ -57,7 +57,7 @@ void
 render_hmapf(hmapf_t *hmap, int lod)
 {
 	int i, j;
-	vf_t v, nv, edge, plane, *data_vf = hmap->vmap;
+	vf_t v, nv, edge, plane, *vmap = hmap->vmap;
 	GLfloat glv[3][3], gln[3];
 
 	/* if kbase set, magnify rendered vs. node hugeorgin */
@@ -94,10 +94,10 @@ render_hmapf(hmapf_t *hmap, int lod)
 		case VRT_DRAWGEOM_TRIANGLES:
 		
 		for(i = 0; i < hmap->vmap_total / 3; i++) {
-			for(j = 0; j < 3; j++, data_vf++) {
+			for(j = 0; j < 3; j++, vmap++) {
 
 				/* rotate verticies for rendering */
-				cp_vf(data_vf, &v);
+				cp_vf(vmap, &v);
 				rotate_vf(&v, &(hmap->vaxi), hmap->ang_dpl);
 
 				/* format vertices for rendering */
