@@ -71,19 +71,19 @@ intersection(select_t *sel)
 		/* tend to hmap a */
 		vvela = &(hmapa->vvel);
 		/* m*v for now */
-		mva = (ma * vvela->m) ? ma * vvela->m : .000001;
+		mva = ma * vvela->m;
 		/* here calculate angle of reflection */
 
 		/* calculate and set acc for a */
-		tele_magz_vf(&vdist, &vacca,
-			scale * inter * mb / mva);
+		if(mva)
+			tele_magz_vf(&vdist, &vacca, scale * inter * mb / mva);
 		sum_vf(&vacca, vvela, vvela);
 
 		/* tend to hmap b */
 		vvelb = &(hmapb->vvel);
-		mvb = (mb * vvelb->m) ? mb * vvelb->m: .000001;
-		tele_magz_vf(&vdist, &vaccb,
-			scale * inter * ma / mvb);
+		mvb = mb * vvelb->m;
+		if(mvb)
+			tele_magz_vf(&vdist, &vaccb, scale * inter * ma / mvb);
 		sum_vf(&vaccb, vvelb, vvelb);
 	}
 
