@@ -157,3 +157,48 @@ get_session_name_from_file_in_dir(session_t *s)
 	int rval = 1;
 	return rval;
 }
+
+/* there will be 2 buffers for each connected partial, one inbound and one out.
+   when changes are generated locally in a partial, outbound buffer contents
+   accumulate for that partial.  at implicit intervals the full set of those is
+   delivered to each network address connected to that partial.  at implicit
+   intervals inbound buffer per partial collects any changes for that partial
+   originating on any peer nodes connected to that partial.  each connected
+   partial inbound buffer is read locally once per state increment, returning
+   NULL if there are no remotely generated changes.  the compliment outbound
+   buffers are written to in one to n sized blocks of hmaps, per associated
+   partial based on calling code */
+
+/* send to each node connected to s, hmaps referenced by NULL terminated maps */
+void
+sendmaps_to_partial(session_t *s, hmapf_t *maps)
+{
+	;
+}
+
+/* for any recieved hmap data unpacked thru transform and connected to s,
+   write reference(s) in NULL terminated reference list maps.  return reference
+   to maps or NULL if none */
+hmapf_t *
+recievemaps_from_partial(session_t *s, hmapf_t *maps)
+{
+	int rval = NULL;
+	return rval;
+}
+
+/* publish to a connecting node, hmap nodemap, with session name s */
+void
+publish_partial(session_t *s, hmapf_t *nodemap)
+{
+	;
+}
+
+/* return recieved hmap nodemap, when successfully logged in to the peer partial
+   with session name s */
+hmapf_t *
+recieve_partial(session_t *s)
+{
+	hmapf_t *nodemap;
+	return nodemap;
+}
+
