@@ -70,6 +70,7 @@ void shutdown_dialog_interface(void);
 
 /* diagnostic */
 void diag_char(char c);
+void diag_node(void);
 
 /* session */
 void tendto_curr_sessions(void);
@@ -440,6 +441,9 @@ node(int argc, char **argv)
 					case VRT_KEY_f:
 					if(diagtext)
 						diag_char(VRT_KEYCODE_f);
+					else {
+						diag_node();
+					}
 					break;
 
 					case VRT_KEY_g:
@@ -751,6 +755,15 @@ diag_char(char c)
 	*scbuf = (int)c;
 	add_dialog(&dialog_sela, (char *)scbuf, 1, diagtext0->dialog_len);
 }
+
+/* diag.  prompted by lowercase f(!while in diag-text input mode) run this */
+void
+diag_node(void)
+{
+	;
+}
+
+
 
 /* tending to curr_session_t and prev_caller_session_t info.
    referencing session info generated thru session.c, selection of available

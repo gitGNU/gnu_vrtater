@@ -182,7 +182,7 @@ sendmaps_to_partial(session_t *s, hmapf_t *maps)
 hmapf_t *
 recievemaps_from_partial(session_t *s, hmapf_t *maps)
 {
-	int rval = NULL;
+	hmapf_t *rval = NULL;
 	return rval;
 }
 
@@ -190,7 +190,8 @@ recievemaps_from_partial(session_t *s, hmapf_t *maps)
 void
 publish_partial(session_t *s, hmapf_t *nodemap)
 {
-	;
+	__builtin_printf("session.c: published partial %x\n",
+			(int)*s);
 }
 
 /* return recieved hmap nodemap, when successfully logged in to the peer partial
