@@ -127,8 +127,8 @@ init_vohspace(void)
 		p->vpre.m = 0;
 		p->ang_spd = 0; /* radians/second */
 		p->ang_dpl = 0; /* radians */
-		p->attribs.bits = 0;
-		p->attribs.modifiers = VRT_MASK_FLOW_OVER;
+		p->attribs.sign = 0;
+		p->attribs.mode = VRT_MASK_FLOW_OVER;
 		p->attribs.session_filter = 0;
 		p->attribs.balance_filter = 0;
 		p->attribs.kg = 0;
@@ -180,9 +180,9 @@ attach_hmapf(void)
 	hmapf_t *p = a_hmaps;
 
 	for(i = 0; i < vrt_hmaps_max; i++, p++) {
-		if(!(p->attribs.modifiers &= VRT_MASK_ATTACHED)) {
+		if(!(p->attribs.mode &= VRT_MASK_ATTACHED)) {
 			p->index = i; /* caller index */
-			p->attribs.modifiers |= VRT_MASK_ATTACHED;
+			p->attribs.mode |= VRT_MASK_ATTACHED;
 			attached_hmaps++;
 			return p;
 		}
@@ -221,8 +221,8 @@ detach_hmapf(hmapf_t *p)
 		p->vpre.m = 0;
 		p->ang_spd = 0;
 		p->ang_dpl = 0;
-		p->attribs.bits = 0;
-		p->attribs.modifiers = VRT_MASK_FLOW_OVER;
+		p->attribs.sign = 0;
+		p->attribs.mode = VRT_MASK_FLOW_OVER;
 		p->attribs.session_filter = 0;
 		p->attribs.balance_filter = 0;
 		p->attribs.kg = 0;
@@ -544,11 +544,12 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	}
 
 	/* filter to tend to attribs.bits */
-	if(m->attribs.bits & VRT_MASK_DETACH) {
+	if(m->attribs.sign & VRT_MASK_DETACH) {
 		__builtin_printf("detaching hmap %x "
-			"(index %i, free maps %u/%u)\n", (int)m->name, m->index,
-			vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);
+			"(index %i, ", (int)m->name, m->index);
 		detach_hmapf(m);
+		__builtin_printf("free maps %u/%u)\n",
+			vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);
 	}
 
 	/* adjust hmap via kbase if set */
@@ -593,29 +594,28 @@ flow_over(btoggles_t *balance_criteria)
 	hmapf_t *p = &a_hmaps[0];
 
 	for(i = 0; i < vrt_hmaps_max; i++, p++) {
-		if((p->attribs.modifiers & VRT_MASK_FLOW_OVER) &
+		if((p->attribs.mode & VRT_MASK_FLOW_OVER) &
 			(p->attribs.balance_filter &= *balance_criteria))
-		p->attribs.bits |= VRT_MASK_RECYCLE;
+		p->attribs.sign |= VRT_MASK_RECYCLE;
 	}
 	/* then in positional round these are recycled */
 }
 
-/* search vohspace for hmaps holding any of attribits and return references to
-   those in selectf_a.  return number of matches referenced.  until vohspace
+/* search vohspace for hmaps holding any of signs or modes and write references
+   for those in selectf_a.  return number of matches referenced.  until vohspace
    memory can be resized while running all partials and in-node, this search
    may be rather suboptimal, as vrt_hmaps_max hmaps are always searched
    regardless of whether they are attached or not */
 int
-search_vohspace(select_t *sel, int attribits)
+search_vohspace(select_t *sel, btoggles_t signs, btoggles_t modes)
 {
 	int i, matches = 0;
-	hmapf_t *hmap, *p = &a_hmaps[0];
+	hmapf_t *map, *p = &a_hmaps[0];
 
-	hmap = *(sel->seta);
 	for(i = 0; i < vrt_hmaps_max; i++, p++) {
-		if(p->attribs.bits & attribits) {
-			hmap = p;
-			hmap++;
+		if((p->attribs.sign & signs) || (p->attribs.mode & modes)) {
+			map = p;
+			map++;
 			matches++;
 		}	
 	}

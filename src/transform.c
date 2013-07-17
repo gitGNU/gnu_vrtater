@@ -155,20 +155,19 @@ extend_hmaps(select_t *sel)
 }
 
 /*
-   recycle counta hmaps given in select_a.  for now just detach these.
-   the recycler could be written to function as undo stack per vob
-   dependant on session name
+   recycle NULL terminated list of hmaps referenced in select_a.  for now just
+   detach these.  the recycler could be written to function as undo stack per
+   map dependant on session name
 */
 int
 recycle(select_t *sel)
 {
-	int i;
-	hmapf_t *map;
+	hmapf_t **map = (hmapf_t **)(sel->seta);
 
-	map = *(sel->seta);
-	for(i = 0; i < sel->counta; i++, map++) {
-		__builtin_printf(" recycling: %x\n", (int)map->name);
-		map->attribs.bits |= VRT_MASK_DETACH;
+	while((*map) != NULL) {
+		__builtin_printf(" recycling: %x\n", (int)(*map)->name);
+		(*map)->attribs.sign |= VRT_MASK_DETACH;
+		map++;
 	}
 
 	return 0;
@@ -223,8 +222,8 @@ hmapwrapf(select_t *sel)
 	*pf++ = h->ang_spd;
 	*pf++ = h->ang_dpl;
 	pi = (int *)pf;
-	*pi++ = h->attribs.bits;
-	*pi++ = h->attribs.modifiers;
+	*pi++ = h->attribs.sign;
+	*pi++ = h->attribs.mode;
 	*pi++ = h->attribs.session_filter;
 	*pi++ = h->attribs.balance_filter;
 	pf = (float *)pi;
@@ -380,8 +379,8 @@ cp_hmapf(select_t *sel)
 	b->vpre.m = a->vpre.m;
 	b->ang_spd = a->ang_spd;
 	b->ang_dpl = a->ang_dpl;
-	b->attribs.bits = a->attribs.bits;
-	b->attribs.modifiers = a->attribs.modifiers;
+	b->attribs.sign = a->attribs.sign;
+	b->attribs.mode = a->attribs.mode;
 	b->attribs.balance_filter = a->attribs.balance_filter;
 	b->attribs.kg = a->attribs.kg;
 	b->attribs.kfactorm = a->attribs.kfactorm;
@@ -438,7 +437,7 @@ cp_hmapf(select_t *sel)
    drawing for each vertice.
 */
 int
-surfinv_hmapf(select_t *sel)
+surface_inv_hmapf(select_t *sel)
 {
 	int i;
 	hmapf_t *map;
@@ -473,6 +472,7 @@ surfinv_hmapf(select_t *sel)
 }
 
 /* functions affecting allocation of hmap data */
+
 
 /*
    hmap dialog referenced thru sel->seta recieves allocation of len + 1 int's

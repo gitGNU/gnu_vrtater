@@ -37,8 +37,7 @@ struct partial_space {
 	session_t session; /* entering from in-node, hmaps take this name */
 	char *desc; /* set when calling mk_partial() */
 	hmapf_t *nodemap; /* hmap describing the volume of given partial */
-	hmapf_t *hmaps; /* list of hmaps in given partial <= vrt_hmaps_max */
-	int partial_hmaps; /* number of hmaps in given partial */
+	hmapf_t *selection; /* NULL terminated ref list for this partial */
 };
 typedef struct partial_space partial_t;
 
@@ -46,10 +45,16 @@ int generate_node(void);
 void regenerate_scene(vf_t *);
 partial_t *mk_partial(char *desc, hmapf_t *map);
 void rm_partial(partial_t *partial);
-void test_ls_partial(void);
+int diag_hmaps_in_partial(session_t *partial_session);
+session_t *diag_partial_by_ordinal(unsigned int idx);
+void diag_ls_partials(int full);
 void close_vobspace(double time_till_closed);
 void close_node(void);
 int resize_node(int, int);
+/* diag */
+void diag_generator_key_f(void);
+void diag_generator_key_g(void);
+void diag_generator_key_h(void);
 /* generator supported calls for tug input */
 void generator_hapticNormill(void);
 void generator_intersection(void);

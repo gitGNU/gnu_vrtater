@@ -62,7 +62,7 @@ int on_node_session(session_t *);
 int close_sessions(session_desc_t *);
 void sendmaps_to_partial(session_t *s, hmapf_t *maps);
 hmapf_t *recievemaps_from_partial(session_t *s, hmapf_t *maps);
-void publish_partial(session_t *s, hmapf_t *nodemap);
+void publish_partial(session_t *s, hmapf_t **maps);
 hmapf_t *recieve_partial(session_t *s);
 
 #endif /* VRT_SESSION_H */

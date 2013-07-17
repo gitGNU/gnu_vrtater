@@ -12,8 +12,8 @@
 typedef long long unsigned int session_t; /* 2^16 * n = 2^bitcount */
 
 struct attributes {
-	btoggles_t bits;
-	btoggles_t modifiers;
+	btoggles_t sign;
+	btoggles_t mode;
 	btoggles_t session_filter; /* vs. the max current sessions def */
 	btoggles_t balance_filter; /* vob dur-ability vs. balance_criteria */
 	float kg; /* mass representation vs. SI units */
@@ -22,7 +22,7 @@ struct attributes {
 };
 typedef struct attributes attribs_t;
 
-enum { /* attribs_t bits, tested at least once every state increment */
+enum { /* attribs_t sign, tested at least once every state increment */
 	VRT_ORDINAL_HOLD, /* hold vob for given time, hold() */
 #define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
 	VRT_ORDINAL_RECYCLE, /* send to recycler */
@@ -41,7 +41,7 @@ enum { /* attribs_t bits, tested at least once every state increment */
 #define VRT_MASK_DETACH (1 << VRT_ORDINAL_DETACH)
 };
 
-enum { /* attribs_t modifiers, tested in context based functions */
+enum { /* attribs_t mode, tested in context based functions */
 	VRT_ORDINAL_ATTACHED, /* true when hmap is not detached */
 #define VRT_MASK_ATTACHED (1 << VRT_ORDINAL_ATTACHED)
 	VRT_ORDINAL_BALANCE_FILTER,
@@ -170,6 +170,7 @@ extern hmapf_t *selectf_b;
 hmapf_t *hmapf(session_t *);
 hmapf_t *p_hmapf(int i);
 unsigned int hmap_count(void);
+void diag_selection(select_t *sel); /* diagnostic */
 void set_lod_envelopef(float near_thresh, float perif_thresh, unsigned int sp_ratio, unsigned int sf_ratio);
 
 #endif /* VRT_HMAP_H */

@@ -43,6 +43,10 @@ char nicenode_message[] = "the really nice node.";
 partial_t *nicenode;
 #endif
 
+/* diag immediate feedback tests */
+void test_send_partial_changes(void);
+void test_detach_all_partials(void);
+
 /* diag */
 void cphmaptest(hmapf_t *, hmapf_t *);
 void hmapwrap_unwraptst(hmapf_t *);
@@ -52,14 +56,14 @@ init_selection_buffers(void)
 {
 	/* allocate hmapf selection buffers */
 	selectf_a = NULL;
-	if((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+	if((selectf_a = (hmapf_t *) malloc((vrt_hmaps_max + 1) * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for selectf_a\n",
 			__FILE__, __LINE__);
 		abort();
 	}
 	selectf_b = NULL;
-	if((selectf_b = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+	if((selectf_b = (hmapf_t *) malloc((vrt_hmaps_max  + 1) * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for selectf_b\n",
 			__FILE__, __LINE__);
@@ -151,7 +155,7 @@ generate_vohspace(void)
 	buffer = (hmapf_t **)selectf_a;
 	*buffer = p;
 	select_t t = { 0, 0, (hmapf_t **)selectf_a, 0, NULL};
-	surfinv_hmapf(&t);
+	surface_inv_hmapf(&t);
 
 	thenode = mk_partial(thenode_message, p);
 
@@ -172,11 +176,9 @@ generate_vohspace(void)
 		form_mag_vf(set_vf(&(p->vpos), 200, 500, 0, 0));
 	}
 	*buffer = p;
-	surfinv_hmapf(&t);
+	surface_inv_hmapf(&t);
 
 	nicenode = mk_partial(nicenode_message, p);
-
-	test_ls_partial();
 #endif /* DIAG_PARTIAL */
 }
 
@@ -211,7 +213,7 @@ regenerate_scene(vf_t *vpt)
 		char a_char[] = "dialog: pass here and "
 			"everything is published unless encrypted\n";
 		add_dialog(&s, a_char, strlen(a_char), 0);
-		(*p)->attribs.bits |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
+		(*p)->attribs.sign |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
 		dialog(&s);
 	}
 
@@ -222,17 +224,18 @@ regenerate_scene(vf_t *vpt)
 	/* usleep(33400); */ /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
 }
 
-/* generate connection point to merge node vobspaces in a peer to peers network.
+/* partial space
+   generate connection point to merge node vobspaces in a peer to peers network.
    given desc, a max 80 chars + NULL reference to a description for a partial
    vobspace, and map, a refrence to an hmap delimiting the partial space.
    return reference to partial.  note: should mabye rewrite as a linked list */
 partial_t *
-mk_partial(char *desc, hmapf_t *map)
+mk_partial(char *desc, hmapf_t *nodemap)
 {
 	int i, lval;
 	partial_t *partial, **incpartial = (partial_t **)partials_list;
 	partial_t *swap, **incswap;
-	hmapf_t **maps;
+	hmapf_t **map;
 
 	if((partial = (partial_t *) malloc(sizeof(partial_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
@@ -241,26 +244,28 @@ mk_partial(char *desc, hmapf_t *map)
 		abort();
 	}
 
-	if((partial->hmaps = (hmapf_t *)
-		malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL)
+	if((partial->selection = (hmapf_t *)
+		malloc((vrt_hmaps_max + 1) * sizeof(hmapf_t *))) == NULL)
 	{
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for partial hmap references\n",
 			__FILE__, __LINE__);
 		abort();
 	}
+	map = (hmapf_t **)(partial->selection);
+	*map = NULL; /* always for partial selection */
 
 	/* get an empty in-node partial session name */
 	if((lval = in_node_session((&(partial->session)))) != 0) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Attemped in-node partial session failed\n",
 			__FILE__, __LINE__);
-		free(partial->hmaps);
+		free(partial->selection);
 		free(partial);
 		return NULL;
 		
 	} else
-		__builtin_printf("generated partial %x\n",
+		__builtin_printf("generated in-node partial %x\n",
 			(int)partial->session);
 
 	/* rewrite partials_list, empty or not, in a swap buffer */
@@ -299,17 +304,17 @@ mk_partial(char *desc, hmapf_t *map)
 
 	/* fill in values for created partial */
 	(*incpartial)->desc = desc;
-	(*incpartial)->nodemap = map;
-	maps = (hmapf_t **)(*incpartial)->hmaps;
-	*maps = map; /* place bound map reference first in list */
-	(*maps)->attribs.bits |= VRT_MASK_PARTIAL;
-	(*maps)->name = (*incpartial)->session | (session_t)(*maps)->index;
-	(*incpartial)->partial_hmaps = 1;
+	(*incpartial)->nodemap = nodemap;
 
-	__builtin_printf(" added:\n%s\n  nodemap %x\n  "
-		"contents\n\t%x\n  total (%i)\n",
-		(*incpartial)->desc, (int)((*incpartial)->nodemap)->name,
-		(int)(*maps)->name, (*incpartial)->partial_hmaps);
+	/* attach nodemap to the implicit partial */
+	((*incpartial)->nodemap)->name =
+		(*incpartial)->session |
+		(session_t)((*incpartial)->nodemap)->index;
+	((*incpartial)->nodemap)->attribs.sign |=
+		VRT_MASK_PARTIAL; /* true until recycled */
+
+	__builtin_printf("  description:\n%s\n  nodemap %x\n",
+		(*incpartial)->desc, (int)((*incpartial)->nodemap)->name);
 
 	free(swap);
 
@@ -317,15 +322,14 @@ mk_partial(char *desc, hmapf_t *map)
 	return partial;
 }
 
-/* given a node vobspace reference partial, send all hmaps therein directly to
-   the recycler() and free any memory associated with the partial */
+/* given a node vobspace reference partial, send any hmaps collected therein to
+   recycle().  free any memory associated with the partial */
 void
 rm_partial(partial_t *partial)
 {
 	int i;
 	partial_t **incpartial = (partial_t **)partials_list;
 	partial_t *swap, **incswap;
-	hmapf_t **maps, **contents;
 	select_t t;
 
 	/* make a swap buffer of partials_count refrences */
@@ -338,7 +342,7 @@ rm_partial(partial_t *partial)
 	}
 
 	/* put any partial reference not given in the swap buffer, while
-	   configuring for recycle() and freeing of allocations of partial */
+	   configuring for recycle() of now given partial */
 	incswap = (partial_t **)swap;
 	incpartial = (partial_t **)partials_list;
 	for(i = 0; i < partials_count; i++, incpartial++) {
@@ -349,13 +353,8 @@ rm_partial(partial_t *partial)
 				(int)partial->session,
 				(((int)(incpartial - i) - (int)partials_list)
 					/ (int)sizeof(partial_t *)) + 1,
-				partials_count,
-				(*incpartial)->desc);
-			contents = (hmapf_t **)(*incpartial)->hmaps;
-			maps = (hmapf_t **)selectf_a;
-			*maps = *contents;
-			(&t)->counta = partial->partial_hmaps;
-			(&t)->seta = (hmapf_t **)selectf_a;
+				partials_count, (*incpartial)->desc);
+			(&t)->seta = (hmapf_t **)(*incpartial)->selection;
 		}
 	}
 
@@ -366,6 +365,7 @@ rm_partial(partial_t *partial)
 			__FILE__, __LINE__);
 		abort();
 	}
+
 	/* recycle partial maps and free allocations of this partial */
 	recycle(&t);
 	__builtin_printf(" freeing %x\n", (int)partial->session);
@@ -388,20 +388,135 @@ rm_partial(partial_t *partial)
 	free(swap);
 }
 
+/* diag */
 void
-test_ls_partial(void)
+diag_ls_partials(int full)
 {
 	int i;
 	partial_t **p = (partial_t **)partials_list;
 
 	__builtin_printf(" partials: (list)\n");
-	for(i = 0; i < partials_count; i++, p++)
+	for(i = 0; i < partials_count; i++, p++) {
 		__builtin_printf("%s\n", (*p)->desc);
+		if(full)
+			diag_hmaps_in_partial(&((*p)->session));
+	}
 	if(!partials_count)
 		__builtin_printf("--none--\n");
 }
 
-/* called thru ifnode */
+int
+diag_hmaps_in_partial(session_t *partial_session)
+{
+	int i, j;
+	partial_t **p = (partial_t **)partials_list;
+	hmapf_t **map;
+
+	for(i = 0; i < partials_count; i++, p++) {
+		if((*partial_session) == (*p)->session) {
+			map = (hmapf_t **)((*p)->selection);
+			for(j = 0; (*map) != NULL; j++, map++)
+				__builtin_printf("  map %x\n", (int)(*map)->name);
+			return j;
+		}
+	}
+	return -1;
+}
+
+session_t *
+diag_partial_by_ordinal(unsigned int idx)
+{
+	partial_t **p = (partial_t **)partials_list;
+
+	if(idx > partials_count)
+		return NULL;
+	p += idx;
+	return (session_t *)&(*p)->session;
+}
+
+/* run diagnostic tests on keypress, f, g, h */
+void
+diag_generator_key_f(void)
+{
+	test_send_partial_changes();
+}
+
+void
+diag_generator_key_g(void)
+{
+	int i;
+	session_t s;
+
+	for(i = 0; i < partials_count; i++) {
+		s = *diag_partial_by_ordinal(i);
+		__builtin_printf("partial %x\n", (int)s);
+		__builtin_printf("%i hmap(s)\n",
+			diag_hmaps_in_partial((session_t *)&s));
+	}
+}
+
+void
+diag_generator_key_h(void)
+{
+	select_t s;
+
+	diag_ls_partials(1);
+
+	__builtin_printf("there are %u attached hmaps\n", hmap_count());
+
+	(&s)->seta = (hmapf_t **)selectf_a;
+	(&s)->counta = search_vohspace(&s, 0, VRT_MASK_ATTACHED);
+	diag_selection(&s);
+
+	test_detach_all_partials();
+	(&s)->counta = search_vohspace(&s, 0, VRT_MASK_ATTACHED);
+	diag_selection(&s);
+}
+
+/* diagnostic tests */
+void
+test_send_partial_changes(void)
+{
+	int i;
+	partial_t **p = (partial_t **)partials_list;
+	hmapf_t *m, **maps;
+
+	if((m = hmapf_cylinder_c(&in_node, 40, 25, 55.75, 0)) != NULL) {
+		m->ang_spd = 0;
+		m->ang_dpl = .761799;
+		set_vf(&(m->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(m->vaxi), -.5, 1, 0, 0));
+		form_mag_vf(set_vf(&(m->vpos), -200, 500, 0, 0));
+	}
+	/* place hapmap in 1st partial */
+	m->name = (*p)->session | (session_t)m->index;
+	m->attribs.sign |= VRT_MASK_PARTIAL;
+
+	p = (partial_t **)partials_list;
+	for(i = 0; i < partials_count; i++, p++) {
+		/* place changes in the partial selection.
+		   for now send nodemap(and cylinder in 1st partial) */
+		maps = (hmapf_t **)(*p)->selection;
+		*(maps++) = (*p)->nodemap;
+		if((m->name  & 0xffff0000) == (*p)->session)
+			*(maps++) = m;
+		*(maps--) = NULL; /* always for partial hmaps list */
+		publish_partial(&(*p)->session, (hmapf_t **)(*p)->selection);
+	}
+}
+
+void
+test_detach_all_partials(void)
+{
+	int i;
+	partial_t **p = (partial_t **)partials_list;
+
+	for(i = partials_count; i > 0; i--) {
+		rm_partial(*p);
+	}
+}
+
+/* node maintainance */
 void
 close_vobspace(double when)
 {
@@ -462,6 +577,7 @@ resize_node(int size, int keep_connected)
 	}
 }
 
+/* hapmap file support */
 void
 cphmaptest(hmapf_t *a, hmapf_t *b)
 {

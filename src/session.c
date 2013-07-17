@@ -186,12 +186,20 @@ recievemaps_from_partial(session_t *s, hmapf_t *maps)
 	return rval;
 }
 
-/* publish to a connecting node, hmap nodemap, with session name s */
+/* publish to a connecting node, with session name s, hmap nodemap, and any maps
+   therein */
 void
-publish_partial(session_t *s, hmapf_t *nodemap)
+publish_partial(session_t *s, hmapf_t **maps)
 {
-	__builtin_printf("session.c: published partial %x\n",
-			(int)*s);
+	hmapf_t **p = maps;
+
+	__builtin_printf("session.c: pretending to publish partial %x "
+		"to another node including...\n",
+		(int)*s);
+	while(*p != NULL) {
+		__builtin_printf("  map %x\n", (int)((*p)->name));
+		p++;
+	}
 }
 
 /* return recieved hmap nodemap, when successfully logged in to the peer partial

@@ -50,7 +50,7 @@ usage(void)
 	__builtin_printf("\n"
 		"usage: vrtater [-?h] [-d[level]] [-f on-node-name] "
 		"[-i[in-node-name]]\n\n"
-		"--brief                Run with beief console messages\n"
+		"--brief                Run with brief console messages\n"
 		"--diag         -d      Apply tug diagnostic mode /w opt level\n"
 		"--find-node    -f      Start with a remote node search\n"
 		"--help         -?      Print this usage message\n"

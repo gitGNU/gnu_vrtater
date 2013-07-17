@@ -70,7 +70,10 @@ void shutdown_dialog_interface(void);
 
 /* diagnostic */
 void diag_char(char c);
-void diag_node(void);
+void diag_node_key_f(void);
+void diag_node_key_g(void);
+void diag_node_key_h(void);
+void diag_node_key_j(void);
 
 /* session */
 void tendto_curr_sessions(void);
@@ -302,7 +305,7 @@ node(int argc, char **argv)
 					break;
 
 					case VRT_KEY_esc:
-					runnode = 0; /* for now */
+					diag_node_key_j();
 					break;
 
 					case VRT_KEY_space:
@@ -442,18 +445,24 @@ node(int argc, char **argv)
 					if(diagtext)
 						diag_char(VRT_KEYCODE_f);
 					else {
-						diag_node();
+						diag_node_key_f();
 					}
 					break;
 
 					case VRT_KEY_g:
 					if(diagtext)
 						diag_char(VRT_KEYCODE_g);
+					else {
+						diag_node_key_g();
+					}
 					break;
 
 					case VRT_KEY_h:
 					if(diagtext)
 						diag_char(VRT_KEYCODE_h);
+					else {
+						diag_node_key_h();
+					}
 					break;
 
 					case VRT_KEY_i:
@@ -464,6 +473,9 @@ node(int argc, char **argv)
 					case VRT_KEY_j:
 					if(diagtext)
 						diag_char(VRT_KEYCODE_j);
+					else {
+						runnode = 0; /* for now */
+					}
 					break;
 
 					case VRT_KEY_k:
@@ -681,7 +693,7 @@ node(int argc, char **argv)
 		__builtin_printf("kbd\n");
 		__builtin_printf("   roll(k/;) %f  pan(a/d) %f tilt(o/l) %f\n"
 			"   vfwd(w/s) %f vvrt(p/,) %f vside(z/c) %f\n"
-			"   decel(space) dialog(\\) pre-alpha exit(esc)\n\n"
+			"   decel(space) dialog(\\) pre-alpha exit(j)\n\n"
 			"dialog\n", (&ifdpy0)->keyroll, (&ifdpy0)->keypan,
 			(&ifdpy0)->keytilt, (&ifdpy0)->keyvfwd,
 			(&ifdpy0)->keyvvrt, (&ifdpy0)->keyvside);
@@ -756,14 +768,35 @@ diag_char(char c)
 	add_dialog(&dialog_sela, (char *)scbuf, 1, diagtext0->dialog_len);
 }
 
-/* diag.  prompted by lowercase f(!while in diag-text input mode) run this */
+/* diag.  prompted by lowercase f, g, h, j(!when diag-text input on) run this */
 void
-diag_node(void)
+diag_node_key_f(void)
 {
-	;
+	diag_generator_key_f();
 }
 
+void
+diag_node_key_g(void)
+{
+	diag_generator_key_g();
+}
 
+void
+diag_node_key_h(void)
+{
+	diag_generator_key_h();
+}
+
+void
+diag_node_key_j(void)
+{
+	__builtin_printf("For now, please use j to exit "
+		"vrtater GNU free software.\n"
+		"No emails so far. :_( Please send patches, "
+		"or become a maintainer, see README.\n"
+		"Outreach drive (eta. mid Aug) coming, for "
+		"session.c, renderer, more...\n");
+}
 
 /* tending to curr_session_t and prev_caller_session_t info.
    referencing session info generated thru session.c, selection of available
