@@ -37,7 +37,7 @@ struct partial_space {
 	session_t session; /* entering from in-node, hmaps take this name */
 	char *desc; /* set when calling mk_partial() */
 	hmapf_t *nodemap; /* hmap describing the volume of given partial */
-	hmapf_t *selection; /* NULL terminated ref list for this partial */
+	hmapf_t **selection; /* NULL terminated ref list for this partial */
 };
 typedef struct partial_space partial_t;
 
@@ -45,6 +45,7 @@ int generate_node(void);
 void regenerate_scene(vf_t *);
 partial_t *mk_partial(char *desc, hmapf_t *map);
 void rm_partial(partial_t *partial);
+void select_hmaps_in_partial(session_t *);
 int diag_hmaps_in_partial(session_t *partial_session);
 session_t *diag_partial_by_ordinal(unsigned int idx);
 void diag_ls_partials(int full);

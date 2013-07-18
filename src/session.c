@@ -186,8 +186,8 @@ recievemaps_from_partial(session_t *s, hmapf_t *maps)
 	return rval;
 }
 
-/* publish to a connecting node, with session name s, hmap nodemap, and any maps
-   therein */
+/* publish to a connecting node, with session name s, any of maps referenced.
+   note: consider throwing error(for now) on checking for partial attrib */
 void
 publish_partial(session_t *s, hmapf_t **maps)
 {
@@ -210,4 +210,3 @@ recieve_partial(session_t *s)
 	hmapf_t *nodemap;
 	return nodemap;
 }
-

@@ -244,7 +244,7 @@ mk_partial(char *desc, hmapf_t *nodemap)
 		abort();
 	}
 
-	if((partial->selection = (hmapf_t *)
+	if((partial->selection = (hmapf_t **)
 		malloc((vrt_hmaps_max + 1) * sizeof(hmapf_t *))) == NULL)
 	{
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
@@ -252,7 +252,7 @@ mk_partial(char *desc, hmapf_t *nodemap)
 			__FILE__, __LINE__);
 		abort();
 	}
-	map = (hmapf_t **)(partial->selection);
+	map = (partial->selection);
 	*map = NULL; /* always for partial selection */
 
 	/* get an empty in-node partial session name */
@@ -354,7 +354,8 @@ rm_partial(partial_t *partial)
 				(((int)(incpartial - i) - (int)partials_list)
 					/ (int)sizeof(partial_t *)) + 1,
 				partials_count, (*incpartial)->desc);
-			(&t)->seta = (hmapf_t **)(*incpartial)->selection;
+			(&t)->seta = (hmapf_t **)selectf_a;
+			select_hmaps_in_partial(&((*incpartial)->session));
 		}
 	}
 
@@ -388,7 +389,23 @@ rm_partial(partial_t *partial)
 	free(swap);
 }
 
-/* diag */
+/* reference hmaps in partial_session as null terminated list in selectf_a */
+void
+select_hmaps_in_partial(session_t *partial_session)
+{
+	int i;
+	hmapf_t *map, **selection;
+
+	map = a_hmaps;
+	selection = (hmapf_t **)selectf_a;
+
+	for(i = 0; i < vrt_hmaps_max; i++, map++)
+		if((map->name & 0xffff0000) == *partial_session)
+			*(selection++) = map;
+	*selection = NULL;
+}
+
+/* diagnostics for partial */
 void
 diag_ls_partials(int full)
 {
@@ -438,14 +455,10 @@ diag_partial_by_ordinal(unsigned int idx)
 void
 diag_generator_key_f(void)
 {
-	test_send_partial_changes();
-}
-
-void
-diag_generator_key_g(void)
-{
 	int i;
 	session_t s;
+
+	test_send_partial_changes();
 
 	for(i = 0; i < partials_count; i++) {
 		s = *diag_partial_by_ordinal(i);
@@ -456,20 +469,23 @@ diag_generator_key_g(void)
 }
 
 void
+diag_generator_key_g(void)
+{
+	select_t t = {  0, 0, (hmapf_t **)selectf_a, 0, NULL };
+
+	(&t)->counta = search_vohspace((&t)->seta, 0, VRT_MASK_FLOW_OVER);
+	diag_selection(&t);
+}
+
+void
 diag_generator_key_h(void)
 {
-	select_t s;
-
-	diag_ls_partials(1);
-
+	select_t s = {  0, 0, (hmapf_t **)selectf_a, 0, NULL };
 	__builtin_printf("there are %u attached hmaps\n", hmap_count());
 
-	(&s)->seta = (hmapf_t **)selectf_a;
-	(&s)->counta = search_vohspace(&s, 0, VRT_MASK_ATTACHED);
-	diag_selection(&s);
-
 	test_detach_all_partials();
-	(&s)->counta = search_vohspace(&s, 0, VRT_MASK_ATTACHED);
+
+	(&s)->counta = search_vohspace((&s)->seta, 0, VRT_MASK_ATTACHED);
 	diag_selection(&s);
 }
 
@@ -501,7 +517,7 @@ test_send_partial_changes(void)
 		if((m->name  & 0xffff0000) == (*p)->session)
 			*(maps++) = m;
 		*(maps--) = NULL; /* always for partial hmaps list */
-		publish_partial(&(*p)->session, (hmapf_t **)(*p)->selection);
+		publish_partial(&(*p)->session, (*p)->selection);
 	}
 }
 

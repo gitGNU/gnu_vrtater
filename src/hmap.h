@@ -170,6 +170,7 @@ extern hmapf_t *selectf_b;
 hmapf_t *hmapf(session_t *);
 hmapf_t *p_hmapf(int i);
 unsigned int hmap_count(void);
+int search_vohspace(hmapf_t **, btoggles_t signs, btoggles_t modes);
 void diag_selection(select_t *sel); /* diagnostic */
 void set_lod_envelopef(float near_thresh, float perif_thresh, unsigned int sp_ratio, unsigned int sf_ratio);
 

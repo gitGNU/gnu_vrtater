@@ -545,8 +545,7 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 
 	/* filter to tend to attribs.bits */
 	if(m->attribs.sign & VRT_MASK_DETACH) {
-		__builtin_printf("detaching hmap %x "
-			"(index %i, ", (int)m->name, m->index);
+		__builtin_printf("detaching hmap %x (", (int)m->name);
 		detach_hmapf(m);
 		__builtin_printf("free maps %u/%u)\n",
 			vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);
@@ -599,27 +598,6 @@ flow_over(btoggles_t *balance_criteria)
 		p->attribs.sign |= VRT_MASK_RECYCLE;
 	}
 	/* then in positional round these are recycled */
-}
-
-/* search vohspace for hmaps holding any of signs or modes and write references
-   for those in selectf_a.  return number of matches referenced.  until vohspace
-   memory can be resized while running all partials and in-node, this search
-   may be rather suboptimal, as vrt_hmaps_max hmaps are always searched
-   regardless of whether they are attached or not */
-int
-search_vohspace(select_t *sel, btoggles_t signs, btoggles_t modes)
-{
-	int i, matches = 0;
-	hmapf_t *map, *p = &a_hmaps[0];
-
-	for(i = 0; i < vrt_hmaps_max; i++, p++) {
-		if((p->attribs.sign & signs) || (p->attribs.mode & modes)) {
-			map = p;
-			map++;
-			matches++;
-		}	
-	}
-	return matches;
 }
 
 /* tag vobspace */
