@@ -432,8 +432,10 @@ diag_hmaps_in_partial(session_t *partial_session)
 	for(i = 0; i < partials_count; i++, p++) {
 		if((*partial_session) == (*p)->session) {
 			map = (hmapf_t **)((*p)->selection);
+			__builtin_printf("  session %x\n", (int)(*p)->session);
 			for(j = 0; (*map) != NULL; j++, map++)
-				__builtin_printf("  map %x\n", (int)(*map)->name);
+				__builtin_printf("      map %x\n",
+					(int)(*map)->name);
 			return j;
 		}
 	}
@@ -455,17 +457,8 @@ diag_partial_by_ordinal(unsigned int idx)
 void
 diag_generator_key_f(void)
 {
-	int i;
-	session_t s;
-
 	test_send_partial_changes();
-
-	for(i = 0; i < partials_count; i++) {
-		s = *diag_partial_by_ordinal(i);
-		__builtin_printf("partial %x\n", (int)s);
-		__builtin_printf("%i hmap(s)\n",
-			diag_hmaps_in_partial((session_t *)&s));
-	}
+	diag_ls_partials(1);
 }
 
 void
@@ -517,7 +510,7 @@ test_send_partial_changes(void)
 		if((m->name  & 0xffff0000) == (*p)->session)
 			*(maps++) = m;
 		*(maps--) = NULL; /* always for partial hmaps list */
-		publish_partial(&(*p)->session, (*p)->selection);
+		buffer_maps_to_peer_partial(&(*p)->session, (*p)->selection);
 	}
 }
 

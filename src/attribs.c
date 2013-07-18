@@ -543,7 +543,7 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 			return;
 	}
 
-	/* filter to tend to attribs.bits */
+	/* filter to tend to attribs bits */
 	if(m->attribs.sign & VRT_MASK_DETACH) {
 		__builtin_printf("detaching hmap %x (", (int)m->name);
 		detach_hmapf(m);

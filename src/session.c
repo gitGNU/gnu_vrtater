@@ -171,8 +171,17 @@ get_session_name_from_file_in_dir(session_t *s)
 
 /* send to each node connected to s, hmaps referenced by NULL terminated maps */
 void
-sendmaps_to_partial(session_t *s, hmapf_t *maps)
+buffer_maps_to_peer_partial(session_t *s, hmapf_t **maps)
 {
+	hmapf_t **p = maps;
+
+	__builtin_printf("session.c: pretending to buffer partial %x "
+		"for transmit to another node,\n including...\n",
+		(int)*s);
+	while(*p != NULL) {
+		__builtin_printf("  map %x\n", (int)((*p)->name));
+		p++;
+	}
 	;
 }
 
@@ -180,26 +189,10 @@ sendmaps_to_partial(session_t *s, hmapf_t *maps)
    write reference(s) in NULL terminated reference list maps.  return reference
    to maps or NULL if none */
 hmapf_t *
-recievemaps_from_partial(session_t *s, hmapf_t *maps)
+write_maps_from_peer_partial(session_t *s, hmapf_t **maps)
 {
 	hmapf_t *rval = NULL;
 	return rval;
-}
-
-/* publish to a connecting node, with session name s, any of maps referenced.
-   note: consider throwing error(for now) on checking for partial attrib */
-void
-publish_partial(session_t *s, hmapf_t **maps)
-{
-	hmapf_t **p = maps;
-
-	__builtin_printf("session.c: pretending to publish partial %x "
-		"to another node including...\n",
-		(int)*s);
-	while(*p != NULL) {
-		__builtin_printf("  map %x\n", (int)((*p)->name));
-		p++;
-	}
 }
 
 /* return recieved hmap nodemap, when successfully logged in to the peer partial
