@@ -61,7 +61,6 @@ int call_session(char *);
 int on_node_session(session_t *);
 int close_sessions(session_desc_t *);
 void buffer_maps_to_peer_partial(session_t *s, hmapf_t **maps);
-hmapf_t *write_maps_from_peer_partial(session_t *s, hmapf_t **maps);
-hmapf_t *recieve_partial(session_t *s);
+hmapf_t *recieve_maps_from_peer_partial(session_t *s, hmapf_t **maps);
 
 #endif /* VRT_SESSION_H */
