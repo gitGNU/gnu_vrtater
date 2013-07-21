@@ -70,20 +70,22 @@ search_vohspace(hmapf_t **listout, btoggles_t signs, btoggles_t modes)
 void
 diag_selection(select_t *sel)
 {
-	int i;
+	int i, count;
 	hmapf_t **map;
 
 	if(sel->specbits & VRT_MASK_HAS_SETB) {
 		map = sel->setb;
+		count = sel->countb;
 		__builtin_printf("diag_selection: setb (%i hmaps)\n",
 			sel->countb);
 	} else {
 		map = sel->seta;
+		count = sel->counta;
 		__builtin_printf("diag_selection: seta (%i hmaps)\n",
 			sel->counta);
 	}
 
-	for(i = 0; i < sel->counta; i++, map++) {
+	for(i = 0; i < count; i++, map++) {
 		__builtin_printf(" %x ", (int)(*map)->name);
 		if((*map)->attribs.sign & VRT_MASK_HOLD)
 			__builtin_printf("HOLD ");

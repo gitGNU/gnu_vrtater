@@ -457,8 +457,103 @@ diag_partial_by_ordinal(unsigned int idx)
 void
 diag_generator_key_f(void)
 {
-	test_send_partial_changes();
-	diag_ls_partials(1);
+	session_t sesn = 0x80860000;
+	list_t *partial1;
+	listed_t *entry;
+	hmapf_t *map, *map1, *map2, *map3, *map4;
+	vf_t loc = { 0, 0, -10, 10 };
+	vf_t d = { 0, 2, 0, 2 };
+	int i, rval;
+	select_t sel = { 0, 0, (hmapf_t **)selectf_a, 0, NULL };
+
+	if((map1 = hmapf_cylinder_c(&in_node, 1, 25, 1.35, 0)) != NULL) {
+		nportf(map1, &loc);
+	}
+
+	if((map2 = hmapf_cylinder_c(&in_node, 1, 25, 1.35, 0)) != NULL) {
+		nportf(map2, sum_vf(&loc, &d, &loc));
+	}
+
+	if((map3 = hmapf_cylinder_c(&in_node, 1, 25, 1.35, 0)) != NULL) {
+		nportf(map3, sum_vf(&loc, factor_vf(inv_vf(&d, &d), &d, 2), &loc));
+	}
+
+	map4 = p_hmapf(0); /* for not found test */
+
+	hmapf_t *a[] = { map1, map2, map3, map4 };
+
+	__builtin_printf("\ntest: make 4 lists of 3 elements in succession.  "
+		"per pass try to remove one\n"
+		"element each time covering each of three present, then one not"
+		"present.\n");
+	for (i = 0; i < 4; i++) {
+
+		partial1 = mk_list(&sesn);
+		entry = add_to_list(partial1, map1);
+		entry = add_to_list(partial1, map2);
+		entry = add_to_list(partial1, map3);
+
+		(&sel)->counta = select_listed(partial1, &sel);
+		diag_selection(&sel);
+
+		map = a[i];
+
+		if((rval = subtract_from_list(partial1, map)))
+			__builtin_printf("failed to find map %x in %x\n",
+				(int)map->name, (int)partial1->name);
+
+		rm_list(partial1);
+		partial1 = NULL;
+	}
+
+	__builtin_printf("\ntest: make  list of 3 elements, then try to remove "
+		"each in unusual sequence.\n"
+		"repeat this test twice mor for various sequences of 2	"
+		"elements.\n");
+	partial1 = mk_list(&sesn);
+	entry = add_to_list(partial1, map1);
+	entry = add_to_list(partial1, map2);
+	entry = add_to_list(partial1, map3);
+
+	(&sel)->counta = select_listed(partial1, &sel);
+	diag_selection(&sel);
+
+	subtract_from_list(partial1, map1);
+	subtract_from_list(partial1, map2);
+	subtract_from_list(partial1, map3);
+
+	(&sel)->counta = select_listed(partial1, &sel);
+	diag_selection(&sel);
+
+	entry = add_to_list(partial1, map1);
+	entry = add_to_list(partial1, map2);
+	entry = add_to_list(partial1, map3);
+
+	(&sel)->counta = select_listed(partial1, &sel);
+	diag_selection(&sel);
+
+	subtract_from_list(partial1, map2);
+	subtract_from_list(partial1, map3);
+
+	(&sel)->counta = select_listed(partial1, &sel);
+	diag_selection(&sel);
+
+	rm_list(partial1);
+	partial1 = NULL;
+
+	partial1 = mk_list(&sesn);
+	entry = add_to_list(partial1, map1);
+	entry = add_to_list(partial1, map2);
+	entry = add_to_list(partial1, map3);
+
+	(&sel)->counta = select_listed(partial1, &sel);
+	diag_selection(&sel);
+
+	subtract_from_list(partial1, map1);
+	subtract_from_list(partial1, map3);
+
+	rm_list(partial1);
+	partial1 = NULL;
 }
 
 void

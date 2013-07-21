@@ -9,6 +9,7 @@
 #include "bittoggles.h"
 #include "vectors.h"
 #include "hmap.h"
+#include "partial.h"
 
 /* generator_opts_t
    these are all set by ifnode**.c, some through data maintained in dialog.c

@@ -10,7 +10,7 @@ INCLUDE =
 
 BIN = vrtater
 MAIN = vrtater
-SRCS = ifnodeglx.c vectors.c rotation.c generator.c session.c dialogX11.c attribs.c tug.c transform.c stock.c rendergl.c hmap.c bittoggles.c
+SRCS = ifnodeglx.c vectors.c rotation.c generator.c session.c dialogX11.c attribs.c tug.c transform.c stock.c rendergl.c hmap.c bittoggles.c partial.c
 
 j : clean all
 
