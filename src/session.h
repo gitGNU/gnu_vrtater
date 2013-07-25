@@ -55,12 +55,14 @@ void init_sessions(void);
 void session_sync(void);
 session_desc_t *p_session_desc(void);
 prev_caller_sessions_t *p_prev_caller_sessions(void);
-int in_node_session(session_t *);
+int set_node_orgin(session_t *);
+int set_node_partial(session_t *);
 void list_nodes(char *);
 int call_session(char *);
-int on_node_session(session_t *);
+int accept_called_partial_session(session_t *, char *passwd);
+int accept_caller_partial_session(session_t *);
 int close_sessions(session_desc_t *);
-void buffer_maps_to_peer_partial(session_t *s, hmapf_t **maps);
+void buffer_maps_to_peer_partial(session_t *s, select_t *sel);
 hmapf_t *recieve_maps_from_peer_partial(session_t *s, hmapf_t **maps);
 
 #endif /* VRT_SESSION_H */

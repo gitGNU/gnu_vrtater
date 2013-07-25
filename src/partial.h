@@ -15,16 +15,26 @@ struct listed_s {
 typedef struct listed_s listed_t;
 
 struct list_s {
-	session_t name;
+	session_t *session;
 	listed_t *last;
 	unsigned int count;
 };
 typedef struct list_s list_t;
 
-list_t *mk_list(session_t *name);
-void rm_list(list_t *list);
-listed_t *add_to_list(list_t *list, hmapf_t *map);
-int subtract_from_list(list_t *list, hmapf_t *depreciated);
-int select_listed(list_t *list, select_t *sel);
+/* partial */
+struct partial_space {
+	session_t session; /* maps from node-orgin are masked into this session */
+	list_t *list; /* session name and list of all hmaps in this partial */
+	char *desc; /* set when calling mk_partial() */
+	hmapf_t *nodemap; /* hmap describing the volume of given partial */
+	int running; /* is in session code's running set */
+};
+typedef struct partial_space partial_t;
+
+partial_t *partial_generator_list;
+int partials_count;
+
+int select_partial_set(list_t *list, select_t *sel);
+list_t *find_partial(session_t *partial_session);
 
 #endif /* VRT_PARTIAL_H */

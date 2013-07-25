@@ -46,9 +46,9 @@ hmap_count(void)
 
 /* search vohspace for hmaps holding any of signs or modes given, and write
    references for those in listout.  return count of matches referenced.  until
-   vohspace memory can be resized while running all partials and in-node, this
-   search may be rather suboptimal, as vrt_hmaps_max hmaps are always searched
-   regardless of whether they are attached or not */
+   vohspace memory can be resized while running all node-partial's and node-orgin,
+   this search may be rather suboptimal, as vrt_hmaps_max hmaps are always
+   searched regardless of whether they are attached or not */
 int
 search_vohspace(hmapf_t **listout, btoggles_t signs, btoggles_t modes)
 {
@@ -76,33 +76,37 @@ diag_selection(select_t *sel)
 	if(sel->specbits & VRT_MASK_HAS_SETB) {
 		map = sel->setb;
 		count = sel->countb;
-		__builtin_printf("diag_selection: setb (%i hmaps)\n",
+		__builtin_printf(" diag_selection: setb (%i hmaps)\n",
 			sel->countb);
 	} else {
 		map = sel->seta;
 		count = sel->counta;
-		__builtin_printf("diag_selection: seta (%i hmaps)\n",
+		__builtin_printf(" diag_selection: seta (%i hmaps)\n",
 			sel->counta);
 	}
 
 	for(i = 0; i < count; i++, map++) {
-		__builtin_printf(" %x ", (int)(*map)->name);
+		__builtin_printf("  %x ", (int)(*map)->name);
 		if((*map)->attribs.sign & VRT_MASK_HOLD)
 			__builtin_printf("HOLD ");
 		if((*map)->attribs.sign & VRT_MASK_RECYCLE)
 			__builtin_printf("RECYC ");
-		if((*map)->attribs.sign & VRT_MASK_PARTIAL)
-			__builtin_printf("PARTIAL ");
-		if((*map)->attribs.sign & VRT_MASK_DIALOG)
-			__builtin_printf("DIALOG ");
 		if((*map)->attribs.sign & VRT_MASK_BUFFER)
 			__builtin_printf("BUFR ");
-		if((*map)->attribs.sign & VRT_MASK_VERTICE_MODS)
-			__builtin_printf("VMODS ");
-		if((*map)->attribs.sign & VRT_MASK_DIALOG_MODS)
-			__builtin_printf("DMODS ");
 		if((*map)->attribs.sign & VRT_MASK_DETACH)
 			__builtin_printf("DETACH ");
+		if((*map)->attribs.sign & VRT_MASK_DIALOG)
+			__builtin_printf("DIALOG ");
+		if((*map)->attribs.sign & VRT_MASK_PARTIAL)
+			__builtin_printf("PARTIAL ");
+		if((*map)->attribs.sign & VRT_MASK_VERTICE_MODS)
+			__builtin_printf("VTCMODS ");
+		if((*map)->attribs.sign & VRT_MASK_DIALOG_MODS)
+			__builtin_printf("DLGMODS ");
+		if((*map)->attribs.sign & VRT_MASK_PARTIAL_MODS)
+			__builtin_printf("PTLMODS ");
+		if((*map)->attribs.sign & VRT_MASK_RENDER_DIALOG)
+			__builtin_printf("RNDRDLG ");
 		if((*map)->attribs.mode & VRT_MASK_ATTACHED)
 			__builtin_printf("attachd ");
 		if((*map)->attribs.mode & VRT_MASK_BALANCE_FILTER)
@@ -129,6 +133,8 @@ diag_selection(select_t *sel)
 			__builtin_printf("xseam ");
 		if((*map)->attribs.mode & VRT_MASK_WALL_TYPEA)
 			__builtin_printf("wtypea ");
+		if((*map)->attribs.mode & VRT_MASK_NODEMAP)
+			__builtin_printf("nodemap ");
 		__builtin_printf("\n");
 	}
 }

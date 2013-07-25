@@ -24,7 +24,7 @@ struct generator_opts {
 	double when; /* shutdown, ... */
 } genopts;
 
-/* gen_opts_t vobspace_criteria.  effective while held high, some of these
+/* generator_opts_t vobspace_criteria.  effective while held high, some of these
    where noted, will be cleared after use */
 enum {
 	VRT_ORDINAL_SHUTDOWN,
@@ -33,26 +33,21 @@ enum {
 #define VRT_MASK_DASHF (1 << VRT_ORDINAL_DASHF)
 };
 
-/* partial */
-struct partial_space {
-	session_t session; /* entering from in-node, hmaps take this name */
-	char *desc; /* set when calling mk_partial() */
-	hmapf_t *nodemap; /* hmap describing the volume of given partial */
-	hmapf_t **selection; /* NULL terminated ref list for this partial */
-};
-typedef struct partial_space partial_t;
-
-int generate_node(void);
+int generate_node_orgin(void);
 void regenerate_scene(vf_t *);
 partial_t *mk_partial(char *desc, hmapf_t *map);
 void rm_partial(partial_t *partial);
+list_t *mk_partial_maps_list(session_t *session, char *desc);
+void rm_partial_maps_list(list_t *list);
+listed_t *add_to_partial_maps_list(list_t *list, hmapf_t *map);
+int subtract_from_partial_maps_list(list_t *list, hmapf_t *map);
 void select_hmaps_in_partial(session_t *);
 int diag_hmaps_in_partial(session_t *partial_session);
-session_t *diag_partial_by_ordinal(unsigned int idx);
+partial_t *diag_partial_by_ordinal(unsigned int idx);
 void diag_ls_partials(int full);
 void close_vobspace(double time_till_closed);
-void close_node(void);
-int resize_node(int, int);
+void close_node_orgin(void);
+int resize_node_orgin(int, int);
 /* diag */
 void diag_generator_key_f(void);
 void diag_generator_key_g(void);

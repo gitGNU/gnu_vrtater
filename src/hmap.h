@@ -27,18 +27,22 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
 	VRT_ORDINAL_RECYCLE, /* send to recycler */
 #define VRT_MASK_RECYCLE (1 << VRT_ORDINAL_RECYCLE)
-	VRT_ORDINAL_PARTIAL,
-#define VRT_MASK_PARTIAL (1 << VRT_ORDINAL_PARTIAL)
-	VRT_ORDINAL_DIALOG, /* need or xtra cyc vs. dialog_len in generator */
-#define	VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
 	VRT_ORDINAL_BUFFER, /* stack in vobspace /w attribute indicator */
 #define VRT_MASK_BUFFER (1 << VRT_ORDINAL_BUFFER)
+	VRT_ORDINAL_DETACH, /* code in generator.c will detach this hmap */
+#define VRT_MASK_DETACH (1 << VRT_ORDINAL_DETACH)
+	VRT_ORDINAL_DIALOG, /* dialog may be buffered in hmaps */
+#define	VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
+	VRT_ORDINAL_PARTIAL, /* is in a partial */
+#define VRT_MASK_PARTIAL (1 << VRT_ORDINAL_PARTIAL)
 	VRT_ORDINAL_VERTICE_MODS, /* unaffix this locally when sending */
 #define VRT_MASK_VERTICE_MODS (1 << VRT_ORDINAL_VERTICE_MODS)
 	VRT_ORDINAL_DIALOG_MODS, /* unaffix this locally when sending */
 #define VRT_MASK_DIALOG_MODS (1 << VRT_ORDINAL_DIALOG_MODS)
-	VRT_ORDINAL_DETACH /* code in generator.c will detach this hmap */
-#define VRT_MASK_DETACH (1 << VRT_ORDINAL_DETACH)
+	VRT_ORDINAL_PARTIAL_MODS, /* sync with nodes in running set */
+#define VRT_MASK_PARTIAL_MODS (1 << VRT_ORDINAL_PARTIAL_MODS)
+	VRT_ORDINAL_RENDER_DIALOG /* if set and implemented, render dialog */
+#define VRT_MASK_RENDER_DIALOG (1 << VRT_ORDINAL_RENDER_DIALOG)
 };
 
 enum { /* attribs_t mode, tested in context based functions */
@@ -48,7 +52,7 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_BALANCE_FILTER (1 << VRT_ORDINAL_BALANCE_FILTER)
 	VRT_ORDINAL_SESSION_FILTER,
 #define VRT_MASK_SESSION_FILTER (1 << VRT_ORDINAL_SESSION_FILTER)
-	VRT_ORDINAL_PUBLISHED,
+	VRT_ORDINAL_PUBLISHED, /* is in a partial in a running set */
 #define VRT_MASK_PUBLISHED (1 << VRT_ORDINAL_PUBLISHED)
 	VRT_ORDINAL_RENDER_FOLLOWS, /* for renderer */
 #define VRT_MASK_RENDER_FOLLOWS (1 << VRT_ORDINAL_RENDER_FOLLOWS)
@@ -66,8 +70,10 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_EXTEND_ANY (1 << VRT_ORDINAL_EXTEND_ANY)
 	VRT_ORDINAL_EXTEND_SEAMLESS,
 #define VRT_MASK_EXTEND_SEAMLESS (1 << VRT_ORDINAL_EXTEND_SEAMLESS)
-	VRT_ORDINAL_WALL_TYPEA
+	VRT_ORDINAL_WALL_TYPEA,
 #define VRT_MASK_WALL_TYPEA (1 << VRT_ORDINAL_WALL_TYPEA)
+	VRT_ORDINAL_NODEMAP /* for renderer */
+#define VRT_MASK_NODEMAP (1 << VRT_ORDINAL_NODEMAP)
 };
 
 struct bounds {
@@ -99,8 +105,8 @@ enum { /* draw_t geom.  note precedence follows n edges */
 
 struct hmapf {
 	session_t name; /* network id */
-	int index; /* in-node id */
-	vf_t vpos; /* position vector from node orgin to hmap orgin */
+	int index; /* identify's hmap from within it's given node-orgin */
+	vf_t vpos; /* position vector from node-orgin orgin to hmap orgin */
 	vf_t vvel; /* direction of travel/velocity vector */
 	vf_t vaxi; /* pole bias along hmap vob rotational axis vs. vobspace */
 	vf_t vrel; /* relative frame of reference, if any */

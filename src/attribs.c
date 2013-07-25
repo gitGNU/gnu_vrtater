@@ -554,7 +554,7 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	/* adjust hmap via kbase if set */
 	/* ... */
 
-	/* for in-node partial vobs, hash together thru session_filter a list
+	/* for node-partial vobs, hash together thru session_filter a list
 	   of pointers to associated hmaps per associated sessions for session.c
 	   sync with remote nodes */
 	/* ... */

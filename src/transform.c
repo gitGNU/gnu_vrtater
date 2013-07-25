@@ -155,19 +155,17 @@ extend_hmaps(select_t *sel)
 }
 
 /*
-   recycle NULL terminated list of hmaps referenced in select_a.  for now just
-   detach these.  the recycler could be written to function as undo stack per
-   map dependant on session name
+   recycle counta hmaps referenced in selectf_a.  for now just detach these.
 */
 int
 recycle(select_t *sel)
 {
+	int i;
 	hmapf_t **map = (hmapf_t **)(sel->seta);
 
-	while((*map) != NULL) {
+	for (i = 0; i < sel->counta; i++, map++) {
 		__builtin_printf(" recycling: %x\n", (int)(*map)->name);
 		(*map)->attribs.sign |= VRT_MASK_DETACH;
-		map++;
 	}
 
 	return 0;

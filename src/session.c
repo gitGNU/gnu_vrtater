@@ -52,20 +52,34 @@ p_prev_caller_sessions(void)
 	return a_prev_caller_sessions;
 }
 
-/* for now, produce a random session name/number 0-65536/0-65536.  session_t
-   is a a long long unsigned int.  for now however, it is used as an int for
-   simplicity.  therefore vrt_hmaps_max must be <= 65536 and session uniqueness
-   has a 1:65536 chance of being unique.  this is pretty sub-optimal, however
-   it will be fine for testing in node sessions.  to call another node, one
-   needs to have an in-node session.  these local sessions need no connection.
-   they will however appear in a_all_sessions[] */
+/* for now, produce a random session name/number 0-65536/0-65536 in session.
+   notes: the session name produced/retrieved needs no connection; it will however
+   appear in a_all_sessions[].  currently session_t is a a long long unsigned int.
+   for now however, it is used as an int for simplicity.  when it does change
+   there will be some adjustment needed.  a set of functions for converting and
+   testing the eventual session name's may needs be implemented to ease this.  as
+   it stands, vrt_hmaps_max must be <= 65536 and session uniqueness has a 1:65536
+   chance of being unique.  this is pretty sub-optimal, however it will be fine
+   for testing sessions. */
 int
-in_node_session(session_t *session)
+set_node_orgin(session_t *session)
 {
-	/* backup previous session for local node .vrtater/session/ln_session */
-	/* generate session number for local node */
+	/* if not provided generate a node-orgin session from
+	   .vrtater/session/ln_seedfiles/ */
+	if (!(*session))
+		*session = (session_t)(rand() << 16); /* for now */
+	/* if any, backup session for node-orgin to .vrtater/session/ln_orgin/ */
+	/* set current session for node-orgin in .vrtater/session/ln_session */
+	return 0; /* for now */
+}
+
+int
+set_node_partial(session_t *session)
+{
+	/* if any, backup last node-partial to .vrtater/session/ln_partial/ */
+	/* if not provided generate a node-partial session from
+	   .vrtater/session/ln_seedfiles/ */
 	*session = (session_t)(rand() << 16);
-	/* set current session for local node .vrtater/session/ln_session */
 	return 0; /* for now */
 }
 
@@ -89,12 +103,12 @@ call_session(char *address)
 }
 
 /* consideration for eventuality that remote nodes may share the same ip address
-   assumes that all associated nodes _may_ be allowed to be included to the
-   running set if session_desc is accepted by the person running the in-node
-   session.  this means that the exchange of a list of composite session_t data
-   with it's session_desc_t data should be supported.  these then would all be
-   included in the running set associated with ip, if the calling node session
-   is accepted by in-node */
+   assumes that all associated nodes may be allowed to be included to the running
+   set if session_desc is accepted by the person running node-orgin.  this means
+   that the exchange of a list of composite session_t data with it's
+   session_desc_t data should be supported.  these then would all be included in
+   the running set associated with ip, if the calling node session is accepted by
+   node-orgin */
 int
 complete_negotiation(session_desc_t *session_desc)
 {
@@ -113,10 +127,24 @@ match_vs_all_sessions(session_t *session_num)
 	return 0;
 }
 
-/* finish log in and then add session_num to the running set.  success is assumed
-   while session_num remains in session_desc data */
+/* finish log in (an optional password may be implemented) and then add
+   session_num to the running set.  success is assumed while session_num remains
+   in session_desc data */
 int
-on_node_session(session_t *session_num)
+accept_called_partial_session(session_t *session_num, char *passwd)
+{
+	session_desc_t *session_desc;
+	int rval;
+	/* return null on no match */
+	if((session_desc = match_vs_all_sessions(session_num)) !=  NULL)
+		rval = complete_negotiation(session_desc);
+	return rval;
+}
+
+/* add session_num to the running set.  success is assumed while session_num
+   remains in session_desc data */
+int
+accept_caller_partial_session(session_t *session_num)
 {
 	session_desc_t *session_desc;
 	int rval;
@@ -166,7 +194,7 @@ get_session_name_from_file_in_dir(session_t *s)
    from the callers perspective, outbound hmaps are referenced in selectf_a, and
    inbound one's are referenced out of selectf_b.  as caller will be calling for
    each partial seperately, input from associated partials is kept in a form
-   conducive to this.  outbound hmaps include all partial(non-in-node) hmaps
+   conducive to this.  outbound hmaps include all partial(non-node-orgin) hmaps
    with any relevant changes.  these may be sent in reduced form and restored
    apon reception through a set of functions (transform.c) affecting network
    transfer and file formatting of hmap data, those being hmapwrapf and
@@ -202,18 +230,18 @@ get_session_name_from_file_in_dir(session_t *s)
 
 /* send to each node connected to s, hmaps referenced by NULL terminated maps */
 void
-buffer_maps_to_peer_partial(session_t *s, hmapf_t **seta)
+buffer_maps_to_peer_partial(session_t *s, select_t *sel)
 {
-	hmapf_t **p = seta;
+	hmapf_t **p;
+	int i;
 
-	__builtin_printf("session.c: pretending to buffer partial %x "
-		"for transmit to another node,\n including...\n",
+	p = (hmapf_t **) (sel->seta);
+	__builtin_printf(" session.c: pretending to buffer partial %x "
+		"for transmit to another node,\n  buffering...\n",
 		(int)*s);
-	while(*p != NULL) {
+	for (i = 0; i < sel->counta; i++, p++)
 		__builtin_printf("  map %x\n", (int)((*p)->name));
-		p++;
-	}
-	;
+		 
 }
 
 /* for any recieved hmap data unpacked thru transform and connected to s,

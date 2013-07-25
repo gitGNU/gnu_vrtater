@@ -77,7 +77,8 @@ void diag_node_key_j(void);
 
 /* session */
 void tendto_curr_sessions(void);
-int connect_partialspace(session_t *);
+int connect_called_partialspace(session_t *);
+int connect_caller_partialspace(session_t *);
 void cfg_session_filter(void);
 
 /* setup for given display and rendering libs */
@@ -174,10 +175,10 @@ shutdown_dialog_interface(void)
 void
 node(int argc, char **argv)
 {
-	/* initialize node */
-
+	/* renderer */
 	setup_glx(argc, argv);
-	generate_node();
+
+	generate_node_orgin();
 
 	/* fov */
 	fov0 = (hmapf_t *)p_hmapf(0); /* for now */
@@ -277,7 +278,7 @@ node(int argc, char **argv)
 	set_vf(&(diag8->vpos), 0, 0, 0, 0);
 	cp_vf(&vrloc8, &(diag8->vpos));
 
-	/* interface node
+	/* interface nodes
 	   all events since last frame are summed, the new frame is drawn */
 
 	XEvent xevent;
@@ -750,9 +751,9 @@ node(int argc, char **argv)
 		glMatrixMode(GL_MODELVIEW);
 	}
 
-	/* shutdown node */
+	/* shutdown node-orgin */
 	close_vobspace(0); /* now, for now */
-	close_node(); /* note: move to callback_close_vobspace() */
+	close_node_orgin(); /* note: move to callback_close_vobspace() */
 	shutdown_glx();
 }
 
@@ -810,15 +811,28 @@ tendto_curr_sessions(void)
 	;
 }
 
-/* run session with remote vobspace node
-   other nodes will mirror optionally given 'partial vobspace', or selected
-   vobs herein.  success is assumed while implied session_t remains in
-   all_sessions data.  reads from remote node will succeed with no data until
-   session sync or closed */
+/* as a caller node-orgin, connect cued session session.
+   notes: session represents a node-partial to be transfered from a caller
+   node-orgin.  this will be obvious from the directional sense visible looking
+   at all_sessions data from within the interface to be provided herein.  remote
+   nodes added to the running set for this node-partial by session code will
+   maintain their own representation of given node-partial.  success is assumed
+   while implied session_t remains in all_sessions data.  reads from remote node
+   will succeed with no data until session sync or closed */
 int
-connect_partialspace(session_t *p_session)
+connect_called_partialspace(session_t *session)
 {
-	return on_node_session(p_session);
+	char passwd[] = "";
+	return accept_called_partial_session(session, passwd);
+}
+/* as a called node-orgin, connect cued session session.
+   notes: session represents a node-partial present in called node-orgin.  success
+   is assumed while implied session_t remains in all_sessions data.  reads from
+   remote node will succeed with no data until session sync or closed */
+int
+connect_caller_partialspace(session_t *session)
+{
+	return accept_caller_partial_session(session);
 }
 
 void
