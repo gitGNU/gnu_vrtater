@@ -48,13 +48,13 @@ void
 usage(void)
 {
 	__builtin_printf("\n"
-		"usage: vrtater [-?h] [-d[level]] [-f on-node-name] "
-		"[-i[in-node-name]]\n\n"
+		"usage: vrtater [-?h] [-d[level]] [-f partial-node-name] "
+		"[-o[node-orgin-name]]\n\n"
 		"--brief                Run with brief console messages\n"
 		"--diag         -d      Apply tug diagnostic mode /w opt level\n"
 		"--find-node    -f      Start with a remote node search\n"
 		"--help         -?      Print this usage message\n"
-		"--in-node      -i      Start with default or given in-node\n"
+		"--node-orgin   -o      Start with default or given node-orgin\n"
 		"--informal     -h      Print output in human readable form\n"
 		"--verbose              Run with verbose console messages\n"
 		"--version              Output disclaimers and versions\n\n"
@@ -77,14 +77,14 @@ main(int argc, char **argv)
 			{"brief", no_argument, &verbose_flag, 0},
 			{"version", no_argument, 0, 0},
 			{"find-node", required_argument, 0, 'f'},
-			{"in-node", optional_argument, 0, 'i'},
+			{"node-orgin", optional_argument, 0, 'o'},
 			{"diag", optional_argument, 0, 'd'},
 			{"informal", no_argument, 0, 'h'},
 			{"help", no_argument, 0, '?'},
 			{0, 0, 0, 0}
 		};
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:i::d::h?", long_options,
+		c = getopt_long(argc, argv, "f:o::d::h?", long_options,
 			 &option_index);
 		if(c == -1)
 			break;
@@ -118,12 +118,12 @@ main(int argc, char **argv)
 			}
 			break;
 
-			case 'i':
+			case 'o':
 			if(optarg)
-				__builtin_printf("Setting in-node to %s "
+				__builtin_printf("Setting node-orgin to %s "
 					"configuration\n", optarg);
 			else
-				__builtin_printf("Setting in-node to default "
+				__builtin_printf("Setting node-orgin to default "
 					"configuration\n");
 			break;
 

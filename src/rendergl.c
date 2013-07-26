@@ -12,12 +12,11 @@
 hmapf_t *fov0;
 vf_t oa_fp, *vpt = &oa_fp;
 
-/* generator options */
-int genopts_changed = 0;
-unsigned int sp_ratio = 1;
-unsigned int sf_ratio = 15;
-float near_thresh = 10000.0;
-float perif_thresh = 100000.0;
+/* vs. options, a calling function may want these maintained */
+unsigned int sp_ratio;
+unsigned int sf_ratio;
+float near_thresh;
+float perif_thresh;
 
 void
 init_renderer(void)
