@@ -8,8 +8,8 @@
 
 #include "hmap.h"
 
-void dialog(select_t *);
-int write_dialog(select_t *, char *);
-int append_dialog(select_t *, char *);
+void refresh_dialog_interfaces(void);
+void node_partial_dialog(select_t *, session_t *partial);
+int *node_orgin_dialog(select_t *);
 
 #endif /* VRT_DIALOGX11_H */

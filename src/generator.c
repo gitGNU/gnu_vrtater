@@ -205,20 +205,18 @@ regenerate_scene(vf_t *vpt)
 	   dialog().  any dialog introduced by modeling transforms is sent to
 	   dialog() directly, and will have VRT_MASK_HMAP_MODELING set high.
 	   along with any dialog representing the person running node-orgin and
-	   written thru transform.c by code in dialog.c, these are the sum of
-	   the ways that new dialog will be introduced.  for now, simulate case
-	   where some node-orgin dialog, newly created by modeling transforms, is
-	   generated in hmap 15 */
-	hmapf_t **p = (hmapf_t **)selectf_a;
+	   written thru transform.c by code in dialog.c.  for now, simulate by
+	   transforming some node-orgin dialog into hmap 15 before calling */
+	hmapf_t **map = (hmapf_t **)selectf_a;
 	static int recurrant = 0;
 	if(!recurrant++) {
-		*p = p_hmapf(15);
-		select_t s = { 0, 1, (hmapf_t **)p, 0, NULL };
+		*map = p_hmapf(15);
+		select_t sel = { 0, 1, (hmapf_t **)map, 0, NULL };
 		char a_char[] = "dialog: pass here and "
 			"everything is published unless encrypted\n";
-		add_dialog(&s, a_char, strlen(a_char), 0);
-		(*p)->attribs.sign |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
-		dialog(&s);
+		add_dialog(&sel, a_char, strlen(a_char), 0);
+		(*map)->attribs.sign |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
+		node_orgin_dialog(&sel);
 	}
 
 	/* timer
