@@ -19,13 +19,12 @@
 #define ISL2 0.474268887881 /* inside layer / 2 */
 #define ICOSAHEDRON_C_BOUND0 1
 
-/* cube_c cuboid */
+/* cube_c cuboid. */
 #define QDR_SZ 0.57735026919 /* derived from opposite corners at distance 2 */
 #define CUBE_C_BOUND0 QDR_SZ
 
-/* icosahedron_c */
-/* enscribe an icosahedron_c VRT_DRAWGEOM_TRIANGLES hmap attached to session,
-   with a radius of r.  return null pointer if vohspace full */
+/* Enscribe an icosahedron_c VRT_DRAWGEOM_TRIANGLES hmap attached to session,
+   with a radius of r.  Return null pointer if vohspace full. */
 hmapf_t *
 hmapf_icosahedron_c(session_t *session, float r)
 {
@@ -36,22 +35,22 @@ hmapf_icosahedron_c(session_t *session, float r)
 	int i, j;
 	vf_t av[3], *tri;
 
-	/* attach an hmap */
+	/* Attach an hmap. */
 	hmapf_t *hmap;
-	if(!(hmap = hmapf(session)))
+	if (!(hmap = hmapf(session)))
 		return NULL;
 
-	/* hmap attribs */
+	/* hmap attribs. */
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
 	hmap->envelope.geom = VRT_BOUND_SPHERE;
 	hmap->envelope.vsz.x = ICOSAHEDRON_C_BOUND0 * r;
 	form_mag_vf(&(hmap->envelope.vsz));
 	hmap->attribs.kg = 4.18879020479 * r * r * r;
 
-	/* allocate for hmap data */
+	/* Allocate for hmap data. */
 	hmap->vmap_total = VRT_ICOSAHEDRON_C_FCOUNT * 3;
 	vf_t *vmap;
-	if((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
@@ -59,13 +58,13 @@ hmapf_icosahedron_c(session_t *session, float r)
 	}
 	hmap->vmap = vmap; /* maintain vmap in hmap */
 
-	/* fill in hmap data */
+	/* Fill in hmap data. */
 	vf_t *pd;
 	vf_t **ppd = &pd;
 	*ppd = hmap->vmap;
 
-	for(i = 0; i < VRT_ICOSAHEDRON_C_FCOUNT; i++) {
-		for(j=0, tri=av; j<3; j++, tri++) {
+	for (i = 0; i < VRT_ICOSAHEDRON_C_FCOUNT; i++) {
+		for (j=0, tri=av; j<3; j++, tri++) {
 			tri->x = a_icosahedron_c[icosahedron_c_idx[i][j]][0] * r;
 			tri->y = a_icosahedron_c[icosahedron_c_idx[i][j]][1] * r;
 			tri->z = a_icosahedron_c[icosahedron_c_idx[i][j]][2] * r;
@@ -77,8 +76,8 @@ hmapf_icosahedron_c(session_t *session, float r)
 	return hmap;
 }
 
-/* enscribe a cube_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
-   length width and height given.  return null pointer if vohspace full */
+/* Enscribe a cube_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
+   length l, width w, and height h.  Return null pointer if vohspace full. */
 hmapf_t *
 hmapf_cube_c(session_t *session, float l, float w, float h)
 {
@@ -90,12 +89,10 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 
 	vf_t av[3], *tri;
 
-	/* attach an hmap */
 	hmapf_t *hmap;
-	if(!(hmap = hmapf(session)))
+	if (!(hmap = hmapf(session)))
 		return NULL;
 
-	/* hmap attribs */
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
 	hmap->envelope.geom = VRT_BOUND_RCUBOID;
 	hmap->envelope.vsz.x = CUBE_C_BOUND0 * w / 2;
@@ -104,10 +101,9 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 	form_mag_vf(&(hmap->envelope.vsz));
 	hmap->attribs.kg = l * w * h;
 
-	/* allocate for hmap data */
 	hmap->vmap_total = VRT_CUBE_C_FCOUNT * 3;
 	vf_t *vmap;
-	if((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
@@ -115,13 +111,12 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 	}
 	hmap->vmap = vmap; /* maintain vmap in hmap */
 
-	/* fill in hmap data */
 	vf_t *pd;
 	vf_t **ppd = &pd;
 	*ppd = hmap->vmap;
 
-	for(i = 0; i < VRT_CUBE_C_FCOUNT; i++) {
-		for(j=0, tri=av; j<3; j++, tri++) {
+	for (i = 0; i < VRT_CUBE_C_FCOUNT; i++) {
+		for (j=0, tri=av; j<3; j++, tri++) {
 			tri->x = a_cube_c[cube_c_idx[i][j]][0] * l;
 			tri->y = a_cube_c[cube_c_idx[i][j]][1] * w;
 			tri->z = a_cube_c[cube_c_idx[i][j]][2] * h;
@@ -133,11 +128,11 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 	return hmap;
 }
 
-/* enscribe a cylinder_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
-   r radius, e capedges, l length, and t threads per that length.  t may be 0.
-   the first and last threads have end taper's adding an extra thread length.
+/* Enscribe a cylinder_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
+   radius r, capedges e, length l, and threads t per that length.  t may be 0.
+   The first and last threads have end taper's adding an extra thread length.
    n length/(threads + 1) sized lengths are created, the threads and the taper
-   set contained therein them.  return null pointer if vohspace full */
+   set contained therein them.  Return null pointer if vohspace full. */
 hmapf_t *
 hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 {
@@ -162,7 +157,7 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 #endif
 
 	hmapf_t *hmap;
-	if(!(hmap = hmapf(session)))
+	if (!(hmap = hmapf(session)))
 		return NULL;
 
 	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
@@ -174,9 +169,8 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 
 	hmap->vmap_total = 3 * ((e * 2 * (3 + t)) - 2);
 
-	/* allocate for hmap's vf data(if any) */
 	vf_t *vmap;
-	if((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
 			__FILE__, __LINE__, hmap->index);
@@ -184,13 +178,11 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	}
 	hmap->vmap = vmap; /* maintain vmap in hmap */
 
-	/* fill in hmap data */
-
-	/* cylinder top */
+	/* Cylinder top. */
 	itr = tri = (vf_t *) vmap;
 	form_mag_vf(set_vf(&a, 0, yoffset, 0, 0));
 	form_mag_vf(set_vf(&b, 0, yoffset, r, 0));
-	for(i = 1; i <= e; i++) {
+	for (i = 1; i <= e; i++) {
 		form_mag_vf(set_vf(&c, sin(i * halfa) * r, yoffset, cos(i * halfa) * r, 0));
 		form_mag_vf(cp_vf(&a, tri++));
 		form_mag_vf(cp_vf(&b, tri++));
@@ -198,10 +190,10 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 		cp_vf(&c, &b);
 	}
 
-	/* top taper */
-	for(i = 0; i < e; i++) {
+	/* Top taper. */
+	for (i = 0; i < e; i++) {
 
-		/* top taper top face */
+		/* Top taper top face. */
 		itr++; /* b */
 		cp_vf(itr, tri++); /* alignment off top cap */
 
@@ -213,9 +205,9 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 		cp_vf(itr, tri++);
 		itr++; /* nxt a */
 
-		if(i > 0) { /* first has only a compound top face */
+		if (i > 0) { /* first has only a compound top face */
 
-			/* top taper bottom face */
+			/* Top taper bottom face. */
 			itr -= 2; /* b */
 			cp_vf(itr, tri++);
 
@@ -231,10 +223,10 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 		}
 	}
 
-	/* thread */
-	for(i = 0; i < t; i++) {
+	/* Thread. */
+	for (i = 0; i < t; i++) {
 		itr = (vf_t *) vmap;
-		for(j = 0; j < e; j++) {
+		for (j = 0; j < e; j++) {
 
 			/* top thread face */
 			itr++; /* b */
@@ -270,11 +262,11 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 		} 
 	}
 
-	/* bottom taper */
+	/* Bottom taper. */
 	itr = (vf_t *) vmap;
 	j = e - 1;
-	for(i = 0; i < e; i++) {
-		if(i < j) { /* last has only bottom face */
+	for (i = 0; i < e; i++) {
+		if (i < j) { /* last has only bottom face */
 
 			/* bottom taper top face */
 			itr++; /* b */
@@ -292,7 +284,7 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 			itr -= 2; /* a */
 		}
 
-		/* bottom taper bottom face */
+		/* Bottom taper bottom face. */
 		itr++; /* b */
 		form_mag_vf(set_vf(tri++, itr->x,
 			-yoffset + ((e - i) * incthread),
@@ -306,9 +298,9 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 		itr++; /* nxt a */
 	}
 
-	/* cylinder bottom */
+	/* Cylinder bottom. */
 	itr = (vf_t *) vmap;
-	for(i = 0; i < e; i++) {
+	for (i = 0; i < e; i++) {
 
 		itr++; /* b */
 		set_vf(tri++, itr->x, -yoffset, itr->z, itr->m);
@@ -322,13 +314,13 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 		itr++; /* nxt a */
 	}
 
-	/* volume for caller to set mass */
+	/* Volume for caller to set mass. */
 	hmap->attribs.kg = M_PI * r * r * l;
 
 	return hmap;
 }
 
-/* add a triangle to hmap data  */
+/* Add triangle referenced by av to hmap data referenced by ppd. */
 void
 add_tri_to_hmapf(vf_t *av, vf_t **ppd)
 {
@@ -336,7 +328,7 @@ add_tri_to_hmapf(vf_t *av, vf_t **ppd)
 	vf_t *p;
 
 	p = av;
-	for(i = 0; i < 3; i++, p++, (*ppd)++) {
+	for (i = 0; i < 3; i++, p++, (*ppd)++) {
 		(*ppd)->x = p->x;
 		(*ppd)->y = p->y;
 		(*ppd)->z = p->z;
@@ -344,7 +336,7 @@ add_tri_to_hmapf(vf_t *av, vf_t **ppd)
 	}
 }
 
-/* this may be used for line type hmap if/when implemented */
+/* Add vertice referenced by p to hmap data referenced by ppd. */
 void
 add_vf_to_hmap(vf_t *p, vf_t **ppd)
 {

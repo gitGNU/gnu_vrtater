@@ -9,41 +9,43 @@
 #include <ctype.h>
 #include "transform.h"
 #include "vectors.h"
-#include "stock.h" /* ... */
+#include "stock.h"
 #include "progscope.h"
 
 float vrt_render_cyc; /* external */
 
 
-/* transform hmaps
-   given two arrays referencing one or two set's of hmaps, affect those hmaps
-   with given transform function that operate's independantly or as a mutually
-   dependant set of transforms available at given compile time */
+/* Transform hmaps.
+   Given two buffers referencing one or two set's of hmaps, affect those hmaps
+   with given transform function that operate's independantly or as a dependant
+   set, in some way altering at least one hmap. */
 
-/*
-   hapticNormill: ... 
-*/
+/* Join two hmaps in selectf_a and selectf_b respectively, with one representing
+   a fulcrum and one a lever.  This will require implementation of
+   session_filter prehand.  note: This function was to be called hapticNormill,
+   as vrtater has much of it's inspiration in a haptic feedback project that
+   took place to a significant extent at a certain most cozy mill, that project
+   inspired by another moreso well known haptic feedback project related.  The
+   name will change to join_hmaps in the next commit, this note eventually
+   moving to CREDITS. */
 int
 hapticNormill(select_t *sel)
 {
-	/* j: i will beta test this */
 	return 0;
 }
 
-/*
-   given reference to 2 hmaps in sel a and b respectively, transform path
-   attributes of these apon hmap intersection.  for now, simply uses spherical
-   bounding volumes per the hmaps to calculate this feature for the purposes
-   of setting values for the frustum.  note: representation of mass is
-   proportional to volume.
-*/
+/* Given reference to 2 hmaps in sel a and b respectively, transform path
+   attributes of these apon hmap intersection.  For now, simply uses spherical
+   bounding volumes of radius envelope.vsz and mass of attribs.kg per any hmaps.
+   note: Representation of mass is proportional to volume. */
 int
 intersection(select_t *sel)
 {
-	/*
-	btoggles_t toggles;
-	toggles = sel->specbits;
-	- determine bound geom
+	/* scrawl:
+	   still in progress
+	   toggles_t toggles;
+	   toggles = sel->specbits;
+	   - determine bound geom
 	*/
 
 	hmapf_t *hmapa, *hmapb;
@@ -62,33 +64,33 @@ intersection(select_t *sel)
 	dif_vf(&(hmapa->vpos), &(hmapb->vpos), &vdist);
 	touch = hmapa->envelope.vsz.x + hmapb->envelope.vsz.x;
 
-	if(hmapb->attribs.kg && (&vdist)->m < touch) {
+	if (hmapb->attribs.kg && (&vdist)->m < touch) {
 
 		ma = hmapa->attribs.kg;
 		mb = hmapb->attribs.kg;
 		inter = touch - (&vdist)->m; /* -intersection */
 
-		/* tend to hmap a */
+		/* Tend to hmap a. */
 		vvela = &(hmapa->vvel);
 		/* m*v for now */
 		mva = ma * vvela->m;
-		/* here calculate angle of reflection */
+		/* Here calculate angle of reflection. */
 
-		/* calculate and set acc for a */
-		if(mva)
+		/* Calculate and set acc for a. */
+		if (mva)
 			tele_magz_vf(&vdist, &vacca, scale * inter * mb / mva);
 		sum_vf(&vacca, vvela, vvela);
 
-		/* tend to hmap b */
+		/* Tend to hmap b. */
 		vvelb = &(hmapb->vvel);
 		mvb = mb * vvelb->m;
-		if(mvb)
+		if (mvb)
 			tele_magz_vf(&vdist, &vaccb, scale * inter * ma / mvb);
 		sum_vf(&vaccb, vvelb, vvelb);
 	}
 
 #ifdef DIAG_INTERSECTION
-	if(hmapb->index == 7) {
+	if (hmapb->index == 7) {
 		__builtin_printf("\n\nindex a: %i\n", hmapa->index);
 		__builtin_printf("  vposa: x %f y %f z %f m %f\n",
 			hmapa->vpos.x, hmapa->vpos.y,
@@ -104,7 +106,7 @@ intersection(select_t *sel)
 			hmapa->vaxi.x, hmapa->vaxi.y,
 			hmapa->vaxi.z, hmapa->vaxi.m);
 		/* todo:
-		   mass not assigned correctly */
+		   Mass not assigned correctly. */
 		//__builtin_printf("   kg a: %f\n", ma);
 		__builtin_printf("    sza: %f\n", hmapa->envelope.vsz.x);
 		__builtin_printf("    mva: %f\n\n", mva);
@@ -134,58 +136,53 @@ intersection(select_t *sel)
 	return 0;
 }
 
-/*
-   allow hmaps to share intersection, attach etc...  requires tending to
-   session_filter and data via perhaps rname_hmapf(), enter_group(),
-   leave_group(), and group_groups(), all based on hmap session_filter and name
-*/
+/* Enable hmaps referenced in selectf_a to be affected by certain contextual
+   transforms with hmap referenced in selectf_b.  This will require
+   implementation of session_filter prehand.  Other transforms to follow would
+   be leave_group, and group_groups. */
 int
 group_hmaps(select_t *sel)
 {
 	return 0;
 }
 
-/*
-   extend given hmaps by joining them together
-*/
+/* Extend given hmaps by merging them together. */
 int
 extend_hmaps(select_t *sel)
 {
 	return 0;
 }
 
-/*
-   recycle counta hmaps referenced in selectf_a.  for now just detach these.
-*/
+/* Recycle counta hmaps referenced in selectf_a.  For now just detach these. */
 int
 recycle(select_t *sel)
 {
 	int i;
-	hmapf_t **map = (hmapf_t **)(sel->seta);
+	hmapf_t **map = (hmapf_t **) (sel->seta);
 
 	for (i = 0; i < sel->counta; i++, map++) {
-		__builtin_printf(" recycling: %x\n", (int)(*map)->name);
+		__builtin_printf(" recycling: %x\n", (int) (*map)->name);
 		(*map)->attribs.sign |= VRT_MASK_DETACH;
 	}
 
 	return 0;
 }
 
-/*
-   format and write to a proto .vrtmap, hmap referenced in the selection
-   buffer to network or file.  this will be further optimized for sending
-   over net by removing anything that can not be calculated inherently.
-   for example the magnitudes of vectors as these may calculated on unwrap.
-   this will then ofc lead to a revised hmapunwrapf()(see below).  for now
-   assume file/network is meta_u a_file_net_io[10000].  later actually do the
-   file write or and pass it over the network
-*/
+/* Format and write to a proto .vrtmap, hmap referenced in the selection buffer
+   to network or file.  This will be further optimized for sending over net by
+   removing anything that can not be calculated inherently or has not changed,
+   for example the magnitudes of vectors as these may calculated on unwrap,
+   hmaps with positional changes and no data changes(see: attribs.sign bits
+   VRT_MASK_VERTICE_MODS and VRT_MASK_DIALOG_MODS), hmap index and pointers to
+   data(useless outside of node).  This will then lead to a revised hmapunwrapf.
+   For now assume file/network is meta_u a_file_net_io[10000].  Later actually
+   do the file write or format it for the network. */
 meta_u a_file_net_io[10000]; /* for now */
 int
 hmapwrapf(select_t *sel)
 {
-	int *pb = (int *)a_file_net_io;
-	int *d, *pi = (int *)&a_file_net_io[1];
+	int *pb = (int *) a_file_net_io;
+	int *d, *pi = (int *) &a_file_net_io[1];
 	float *pf;
 	int i = 0;
 	int j = 0;
@@ -193,10 +190,10 @@ hmapwrapf(select_t *sel)
 	vf_t *v;
 
 	h = *(sel->seta);
-	*pi++ = (int)(h->name >> 16);
-	*pi++ = (int)(h->name & 0xffff);
+	*pi++ = (int) (h->name >> 16);
+	*pi++ = (int) (h->name & 0xffff);
 	*pi++ = h->index;
-	pf = (float *)pi;
+	pf = (float *) pi;
 	*pf++ = h->vpos.x;
 	*pf++ = h->vpos.y;
 	*pf++ = h->vpos.z;
@@ -219,126 +216,124 @@ hmapwrapf(select_t *sel)
 	*pf++ = h->vpre.m;
 	*pf++ = h->ang_spd;
 	*pf++ = h->ang_dpl;
-	pi = (int *)pf;
+	pi = (int *) pf;
 	*pi++ = h->attribs.sign;
 	*pi++ = h->attribs.mode;
 	*pi++ = h->attribs.session_filter;
 	*pi++ = h->attribs.balance_filter;
-	pf = (float *)pi;
+	pf = (float *) pi;
 	*pf++ = h->attribs.kg;
-	pi = (int *)pf;
+	pi = (int *) pf;
 	*pi++ = h->attribs.kfactorm;
 	*pi++ = h->attribs.kfactord;
 	*pi++ = h->envelope.geom;
-	pf = (float *)pi;
+	pf = (float *) pi;
 	*pf++ = h->envelope.vsz.x;
 	*pf++ = h->envelope.vsz.y;
 	*pf++ = h->envelope.vsz.z;
 	*pf++ = h->envelope.vsz.m;
-	pi = (int *)pf;
+	pi = (int *) pf;
 	*pi++ = h->draw.geom;
 	*pi++ = h->vmap_total;
-	pf = (float *)pi;
+	pf = (float *) pi;
 	v = h->vmap;
-	while(i++ < h->vmap_total) {
+	while (i++ < h->vmap_total) {
 		*pf++ = v->x;
 		*pf++ = v->y;
 		*pf++ = v->z;
 		*pf++ = v->m;
 		v++;
 	}
-	pi = (int *)pf;
+	pi = (int *) pf;
 	*pi++ = h->dialog_len;
 	d = h->dialog;
-	while(j++ < h->dialog_len)
+	while (j++ < h->dialog_len)
 		*pi++ = *d++;
-	*pb = abs((int)pi - (int)pb) / sizeof(int);
+	*pb = abs((int) pi - (int) pb) / sizeof(int);
 	return 0;
 }
 
-/*
-   read .vrtmap file/transfer formated hmap into selection buffer.  for now
-   assume file/network is meta_u a_file_net_io[10000].  for now display it's
-   contents to stdout.  later write it to an hmap, allocating for vf_t's and
-   dialog.  as anything that can be calculated inherently will be omitted from
-   an hmap file, this function will eventually be revised
-*/
+/* Read .vrtmap file/transfer formated hmap into selection buffer.  For now
+   assume file/network is meta_u a_file_net_io[10000].  For now display it's
+   contents to stdout.  Later write it to an hmap, allocating for vf_t's and
+   dialog.  As anything that can be calculated inherently will be omitted from
+   an hmap file, this function will eventually be revised. */
 int
 hmapunwrapf(select_t *sel)
 {
-	float *fl = (float *)a_file_net_io;
-	int i, graph, space, ctrl, null, *in = (int *)a_file_net_io;
+	float *fl = (float *) a_file_net_io;
+	int i, graph, space, ctrl, null, *in = (int *) a_file_net_io;
 	graph = 0; space = 0; ctrl = 0; null = 0;
 
-	__builtin_printf("hmapf size: %i\n", (int)*in++); fl++;
-	__builtin_printf("vobnum: %i:", (int)*in++); fl++;
-	__builtin_printf("%i\n", (int)*in++); fl++;
-	__builtin_printf("index: %i\n", (int)*in++); fl++;
+	__builtin_printf("hmapf size: %i\n", (int) *in++); fl++;
+	__builtin_printf("vobnum: %i:", (int) *in++); fl++;
+	__builtin_printf("%i\n", (int) *in++); fl++;
+	__builtin_printf("index: %i\n", (int) *in++); fl++;
 	__builtin_printf("pos: %f %f %f %f\n",
-		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
-	in++; in++; in++; in++;	
+		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
+	in++; in++; in++; in++;
 	__builtin_printf("vel: %f %f %f %f\n",
-		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
+		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
 	in++; in++; in++; in++;	
 	__builtin_printf("axi: %f %f %f %f\n",
-		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
+		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
 	in++; in++; in++; in++;	
 	__builtin_printf("rel: %f %f %f %f\n",
-		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
+		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
 	in++; in++; in++; in++;	
 	__builtin_printf("pre: %f %f %f %f\n",
-		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
+		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
 	in++; in++; in++; in++;	
-	__builtin_printf("ang_spd: %f\n", (float)*fl++); in++;
-	__builtin_printf("ang_dpl: %f\n", (float)*fl++); in++;
-	__builtin_printf("attribs bits: 0x%x\n", (int)*in++); fl++;
-	__builtin_printf("attribs modifiers: 0x%x\n", (int)*in++); fl++;
-	__builtin_printf("session filter: 0x%x\n", (int)*in++); fl++;
-	__builtin_printf("balance filter: 0x%x\n", (int)*in++); fl++;
-	__builtin_printf("kg: %f\n", (float)*fl++); in++;
-	__builtin_printf("kfactorm: %i\n", (int)*in++); fl++;
-	__builtin_printf("kfactord: %i\n", (int)*in++); fl++;
-	__builtin_printf("bound geom: %i\n", (int)*in++); fl++;
+	__builtin_printf("ang_spd: %f\n", (float) *fl++); in++;
+	__builtin_printf("ang_dpl: %f\n", (float) *fl++); in++;
+	__builtin_printf("attribs bits: 0x%x\n", (int) *in++); fl++;
+	__builtin_printf("attribs modifiers: 0x%x\n", (int) *in++); fl++;
+	__builtin_printf("session filter: 0x%x\n", (int) *in++); fl++;
+	__builtin_printf("balance filter: 0x%x\n", (int) *in++); fl++;
+	__builtin_printf("kg: %f\n", (float) *fl++); in++;
+	__builtin_printf("kfactorm: %i\n", (int) *in++); fl++;
+	__builtin_printf("kfactord: %i\n", (int) *in++); fl++;
+	__builtin_printf("bound geom: %i\n", (int) *in++); fl++;
 	__builtin_printf("bound size: %f %f %f %f\n", \
-		(float)*fl++, (float)*fl++, (float)*fl++, (float)*fl++);
+		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
 	in++; in++; in++; in++;	
-	__builtin_printf("draw geom: %i\n", (int)*in++); fl++;
-	int vmap_total = (int)*in;
-	__builtin_printf("vmap_total: %i\n", (int)*in++); fl++;
+	__builtin_printf("draw geom: %i\n", (int) *in++); fl++;
+	int vmap_total = (int) *in;
+	__builtin_printf("vmap_total: %i\n", (int) *in++); fl++;
 	i = 0;
-	while(i < vmap_total) {
-		__builtin_printf("vf %i: %f", i + 1, (float)*fl++); in++;
-		__builtin_printf(" %f", (float)*fl++); in++;
-		__builtin_printf(" %f", (float)*fl++); in++;
-		__builtin_printf(" %f\n", (float)*fl++); in++;
+	while (i < vmap_total) {
+		__builtin_printf("vf %i: %f", i + 1, (float) *fl++); in++;
+		__builtin_printf(" %f", (float) *fl++); in++;
+		__builtin_printf(" %f", (float) *fl++); in++;
+		__builtin_printf(" %f\n", (float) *fl++); in++;
 		i++;
 	}
-	int dialog_len = (int)*in;
-	__builtin_printf("dialog_len: %i\n", (int)*in++); fl++;
+	int dialog_len = (int) *in;
+	__builtin_printf("dialog_len: %i\n", (int) *in++); fl++;
 	i = 0;
 	__builtin_printf("dialog:\n");
-	while(i < dialog_len) {
+	while (i < dialog_len) {
 		/* print !last char 1 thru 7 of rows of 8 chars */
-		for(;!((i%8)==7) && ((i+1)%dialog_len);i++) {
-			if(iscntrl((char)*in)) { ctrl += 1; }
-			if(isgraph((char)*in)) { graph += 1; }
-			if(isspace((char)*in)) { space += 1; }
-			if(!(*in)) { null += 1; }
-			__builtin_printf("%10.8x", (int)*in++); fl++;
+		for (;!((i%8)==7) && ((i+1)%dialog_len);i++) {
+			if (iscntrl((char) *in)) { ctrl += 1; }
+			if (isgraph((char) *in)) { graph += 1; }
+			if (isspace((char) *in)) { space += 1; }
+			if (!(*in)) { null += 1; }
+			__builtin_printf("%10.8x", (int) *in++); fl++;
 		}
-		if((i+1)%dialog_len) { /* print !last char 8 in row of 8 */
-			if(iscntrl((char)*in)) { ctrl += 1; }
-			if(isgraph((char)*in)) { graph += 1; }
-			if(isspace((char)*in)) { space += 1; }
-			if(!(*in)) { null += 1; }
-			__builtin_printf("%10.8x\n", (int)*in++); fl++;
+		if ((i+1)%dialog_len) { /* print !last char 8 in row of 8 */
+			if (iscntrl((char) *in)) { ctrl += 1; }
+			if (isgraph((char) *in)) { graph += 1; }
+			if (isspace((char) *in)) { space += 1; }
+			if (!(*in)) { null += 1; }
+			__builtin_printf("%10.8x\n", (int) *in++); fl++;
 			i++;
 		} else { /* last char */
-			if(iscntrl((char)*in)) { ctrl += 1; }
-			if(isgraph((char)*in)) { graph += 1; }
-			if(isspace((char)*in)) { space += 1; }
-			if(!(*in)) { null += 1; }
-			__builtin_printf("%10.8x\n", (int)*in++); fl++;
+			if (iscntrl((char) *in)) { ctrl += 1; }
+			if (isgraph((char) *in)) { graph += 1; }
+			if (isspace((char) *in)) { space += 1; }
+			if (!(*in)) { null += 1; }
+			__builtin_printf("%10.8x\n", (int) *in++); fl++;
 			i++; i++;
 		}
 	}
@@ -346,10 +341,9 @@ hmapunwrapf(select_t *sel)
 	return 0;
 }
 
-/*
-   make a copy of (for now) a single hmap referenced as first item in
+/* Make a copy of (for now) a single hmap referenced as first item in
    *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
-   recieving hmap retains name/index, session_filter, position, and kfactord */
+   Receiving hmap retains name/index, session_filter, position, and kfactord. */
 int
 cp_hmapf(select_t *sel)
 {
@@ -389,10 +383,10 @@ cp_hmapf(select_t *sel)
 	b->envelope.vsz.m = a->envelope.vsz.m;
 	b->draw.geom = a->draw.geom;
 
-	if(a->vmap_total) {
+	if (a->vmap_total) {
 		free(b->vmap);
 		b->vmap = NULL;
-		if((b->vmap = (vf_t *) malloc(a->vmap_total * sizeof(vf_t))) == NULL) {
+		if ((b->vmap = (vf_t *) malloc(a->vmap_total * sizeof(vf_t))) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
 				"Error: could not malloc vertice data "
 				"copying hmap %i to %i\n",
@@ -401,7 +395,7 @@ cp_hmapf(select_t *sel)
 		}
 		av = a->vmap;
 		bv = b->vmap;
-		for(i = 0; i < a->vmap_total; i++, av++, bv++) {
+		for (i = 0; i < a->vmap_total; i++, av++, bv++) {
 			bv->x = av->x;
 			bv->y = av->y;
 			bv->z = av->z;
@@ -410,10 +404,10 @@ cp_hmapf(select_t *sel)
 		b->vmap_total = a->vmap_total;
 	}
 
-	if(a->dialog_len) {
+	if (a->dialog_len) {
 		free(b->dialog);
 		b->dialog = NULL;
-	   if((b->dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
+	   if ((b->dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
 				"Error: could not malloc dialog data copying hmap %i to %i\n",
 				__FILE__, __LINE__, a->index, b->index);
@@ -421,7 +415,7 @@ cp_hmapf(select_t *sel)
 		}
 		ad = a->dialog;
 		bd = b->dialog;
-		for(i = 0; i < a->dialog_len; i++)
+		for (i = 0; i < a->dialog_len; i++)
 			*bd++ = *ad++;
 		b->dialog_len = a->dialog_len;
 	}
@@ -429,11 +423,9 @@ cp_hmapf(select_t *sel)
 	return 0;
 }
 
-/*
-   for c series hmaps, invert surface normals of (for now) a single hmap
+/* For c series hmaps, invert surface normals of (for now) a single hmap
    referenced as first item in *(sel->seta) by inverting the precedence of
-   drawing for each vertice.
-*/
+   drawing for each vertice. */
 int
 surface_inv_hmapf(select_t *sel)
 {
@@ -443,14 +435,14 @@ surface_inv_hmapf(select_t *sel)
 
 	map = *(sel->seta);
 	org = map->vmap;
-	if((cpy = (vf_t *) malloc(map->vmap_total * sizeof(vf_t))) == NULL) {
+	if ((cpy = (vf_t *) malloc(map->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 		"Error: Could not malloc vertice data when inverting hmap %i\n",
 		__FILE__, __LINE__, map->index);
 		abort();
 	}
 
-	for(i = 0; i < map->vmap_total; i++) {
+	for (i = 0; i < map->vmap_total; i++) {
 		cpy->x = org->x;
 		cpy->y = org->y;
 		cpy->z = org->z;
@@ -458,7 +450,7 @@ surface_inv_hmapf(select_t *sel)
 	}
 
 	org = map->vmap;
-	for(i = map->vmap_total; i > 0; i--) {
+	for (i = map->vmap_total; i > 0; i--) {
 		org->x = (--cpy)->x;
 		org->y = cpy->y;
 		org->z = cpy->z;
@@ -469,17 +461,15 @@ surface_inv_hmapf(select_t *sel)
 	return 0;
 }
 
-/* functions affecting allocation of hmap data */
 
+/* Functions affecting allocation of hmap data. */
 
-/*
-   hmap dialog referenced thru sel->seta recieves allocation of len + 1 int's
-*/
+/* hmap dialog referenced  selectf_a recieves allocation of len + 1 int's. */
 int
 alloc_dialog(select_t *sel, int len)
 {
 	(*sel->seta)->dialog = NULL;
-	if(((*sel->seta)->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
+	if (((*sel->seta)->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for given dialog\n",
 			__FILE__, __LINE__);
@@ -490,19 +480,19 @@ alloc_dialog(select_t *sel, int len)
 	return 0;
 }
 
-/* write or append s to dialog(for now at end of current dialog) for any given
-   hmap thru sel->seta.  when supported will also insert or delete count at
+/* Write or append s to dialog(for now at end of current dialog) for any given
+   hmap thru sel->seta.  When supported will also insert or delete count at
    offset to s, where sign of count will determine insert or delete and sense
-   of count will be after offset */
+   of count will be after offset. */
 int
 add_dialog(select_t *sel, char *s, int count, int offset)
 {
 	int i, addlen, orglen, newlen, *pti, *pti2, *swap = NULL;
 	char *ptc;
 
-	if((*sel->seta)->dialog) {
-		/* allocate swap, memory to hold previous dialog */
-		if((swap = (int *) malloc((*sel->seta)->dialog_len * sizeof(int))) == NULL) {
+	if ((*sel->seta)->dialog) {
+		/* Allocate swap memory to hold previous dialog. */
+		if ((swap = (int *) malloc((*sel->seta)->dialog_len * sizeof(int))) == NULL) {
 			__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 				"Error: Could not malloc for add_dialog()\n",
 				__FILE__, __LINE__);
@@ -513,20 +503,20 @@ add_dialog(select_t *sel, char *s, int count, int offset)
 		addlen = strlen(s);
 		newlen = orglen + addlen;
 
-		/* put original hmap dialog in swap */
+		/* Put original hmap dialog in swap. */
 		pti = (*sel->seta)->dialog;
 		pti2 = swap;
-		for(i = 0; i < orglen; i++)
+		for (i = 0; i < orglen; i++)
 			*pti2++ = *pti++;
 
-		/* (re-)allocate memory for dialog with append */
+		/* (re-)allocate memory for dialog with append. */
 		free((*sel->seta)->dialog);
 		alloc_dialog(sel, newlen);
 
-		/* write original string from swap */
+		/* Write original string from swap. */
 		pti = (*sel->seta)->dialog;
 		pti2 = swap;
-		for(i = 0; i < orglen; i++)
+		for (i = 0; i < orglen; i++)
 			*pti++ = *pti2++;
 		free(swap);
 	} else {
@@ -535,42 +525,42 @@ add_dialog(select_t *sel, char *s, int count, int offset)
 		pti = (*sel->seta)->dialog;
 	}
 
-	/* write new string */
+	/* Write new string. */
 	ptc = s;
-	for(i = 0; i < addlen; i++)
+	for (i = 0; i < addlen; i++)
 		*pti++ = *ptc++;
 	*pti = '\0';
 
-	/* tend nicely */
+	/* Tend nicely. */
 	(*sel->seta)->dialog_len = newlen;
 
 	return 0;
 }
 
-/* hmap dialog referenced thru sel->seta becomes string s */
+/* hmap dialog referenced thru sel->seta becomes string s. */
 int
 write_dialog(select_t *sel, char *s)
 {
 	int i, len, *d;
 	char *p;
 
-	/* free previous */
+	/* Free previous. */
 	free((*sel->seta)->dialog);
 	(*sel->seta)->dialog = NULL;
 
-	/* allocate */
+	/* Allocate. */
 	len = strlen(s);
-	if(((*sel->seta)->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
+	if (((*sel->seta)->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for given dialog\n",
 			__FILE__, __LINE__);
 		abort();
 	}
 
-	/* write */
+	/* Write. */
 	p = s;
 	d = (*sel->seta)->dialog;
-	for(i = 0; i < len; i++)
+	for (i = 0; i < len; i++)
 		*d++ = *p++;
 	*d = '\0';
 

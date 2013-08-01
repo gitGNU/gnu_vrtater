@@ -9,11 +9,11 @@
 #include "progscope.h"
 
 struct interface_display {
-	int indexfov; /* hmap dpy_ is attached to */
+	int indexfov; /* hmap dpy_ is attached to. */
 	float accel_adv; /* acceleration multiplier */
 	float accel_crv; /* reciprocal curvalinear acceleration multiplier */
 	float aaccel_adv; /* angular acceleration multiplier */
-	float keypan; /* current pan.  radians */
+	float keypan; /* current pan, radians */
 	float aaccpan; /* angular acceleration */
 	float adclpan; /* angular decelleration */
 	float keytilt;
@@ -34,7 +34,7 @@ struct interface_display {
 };
 typedef struct interface_display ifdpy_t;
 
-/* for now */
+/* Incrementally form a keyboard remapping. */
 #ifdef VRT_US101KBD_X11_DIAG
 enum {
 #define VRT_KEY_tab XK_Tab

@@ -1,4 +1,4 @@
-/* attribs.c: store and maintain hmaps vs. node feedback creating vobspace.
+/* attribs.c: Store and maintain hmaps vs. node feedback creating vobspace.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -14,96 +14,111 @@
 #include "rendergl.h"
 #endif /* VRT_RENDER_GL */
 
-/* for now, to ease things */
+/* For now. */
 #define SMALLRANDOM 0.000000100000000
 #define TINYRANDOM 0.000000001000000
 
-unsigned int vrt_hmaps_max; /* external */
-float vrt_render_cyc; /* external */
-int fov0_index;
-
-/* hmap memory, sorting */
-hmapf_t *ap_hmap_near;
-hmapf_t *ap_hmap_perif;
-hmapf_t *ap_hmap_far;
-hmapf_t **pp_lr_n;
-hmapf_t **pp_rl_n;
-hmapf_t **pp_lr_p;
-hmapf_t **pp_rl_p;
-hmapf_t **pp_lr_f;
-hmapf_t **pp_rl_f;
-int dlr_n, dlr_p, dlr_f;
+hmapf_t *near_hmaps;
+hmapf_t *perif_hmaps;
+hmapf_t *far_hmaps;
+hmapf_t **lr_n;
+hmapf_t **rl_n;
+hmapf_t **lr_p;
+hmapf_t **rl_p;
+hmapf_t **lr_f;
+hmapf_t **rl_f;
+hmapf_t **b_n;
+hmapf_t **e_n;
+hmapf_t **b_p;
+hmapf_t **e_p;
+hmapf_t **b_f;
+hmapf_t **e_f;
+int dlr_n, dlr_p, dlr_f; /* direction */
 unsigned int passes;
 
-/* selection buffer */
-hmapf_t *selectf_a; /* external */
-hmapf_t *selectf_b; /* external */
+/* Renderer. */
+float vrt_render_cyc;
+int fov0_index;
+
+/* External. */
+unsigned int vrt_hmaps_max;
+hmapf_t *selectf_a;
+hmapf_t *selectf_b;
 
 void flow_over(btoggles_t *balance_criteria);
 float estimate_radiusf(hmapf_t *);
 void wanderf(hmapf_t *hmap, float e, float m, float r);
 
-/* set up hmap arrays, pointers thereto, nullify their attribs */
+/* Set up hmap and lod envelope allocations, nullify their attribs. */
 void
 init_vohspace(void)
 {
 	int i;
-	hmapf_t *p, **pap_hmap_n;
+	hmapf_t *p, **near;
 
 	attached_hmaps = 0;
-	if((a_hmaps = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t))) == NULL) {
+	if ((vohspace = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
-			"Error: Could not malloc for a_hmaps\n",
+			"Error: Could not malloc for vohspace\n",
 			__FILE__, __LINE__);
 		abort();
 	}
-	if((ap_hmap_near = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+	if ((near_hmaps = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
-			"Error: Could not malloc for ap_hmap_near\n",
+			"Error: Could not malloc for near_hmaps\n",
 			__FILE__, __LINE__);
 		abort();
 	}
-	if((ap_hmap_perif = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+	if ((perif_hmaps = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
-			"Error: Could not malloc for ap_hmap_perif\n",
+			"Error: Could not malloc for perif_hmaps\n",
 			__FILE__, __LINE__);
 		abort();
 	}
-	if((ap_hmap_far = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
+	if ((far_hmaps = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
-			"Error: Could not malloc for ap_hmap_far\n",
+			"Error: Could not malloc for far_hmaps\n",
 			__FILE__, __LINE__);
 		abort();
 	}
 
-	p = &a_hmaps[0];
-	pap_hmap_n = (hmapf_t **)&ap_hmap_near[0];
+	/* Allocation delimiters. */
+	b_n = (hmapf_t **) &near_hmaps[0];
+	e_n = (hmapf_t **) &near_hmaps[vrt_hmaps_max - 1];
+	b_p = (hmapf_t **) &perif_hmaps[0];
+	e_p = (hmapf_t **) &perif_hmaps[vrt_hmaps_max - 1];
+	b_f = (hmapf_t **) &far_hmaps[0];
+	e_f = (hmapf_t **) &far_hmaps[vrt_hmaps_max - 1];
 
-	/* point out of bounds when buffer empty */
-	pp_lr_n = (hmapf_t **) &ap_hmap_near[0];
-	pp_lr_n--;
-	pp_rl_n = (hmapf_t **) &ap_hmap_near[vrt_hmaps_max - 1];
-	pp_rl_n++;
-	pp_lr_p = (hmapf_t **) &ap_hmap_perif[0];
-	pp_lr_p--;
-	pp_rl_p = (hmapf_t **) &ap_hmap_perif[vrt_hmaps_max - 1];
-	pp_rl_p++;
-	pp_lr_f = (hmapf_t **) &ap_hmap_far[0];
-	pp_lr_f--;
-	pp_rl_f = (hmapf_t **) &ap_hmap_far[vrt_hmaps_max - 1];
-	pp_rl_f++;
+	p = &vohspace[0];
+	near = (hmapf_t **) &near_hmaps[0];
+
+	/* Point out of bounds when an envelope buffer is empty. */
+	lr_n = (hmapf_t **) &near_hmaps[0];
+	lr_n--;
+	rl_n = (hmapf_t **) &near_hmaps[vrt_hmaps_max - 1];
+	rl_n++;
+	lr_p = (hmapf_t **) &perif_hmaps[0];
+	lr_p--;
+	rl_p = (hmapf_t **) &perif_hmaps[vrt_hmaps_max - 1];
+	rl_p++;
+	lr_f = (hmapf_t **) &far_hmaps[0];
+	lr_f--;
+	rl_f = (hmapf_t **) &far_hmaps[vrt_hmaps_max - 1];
+	rl_f++;
 
 	passes = -1;
 	dlr_n = 1;
 	dlr_p = 1;
 	dlr_f = 1;
 
-	/* put vrt_hmaps_max hmap pointers in near buf */
-	for(i = 0; i < vrt_hmaps_max; i++, ++pp_lr_n, pap_hmap_n++)
-		*pap_hmap_n = p++;
-	/* set hmaps to null default */
-	p = a_hmaps;
-	for(i = 0; i < vrt_hmaps_max; i++, p++) {
+	/* Put vrt_hmaps_max hmap pointers in near buf. */
+	for (i = 0; i < vrt_hmaps_max; i++, ++lr_n, near++)
+		*near = p++;
+
+	/* Set hmaps to null default. */
+	p = vohspace;
+	for (i = 0; i < vrt_hmaps_max; i++, p++) {
 		p->name = (session_t)0;
 		p->vpos.x = 0;
 		p->vpos.y = 0;
@@ -125,7 +140,7 @@ init_vohspace(void)
 		p->vpre.y = 0;
 		p->vpre.z = 0;
 		p->vpre.m = 0;
-		p->ang_spd = 0; /* radians/second */
+		p->ang_spd = 0; /* radians/second, if timer  */
 		p->ang_dpl = 0; /* radians */
 		p->attribs.sign = 0;
 		p->attribs.mode = VRT_MASK_FLOW_OVER;
@@ -146,41 +161,41 @@ init_vohspace(void)
 		p->dialog_len = 0;
 	}
 
-	/* lod envelope defaults for sort_proc_hmaps(), for now */
+	/* Set lod envelope to defaults. */
 	sort_perif_ratio = 1; /* render decomplextimates */
 	sort_far_ratio = 15; /* approx once per 1/2 second */
 	near_threshf = 10000.0; /* represent 10000m */
 	perif_threshf  = 100000.0;
 }
 
-/* free all dynamic memory associated with vohspace and selection buffer */
+/* Free all dynamic memory associated with vohspace and selection buffer. */
 void
 free_vohspace_memory(void)
 {
 	int i;
-	for(i = 0; i < vrt_hmaps_max; i++) {
-		free((&a_hmaps[i])->vmap);
-		(&a_hmaps[i])->vmap = NULL;
-		free((&a_hmaps[i])->dialog);
-		(&a_hmaps[i])->dialog = NULL;
+	for (i = 0; i < vrt_hmaps_max; i++) {
+		free((&vohspace[i])->vmap);
+		(&vohspace[i])->vmap = NULL;
+		free((&vohspace[i])->dialog);
+		(&vohspace[i])->dialog = NULL;
 	}
-	free(a_hmaps);
-	free(ap_hmap_near);
-	free(ap_hmap_perif);
-	free(ap_hmap_far);
+	free(vohspace);
+	free(near_hmaps);
+	free(perif_hmaps);
+	free(far_hmaps);
 	free(selectf_a);
 	free(selectf_b);
 }
 
-/* from given finite set, find then attach unattached hmap */
+/* From given set, find then attach and return unattached hmap. */
 hmapf_t *
 attach_hmapf(void)
 {
 	int i;
-	hmapf_t *p = a_hmaps;
+	hmapf_t *p = vohspace;
 
-	for(i = 0; i < vrt_hmaps_max; i++, p++) {
-		if(!(p->attribs.mode &= VRT_MASK_ATTACHED)) {
+	for (i = 0; i < vrt_hmaps_max; i++, p++) {
+		if (!(p->attribs.mode &= VRT_MASK_ATTACHED)) {
 			p->index = i; /* caller index */
 			p->attribs.mode |= VRT_MASK_ATTACHED;
 			attached_hmaps++;
@@ -190,14 +205,14 @@ attach_hmapf(void)
 	return NULL;
 }
 
-/* re-initialize hmap referenced by p.  free any associated memory */
+/* Re-initialize hmap referenced by p.  Free any associated memory. */
 void
 detach_hmapf(hmapf_t *p)
 {
-	hmapf_t *sb = &a_hmaps[0];
-	hmapf_t *eb = &a_hmaps[vrt_hmaps_max];
+	hmapf_t *sb = &vohspace[0];
+	hmapf_t *eb = &vohspace[vrt_hmaps_max];
 
-	if((p >= sb) && (p <= eb)) {
+	if ((p >= sb) && (p <= eb)) {
 		p->name = (session_t)0;
 		p->vpos.x = 0;
 		p->vpos.y = 0;
@@ -250,62 +265,48 @@ detach_hmapf(hmapf_t *p)
 	abort();
 }
 
-/* for <= vrt_hmaps_max, in each lod set, optionally(except for near and based
-   on sort ratio) sort all hmaps therein, meanwhile sending them to be drawn or
-   rendered apon.  also, shift hmaps into a new lod set if implied by their
-   current position given most recent changes.  each lod set is sorted/sent
-   a given 1:sort_*_ratio of times or 1:1 for near one's based on proximity to
-   viewpoint(vpt).  as the hmap holding fov0 thus vpt, is sent directly to
-   proc_hmapf() in advance of this function, it passes here yet does not get
-   proc'd on the second try at proc. */
+/* Given viewpoint vpt, for <= vrt_hmaps_max, in each lod set, optionally(except
+   for near and based on sort ratio) sort all hmaps therein, meanwhile sending
+   them to be drawn or rendered apon.  Also, shift hmaps into a new lod set if
+   implied by their current position, and soon bound size, given most recent
+   changes.  Each lod set is sorted/sent a given 1:sort_*_ratio of times or 1:1
+   for near one's based on proximity to vpt.  As the hmap holding fov0 thus vpt,
+   is sent directly to proc_hmapf in advance of this function, it passes here
+   yet does not get re-adjusted on the second try. */
 void
 sort_proc_hmaps(vf_t *vpt)
 {
 	int i, count;
 	vf_t rel;
 
-	/* conditional for multiple hmap types */
-	/* ... */
-
-	/* keep passthrough number for proximity prioritization */
 	passes++;
 
-	/* fixed pointers to array ends */
-	hmapf_t **pp_b_n = (hmapf_t **) &ap_hmap_near[0];
-	hmapf_t **pp_e_n = (hmapf_t **) &ap_hmap_near[vrt_hmaps_max - 1];
-	hmapf_t **pp_b_p = (hmapf_t **) &ap_hmap_perif[0];
-	hmapf_t **pp_e_p = (hmapf_t **) &ap_hmap_perif[vrt_hmaps_max - 1];
-	hmapf_t **pp_b_f = (hmapf_t **) &ap_hmap_far[0];
-	hmapf_t **pp_e_f = (hmapf_t **) &ap_hmap_far[vrt_hmaps_max - 1];
+	/* Near hmaps. */
+	if (dlr_n) { /* lr */
 
-	/* sort for near, perif, far */
+		/* Determine near count based on direction. */
+		count = (lr_n + 1) - b_n;
 
-	/* near hmaps */
-	if(dlr_n) { /* lr */
+		/* Set rl pointer to empty position. */
+		rl_n = e_n + 1;
 
-		/* determine near count based on direction */
-		count = (pp_lr_n + 1) - pp_b_n;
-
-		/* set rl pointer to empty position */
-		pp_rl_n = pp_e_n + 1;
-
-		/* sort */
-		for(i = 0; i < count; i++) {
-			/* move relative lod orgin */
-			(&rel)->x = -vpt->x + (*pp_lr_n)->vpos.x;
-			(&rel)->y = -vpt->y + (*pp_lr_n)->vpos.y;
-			(&rel)->z = -vpt->z + (*pp_lr_n)->vpos.z;
+		/* Sort */
+		for (i = 0; i < count; i++) {
+			/* Move relative lod orgin. */
+			(&rel)->x = -vpt->x + (*lr_n)->vpos.x;
+			(&rel)->y = -vpt->y + (*lr_n)->vpos.y;
+			(&rel)->z = -vpt->z + (*lr_n)->vpos.z;
 			(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
-			if((&rel)->m <= near_threshf) {
-				proc_hmapf(*pp_lr_n, VRT_MASK_LOD_NEAR, 1);
-				*(--pp_rl_n) = *(pp_lr_n--); /* move in near */
+			if ((&rel)->m <= near_threshf) {
+				proc_hmapf(*lr_n, VRT_MASK_LOD_NEAR, 1);
+				*(--rl_n) = *(lr_n--); /* move in near */
 			} else {
-				if(dlr_p) { /* move to perif left to right */
-					proc_hmapf(*pp_lr_n, VRT_MASK_LOD_PERIF, 1);
-					*(++pp_lr_p) = *(pp_lr_n--);
+				if (dlr_p) { /* move to perif left to right */
+					proc_hmapf(*lr_n, VRT_MASK_LOD_PERIF, 1);
+					*(++lr_p) = *(lr_n--);
 				} else { /* move to perif right to left */
-					proc_hmapf(*pp_lr_n, VRT_MASK_LOD_PERIF, 1);
-					*(--pp_rl_p) = *(pp_lr_n--);
+					proc_hmapf(*lr_n, VRT_MASK_LOD_PERIF, 1);
+					*(--rl_p) = *(lr_n--);
 				}
 			}
 		}
@@ -313,118 +314,101 @@ sort_proc_hmaps(vf_t *vpt)
 
 	} else { /* rl */
 
-		/* determine near count based on direction */
-		count = (pp_e_n + 1) - pp_rl_n;
+		count = (e_n + 1) - rl_n;
+		lr_n = b_n - 1;
 
-		/* set lr pointer to empty position */
-		pp_lr_n = pp_b_n - 1;
-
-		/* sort */
-		for(i = 0; i < count; i++) {
-			/* move relative lod orgin */
-			(&rel)->x = -vpt->x + (*pp_rl_n)->vpos.x;
-			(&rel)->y = -vpt->y + (*pp_rl_n)->vpos.y;
-			(&rel)->z = -vpt->z + (*pp_rl_n)->vpos.z;
+		for (i = 0; i < count; i++) {
+			(&rel)->x = -vpt->x + (*rl_n)->vpos.x;
+			(&rel)->y = -vpt->y + (*rl_n)->vpos.y;
+			(&rel)->z = -vpt->z + (*rl_n)->vpos.z;
 			(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
-			if((&rel)->m <= near_threshf) {
-				proc_hmapf(*pp_rl_n, VRT_MASK_LOD_NEAR, 1);
-				*(++pp_lr_n) = *(pp_rl_n++); /* moves in near */
+			if ((&rel)->m <= near_threshf) {
+				proc_hmapf(*rl_n, VRT_MASK_LOD_NEAR, 1);
+				*(++lr_n) = *(rl_n++); /* moves in near */
 			} else {
-				if(dlr_p) { /* moves to perif left to right */
-					proc_hmapf(*pp_rl_n, VRT_MASK_LOD_PERIF, 1);
-					*(++pp_lr_p) = *(pp_rl_n++);
+				if (dlr_p) { /* moves to perif left to right */
+					proc_hmapf(*rl_n, VRT_MASK_LOD_PERIF, 1);
+					*(++lr_p) = *(rl_n++);
 				} else { /* moves to perif right to left */
-					proc_hmapf(*pp_rl_n, VRT_MASK_LOD_PERIF, 1);
-					*(--pp_rl_p) = *(pp_rl_n++);
+					proc_hmapf(*rl_n, VRT_MASK_LOD_PERIF, 1);
+					*(--rl_p) = *(rl_n++);
 				}
 			}
 		}
 		dlr_n = (dlr_n + 1) % 2; /* flip direction */
 	}
 
-	/* perif hmaps */
-	if(dlr_p) { /* lr */
+	/* Perif hmaps. */
+	if (dlr_p) {
 
-		/* ratio */
-		if(!(passes % sort_perif_ratio)) {
+		/* Ratio */
+		if (!(passes % sort_perif_ratio)) {
 
-			/* determine perif count based on direction */
-			count = (pp_lr_p + 1) - pp_b_p;
+			count = (lr_p + 1) - b_p;
+			rl_p = e_p + 1;
 
-			/* set rl pointer to empty position */
-			pp_rl_p = pp_e_p + 1;
-
-			/* sort */
-			for(i = 0; i < count; i++) {
-				/* move relative lod orgin */
-				(&rel)->x = -vpt->x + (*pp_lr_p)->vpos.x;
-				(&rel)->y = -vpt->y + (*pp_lr_p)->vpos.y;
-				(&rel)->z = -vpt->z + (*pp_lr_p)->vpos.z;
+			for (i = 0; i < count; i++) {
+				(&rel)->x = -vpt->x + (*lr_p)->vpos.x;
+				(&rel)->y = -vpt->y + (*lr_p)->vpos.y;
+				(&rel)->z = -vpt->z + (*lr_p)->vpos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
-				if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
-					proc_hmapf(*pp_lr_p, VRT_MASK_LOD_PERIF, sort_perif_ratio);
-					*(--pp_rl_p) = *(pp_lr_p--); /* move in perif */
+				if (((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
+					proc_hmapf(*lr_p, VRT_MASK_LOD_PERIF, sort_perif_ratio);
+					*(--rl_p) = *(lr_p--); /* move in perif */
 				} else {
-					if((&rel)->m <= near_threshf) {
-						if(dlr_n) { /* moves to near left to right */
-							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
-							*(++pp_lr_n) = *(pp_lr_p--);
+					if ((&rel)->m <= near_threshf) {
+						if (dlr_n) { /* moves to near left to right */
+							proc_hmapf(*lr_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
+							*(++lr_n) = *(lr_p--);
 						} else { /* moves to near right to left */
-							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
-							*(--pp_rl_n) = *(pp_lr_p--);
+							proc_hmapf(*lr_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
+							*(--rl_n) = *(lr_p--);
 						}
 					} else { /* far */
-						if(dlr_f) { /* moves to far left to right */
-							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
-							*(++pp_lr_f) = *(pp_lr_p--);
+						if (dlr_f) { /* moves to far left to right */
+							proc_hmapf(*lr_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
+							*(++lr_f) = *(lr_p--);
 						} else { /* moves to far right to left */
-							proc_hmapf(*pp_lr_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
-							*(--pp_rl_f) = *(pp_lr_p--);
+							proc_hmapf(*lr_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
+							*(--rl_f) = *(lr_p--);
 						}
 					}
 				}
 			}
 			dlr_p = (dlr_p + 1) % 2; /* flip direction */
 		}
+	} else {
+		if (!(passes % sort_perif_ratio)) {
 
-	} else { /* rl */
+			count = (e_p + 1) - rl_p;
+			lr_p = b_p - 1;
 
-		/* ratio */
-		if(!(passes % sort_perif_ratio)) {
-
-			/* determine perif count based on direction */
-			count = (pp_e_p + 1) - pp_rl_p;
-
-			/* set lr pointer to empty position */
-			pp_lr_p = pp_b_p - 1;
-
-			/* sort */
-			for(i = 0; i < count; i++) {
+			for (i = 0; i < count; i++) {
 				/* move relative lod orgin */
-				(&rel)->x = -vpt->x + (*pp_rl_p)->vpos.x;
-				(&rel)->y = -vpt->y + (*pp_rl_p)->vpos.y;
-				(&rel)->z = -vpt->z + (*pp_rl_p)->vpos.z;
+				(&rel)->x = -vpt->x + (*rl_p)->vpos.x;
+				(&rel)->y = -vpt->y + (*rl_p)->vpos.y;
+				(&rel)->z = -vpt->z + (*rl_p)->vpos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
-				if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
-					proc_hmapf(*pp_rl_p, VRT_MASK_LOD_PERIF, sort_perif_ratio);
-					*(++pp_lr_p) = *(pp_rl_p++); /* moves in perif */
+				if (((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
+					proc_hmapf(*rl_p, VRT_MASK_LOD_PERIF, sort_perif_ratio);
+					*(++lr_p) = *(rl_p++); /* moves in perif */
 				} else {
-					if((&rel)->m <= near_threshf) {
-						if(dlr_n) { /* moves to near left to right */
-							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
-							*(++pp_lr_n) = *(pp_rl_p++);
+					if ((&rel)->m <= near_threshf) {
+						if (dlr_n) { /* moves to near left to right */
+							proc_hmapf(*rl_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
+							*(++lr_n) = *(rl_p++);
 
 						} else { /* moves to near right to left */
-							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
-							*(--pp_rl_n) = *(pp_rl_p++);
+							proc_hmapf(*rl_p, VRT_MASK_LOD_NEAR, sort_perif_ratio);
+							*(--rl_n) = *(rl_p++);
 						}
 					} else { /* far */
-						if(dlr_f) { /* moves to far left to right */
-							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
-							*(++pp_lr_f) = *(pp_rl_p++);
+						if (dlr_f) { /* moves to far left to right */
+							proc_hmapf(*rl_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
+							*(++lr_f) = *(rl_p++);
 						} else { /* moves to far right to left */
-							proc_hmapf(*pp_rl_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
-							*(--pp_rl_f) = *(pp_rl_p++);
+							proc_hmapf(*rl_p, VRT_MASK_LOD_FAR, sort_perif_ratio);
+							*(--rl_f) = *(rl_p++);
 						}
 					}
 				}
@@ -433,90 +417,73 @@ sort_proc_hmaps(vf_t *vpt)
 		}
 	}
 
-	/* far hmaps */
-	if(dlr_f) { /* lr */
+	/* Far hmaps. */
+	if (dlr_f) {
+		if (!(passes % sort_far_ratio)) {
 
-		/* ratio */
-		if(!(passes % sort_far_ratio)) {
+			count = (lr_f + 1) - b_f;
+			rl_f = e_f + 1;
 
-			/* determine far count based on direction */
-			count = (pp_lr_f + 1) - pp_b_f;
-
-			/* set rl pointer to empty position */
-			pp_rl_f = pp_e_f + 1;
-
-			/* sort */
-			for(i = 0; i < count; i++) {
-				/* move relative lod orgin */
-				(&rel)->x = -vpt->x + (*pp_lr_f)->vpos.x;
-				(&rel)->y = -vpt->y + (*pp_lr_f)->vpos.y;
-				(&rel)->z = -vpt->z + (*pp_lr_f)->vpos.z;
+			for (i = 0; i < count; i++) {
+				(&rel)->x = -vpt->x + (*lr_f)->vpos.x;
+				(&rel)->y = -vpt->y + (*lr_f)->vpos.y;
+				(&rel)->z = -vpt->z + (*lr_f)->vpos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
-				if((&rel)->m > perif_threshf) {
-					proc_hmapf(*pp_lr_f, VRT_MASK_LOD_FAR, sort_far_ratio);
-					*(--pp_rl_f) = *(pp_lr_f--); /* moves in far */
+				if ((&rel)->m > perif_threshf) {
+					proc_hmapf(*lr_f, VRT_MASK_LOD_FAR, sort_far_ratio);
+					*(--rl_f) = *(lr_f--); /* moves in far */
 				} else {
-					/* note: could save cycles heretofore by moving
-					   all non far to perif */
-					if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
-						if(dlr_f) { /* moves to perif left to right */
-							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
-							*(++pp_lr_p) = *(pp_lr_f--);
+					if (((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
+						if (dlr_f) { /* moves to perif left to right */
+							proc_hmapf(*lr_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
+							*(++lr_p) = *(lr_f--);
 						} else { /* moves to perif right to left */
-							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
-							*(--pp_rl_p) = *(pp_lr_f--);
+							proc_hmapf(*lr_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
+							*(--rl_p) = *(lr_f--);
 						}
 					} else { /* near */
-						if(dlr_n) { /* moves to near left to right */
-							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
-							*(++pp_lr_n) = *(pp_lr_f--);
+						if (dlr_n) { /* moves to near left to right */
+							proc_hmapf(*lr_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
+							*(++lr_n) = *(lr_f--);
 						} else { /* moves to near right to left */
-							proc_hmapf(*pp_lr_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
-							*(--pp_rl_n) = *(pp_lr_f--);
+							proc_hmapf(*lr_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
+							*(--rl_n) = *(lr_f--);
 						}
 					}
 				}
 			}
 			dlr_f = (dlr_f + 1) % 2; /* flip direction */
 		}
+	} else {
+		if (!(passes % sort_far_ratio)) {
 
-	} else { /* rl */
+			count = (e_f + 1) - rl_f;
+			lr_f = b_f - 1;
 
-		/* ratio */
-		if(!(passes % sort_far_ratio)) {
-
-			/* determine far count based on direction */
-			count = (pp_e_f + 1) - pp_rl_f;
-
-			/* set lr pointer to empty position */
-			pp_lr_f = pp_b_f - 1;
-
-			/* sort */
-			for(i = 0; i < count; i++) {
-				/* move relative lod orgin */
-				(&rel)->x = -vpt->x + (*pp_rl_f)->vpos.x;
-				(&rel)->y = -vpt->y + (*pp_rl_f)->vpos.y;
-				(&rel)->z = -vpt->z + (*pp_rl_f)->vpos.z;
+			for (i = 0; i < count; i++) {
+				(&rel)->x = -vpt->x + (*rl_f)->vpos.x;
+				(&rel)->y = -vpt->y + (*rl_f)->vpos.y;
+				(&rel)->z = -vpt->z + (*rl_f)->vpos.z;
 				(&rel)->m = sqrt((&rel)->x * (&rel)->x + (&rel)->y * (&rel)->y + (&rel)->z * (&rel)->z);
-				if((&rel)->m > perif_threshf) {
-					proc_hmapf(*pp_rl_f, VRT_MASK_LOD_FAR, sort_far_ratio);
-					*(++pp_lr_f) = *(pp_rl_f++); /* moves in far */
+				if ((&rel)->m > perif_threshf) {
+					proc_hmapf(*rl_f, VRT_MASK_LOD_FAR, sort_far_ratio);
+					*(++lr_f) = *(rl_f++); /* moves in far */
 				} else {
-					if(((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
-						if(dlr_f) { /* moves to perif left to right */
-							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
-							*(++pp_lr_p) = *(pp_rl_f++);
+					if (((&rel)->m > near_threshf) & ((&rel)->m <= perif_threshf)) {
+						if (dlr_f) { /* moves to perif left to right */
+							proc_hmapf(*rl_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
+							*(++lr_p) = *(rl_f++);
 						} else { /* moves to perif right to left */
-							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
-							*(--pp_rl_p) = *(pp_rl_f++);
+							proc_hmapf(*rl_f, VRT_MASK_LOD_PERIF, sort_far_ratio);
+							*(--rl_p) = *(rl_f++);
 						}
 					} else { /* near */
-						if(dlr_n) { /* moves to near left to right */
-							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
-							*(++pp_lr_n) = *(pp_rl_f++);
+						if (dlr_n) { /* moves to near left to right */
+							proc_hmapf(*rl_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
+							*(++lr_n) = *(rl_f++);
 						} else { /* moves to near right to left */
-							proc_hmapf(*pp_rl_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
-							*(--pp_rl_n) = *(pp_rl_f++);
+							proc_hmapf(*rl_f, VRT_MASK_LOD_NEAR, sort_far_ratio);
+							*(--rl_n) = *(rl_f++);
 						}
 					}
 				}
@@ -526,91 +493,84 @@ sort_proc_hmaps(vf_t *vpt)
 	}
 }
 
-/* per hmap referenced by m, per frame in frequency, process humdrum attribs.
-   foreward lod prerequisite to draw function */
+/* Per hmap referenced by m, per frame(in frequency(per likely future support),
+   process humdrum attribs factored by sort_ratio.  Foreward given lod envelope
+   to renderer. */
 void
 proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 {
 
-	vf_t d; /* delta d/t^2 */
-	hmapf_t **a, **b; /* selection buffer */
+	vf_t d; /* delta */
+	hmapf_t **sela = (hmapf_t **) selectf_a;
+	hmapf_t **selb = (hmapf_t **) selectf_b;
+	select_t sel = { 0, 0, sela, 0, selb };
 
-	/* filter out hmap holding fov0 in alternate passes */
-	if(lod & VRT_MASK_LOD_INF) /* arrives pre sort_proc_hmaps() per frame */
+	/* Filter out hmap holding fov0 in alternate passes while setting up for
+	   intersection on the first alternate.  It arrives immediately before
+	   sort_proc_hmaps per frame, then again in sort. */
+	if (lod & VRT_MASK_LOD_INF) {
 		fov0_index = m->index;
-	else { /* ignore hmap holding fov0 unless it has VRT_MASK_LOD_INF */
-		if(m->index == fov0_index)
+		*sela = m; /* for intersection */
+	} else { /* skip hmap holding fov0 unless it has VRT_MASK_LOD_INF */
+		if (m->index == fov0_index)
 			return;
 	}
 
-	/* filter to tend to attribs bits */
-	if(m->attribs.sign & VRT_MASK_DETACH) {
-		__builtin_printf("detaching hmap %x (", (int)m->name);
+	/* Tend to attribs bits. */
+	if (m->attribs.sign & VRT_MASK_DETACH) {
+		__builtin_printf("detaching hmap %x (", (int) m->name);
 		detach_hmapf(m);
 		__builtin_printf("free maps %u/%u)\n",
 			vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);
 	}
 
-	/* adjust hmap via kbase if set */
-	/* ... */
-
-	/* for node-partial vobs, hash together thru session_filter a list
-	   of pointers to associated hmaps per associated sessions for session.c
-	   sync with remote nodes */
-	/* ... */
-
-	/* sum intersection effects for hmap with fov0 vs. next argued hmap */
-	a = (hmapf_t **)selectf_a;
-	*a = p_hmapf(0);
-	b = (hmapf_t **)selectf_b;
-	*b = m;
-	select_t sel = { 0, 0, (hmapf_t **)a, 0, (hmapf_t **)b };
+	/* Sum intersection effects for hmap with fov0 vs. next argued hmap.
+	   note: hmaps do not intersect with themselv's, so this will work
+	   for now. */
+	*selb = m;
 	intersection(&sel);
 
-	/* sum velocity into position for this frame */
+	/* Sum velocity into position for this frame. */
 	cp_vf(&(m->vvel), &d); /* take a copy of direction/velocity */
 	factor_vf(&d, &d, vrt_render_cyc * sort_ratio); /* delta given freq */
 	sum_vf(&(m->vpos), &d, &(m->vpos)); /* new pos = delta vector + pos */
 
-	/* set vob angular displacement
-	   note: v_ang_vel will be pseudovector.  on fly calc moreso optimal */
+	/* Set vob angular displacement.  note: v_ang_vel will be pseudovector
+	   where on the fly calculation will be moreso optimal. */
 	m->ang_dpl += m->ang_spd * vrt_render_cyc * sort_ratio;
 
-	/* wraparound for 2 * M_PI, without this a glitch occurs on wrap */
-	if(fabs(m->ang_dpl) >= 2 * M_PI)
+	/* Overflow for 2 * M_PI, without this a glitch occurs on wrap. */
+	if (fabs(m->ang_dpl) >= 2 * M_PI)
 		m->ang_dpl = fmodf(m->ang_dpl, 2 * M_PI);
 
-	if(m->vmap)
+	if (m->vmap)
 		render_hmapf(m, lod);
 }
 
-/* vs. overload, release any hmaps with balance_filter over balance_criteria.
-   needs further implementation/considerations */
+/* Given any overloading, release hmaps with balance_filter over
+   balance_criteria.  Needs further implementation/considerations. */
 void
 flow_over(btoggles_t *balance_criteria)
 {
 	int i;
-	hmapf_t *p = &a_hmaps[0];
+	hmapf_t *p = &vohspace[0];
 
-	for(i = 0; i < vrt_hmaps_max; i++, p++) {
-		if((p->attribs.mode & VRT_MASK_FLOW_OVER) &
+	for (i = 0; i < vrt_hmaps_max; i++, p++) {
+		if ((p->attribs.mode & VRT_MASK_FLOW_OVER) &
 			(p->attribs.balance_filter &= *balance_criteria))
 		p->attribs.sign |= VRT_MASK_RECYCLE;
 	}
-	/* then in positional round these are recycled */
+	/* Then in positional round these are recycled. */
 }
 
-/* tag vobspace */
-/* ... */
 
-/* if seekpos(p, loc) is successful, arrival(p, loc) becomes successful */
+/* If seekpos(p, loc) is successful, arrival(p, loc) becomes successful. */
 void
 nportf(hmapf_t *p, vf_t *loc)
 {
 	float r;
 
-	/* diag */
-	if(!p) {
+	if (!p) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Attempted nport of NULL vob\n"
 			"Nport destination was %f %f %f\n",
@@ -618,7 +578,7 @@ nportf(hmapf_t *p, vf_t *loc)
 		return;
 	}
 
-	/* seekpos() calculation */
+	/* seekpos() calculation. */
 	/* ... */
 
 	/* nport */
@@ -628,18 +588,17 @@ nportf(hmapf_t *p, vf_t *loc)
 	/* arrival(), for now */
 	r = estimate_radiusf(p);
 	double e;
-	e = (double)rand() * TINYRANDOM;
-	wanderf(p, (float)e, p->attribs.kg, r);
+	e = (double) rand() * TINYRANDOM;
+	wanderf(p, (float) e, p->attribs.kg, r);
 }
 
-/* for now, guestimate for hmap p, a proportion vs. where it were the same
-   volume and reshaped as a sphere, needed to calculate rotation /w a radius
-   this will be moved to transform and expanded to guess bound */
+/* Aproximate and return, for hmap p, a fair proportion vs. where it were the
+   same ideal volume and reshaped as a sphere.  Cheating a bit for now. */
 float
 estimate_radiusf(hmapf_t *p)
 {
 	float r;
-	switch(p->envelope.geom) {
+	switch (p->envelope.geom) {
 		case VRT_BOUND_NONE:
 		r = 0;
 		break;
@@ -653,25 +612,21 @@ estimate_radiusf(hmapf_t *p)
 		break;
 
 		case VRT_BOUND_RCUBOID:
-		r = M_SQRT1_2 * sqrt(
-			p->envelope.vsz.x * p->envelope.vsz.x +
-			p->envelope.vsz.y * p->envelope.vsz.y +
-			p->envelope.vsz.z * p->envelope.vsz.z);
+		r = M_SQRT1_2 * sqrt(p->envelope.vsz.x * p->envelope.vsz.x + p->envelope.vsz.y * p->envelope.vsz.y + p->envelope.vsz.z * p->envelope.vsz.z);
 		break;
 
 		case VRT_BOUND_CUBE:
-		r = M_SQRT1_2 * sqrt(
-			p->envelope.vsz.x * p->envelope.vsz.x * 3);
+		r = M_SQRT1_2 * sqrt(p->envelope.vsz.x * p->envelope.vsz.x * 3);
 		break;
 	}
 	return r;
 }
 
-/* set vob in hmap referenced by p to arbitrary but energy factored initial
-   conditions vs. given energy e.  vvel, vaxi, vpre, ang_spd, and ang_dpl,
-   are set vs. given determinate or estimated radius r and given mass m.
-   note: now that e, r, and m are easily derived from an hmap, this will be
-   moved to transform.  also could needs a re-write */
+/* Set hmap referenced by p to arbitrary but energy factored initial conditions
+   vs. given energy e.  vvel, vaxi, vpre, ang_spd, and ang_dpl, are set vs.
+   given determinate or estimated radius r and given mass m.  note: Now that e,
+   r, and m are easily derived from an hmap, this will be moved to transform and
+   revised some as well. */
 void
 wanderf(hmapf_t *p, float e, float m, float r)
 {
@@ -686,54 +641,54 @@ wanderf(hmapf_t *p, float e, float m, float r)
 	/* note: vobspace is represented as 1 default renderer unit per m.
 	   e, will be represented in joule units, 1 ampere/s, or 1 neuton/m.
 	   this function will be moved to transform.  e can be there derived
-	   and redistributed as can r */
+	   and redistributed as can r. */
 
-	/* pseudo random reciprocal part factors */
-	rnd1 = (double)rand(); rnd2 = (double)rand(); rnd3 = rnd1 + rnd2;
+	/* Pseudo random reciprocal part factors. */
+	rnd1 = (double) rand(); rnd2 = (double) rand(); rnd3 = rnd1 + rnd2;
 
-	/* given a spherical regular solid represented as an hmap
-	   distribute input energy */
+	/* Given a spherical regular solid represented as an hmap
+	   distribute input energy. */
 	kinetic_energy = fabs(e) / m; /* kinetic energy per mass */
 	avg_absorbed_ke = avg_reflected_ke = kinetic_energy / 2;
-	avg_orginv_ke = avg_absorbed_ke * M_SQRT1_2 * (float)(rnd1 / rnd3);
-	avg_tangentv_ke = avg_absorbed_ke * (1 - M_SQRT1_2) * (float)(rnd2 / rnd3);
+	avg_orginv_ke = avg_absorbed_ke * M_SQRT1_2 * (float) (rnd1 / rnd3);
+	avg_tangentv_ke = avg_absorbed_ke * (1 - M_SQRT1_2) * (float) (rnd2 / rnd3);
 
-	/* arbitrary direction vector */
-	rnd = (double)rand() * SMALLRANDOM;
-	p->vvel.x = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
-	if(((int)rnd) % 2) { sign = sign * -1.0; }
+	/* Arbitrary direction vector. */
+	rnd = (double) rand() * SMALLRANDOM;
+	p->vvel.x = (float) (rnd = ((rnd + (double) rand()) * SMALLRANDOM));
+	if (((int) rnd) % 2) { sign = sign * -1.0; }
 	p->vvel.x = copysign(p->vvel.x, sign);
-	p->vvel.y = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
-	if(((int)rnd) % 2) { sign = sign * -1.0; }
+	p->vvel.y = (float) (rnd = ((rnd + (double) rand()) * SMALLRANDOM));
+	if (((int) rnd) % 2) { sign = sign * -1.0; }
 	p->vvel.y = copysign(p->vvel.y, sign);
-	p->vvel.z = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
-	if(((int)rnd) % 2) { sign = sign * -1.0; }
+	p->vvel.z = (float) (rnd = ((rnd + (double) rand()) * SMALLRANDOM));
+	if (((int) rnd) % 2) { sign = sign * -1.0; }
 	p->vvel.z = copysign(p->vvel.z, sign);
 	normz_vf(&(p->vvel), &(p->vvel));
 
-	/* velocity thereapon */
+	/* Velocity thereapon. */
 	tele_magz_vf(&(p->vvel), &(p->vvel), avg_orginv_ke); /* m/s */
 
-	/* arbitrary vpre vector axis of mass distribution */
-	p->vpre.x = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
-	if(((int)rnd) % 2) { sign = sign * -1.0; }
+	/* Arbitrary vpre vector axis of mass distribution. */
+	p->vpre.x = (float) (rnd = ((rnd + (double) rand()) * SMALLRANDOM));
+	if (((int) rnd) % 2) { sign = sign * -1.0; }
 	p->vpre.x = copysign(p->vpre.x, sign);
-	p->vpre.y = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
-	if(((int)rnd) % 2) { sign = sign * -1.0; }
+	p->vpre.y = (float) (rnd = ((rnd + (double) rand()) * SMALLRANDOM));
+	if (((int) rnd) % 2) { sign = sign * -1.0; }
 	p->vpre.y = copysign(p->vpre.y, sign);
-	p->vpre.z = (float)(rnd = ((rnd + (double)rand()) * SMALLRANDOM));
-	if(((int)rnd) % 2) { sign = sign * -1.0; }
+	p->vpre.z = (float) (rnd = ((rnd + (double) rand()) * SMALLRANDOM));
+	if (((int) rnd) % 2) { sign = sign * -1.0; }
 	p->vpre.z = copysign(p->vpre.z, sign);
 	normz_vf(&(p->vpre), &(p->vpre));
 
-	/* arbitrary vaxi and thus relative rotation/sense when vaxi is
-	   combined with ang_dpl.  for now vpre is unused, so use that */
+	/* Arbitrary vaxi and thus relative rotation/sense when vaxi is
+	   combined with ang_dpl.  for now vpre is unused, so use that. */
 	cp_vf(&(p->vpre), &(p->vaxi));
 
-	/* arbitrary signed rotation speed and initial displacement */
+	/* Arbitrary signed rotation speed and initial displacement. */
 	p->ang_spd = ANG_AFS * avg_tangentv_ke / r; /* r/s */
-	rnd = (rnd + (double)rand()) / 2;
-	if(((int)rnd) % 2) { sign = sign * -1.0; }
+	rnd = (rnd + (double) rand()) / 2;
+	if (((int) rnd) % 2) { sign = sign * -1.0; }
 	p->ang_spd = copysign(p->ang_spd, sign);
-	p->ang_dpl = (float)rnd + (double)rand();
+	p->ang_dpl = (float) rnd + (double) rand();
 }

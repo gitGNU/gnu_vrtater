@@ -3,7 +3,7 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#include <X11/X.h> /* ... */
+#include <X11/X.h>
 #include <GL/glx.h>
 #include <stdio.h>
 #include <string.h>
@@ -42,13 +42,13 @@ int fov0_available = 0;
 int runnode = 1;
 int diagtext = 0;
 
-/* fps */
+/* Time related. */
 time_t start, stop;
 int run, frames, sfreq, reads, infcount;
 float fps;
 float vrt_render_cyc; /* external */
 
-/* diagnostic */
+/* Temporary diagnostics. */
 hmapf_t *ryg, *ryg1, *diag1, *diag2, *diag3, *diag4, *diag5, *diag6, *diag8;
 vf_t diag = { 0, 10, 0, 10 };
 vf_t isb = { 5,  0,  0, 5 };
@@ -56,63 +56,57 @@ vf_t jsb = {  0, 5,  0, 5 };
 vf_t ksb = {  0,  0, 5, 5 };
 vf_t vrloc8 = { 0, 0, -80, 80 };
 
-/* pre-alpha dialog */
+/* Pre-alpha dialog. */
 hmapf_t *diagtext0; /* hmap to recieve text entry */
 int dialogrecurrant = 0;
 char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
 
 void setup_glx(int argc, char **argv);
 void shutdown_glx(void);
-
-/* dialog */
 void setup_dialog_interface(void);
 void shutdown_dialog_interface(void);
+void tendto_curr_sessions(void);
+int connect_called_partialspace(session_t *);
+int connect_caller_partialspace(session_t *);
+void cfg_session_filter(void);
 
-/* diagnostic */
+/* Temporary diagnostics. */
 void diag_char(char c);
 void diag_node_key_f(void);
 void diag_node_key_g(void);
 void diag_node_key_h(void);
 void diag_node_key_j(void);
 
-/* session */
-void tendto_curr_sessions(void);
-int connect_called_partialspace(session_t *);
-int connect_caller_partialspace(session_t *);
-void cfg_session_filter(void);
-
-/* setup for given display and rendering libs */
+/* Setup for given display and rendering libs. */
 void
 setup_glx(int argc, char **argv)
 {
 	dpy0 = NULL;
 	xvinf0 = NULL;
 
-	/* gl X rendering */
-
-	/* open connection to X server */
-	if((dpy0 = XOpenDisplay(NULL)) == NULL) {
+	/* Open a connection to X server. */
+	if ((dpy0 = XOpenDisplay(NULL)) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not open a connection to X server\n",
 			__FILE__, __LINE__);
 		__builtin_exit(1);
 	}
 
-	/* determine glX support */
+	/* Determine glx support. */
 	int error;
 	int event;
-	if(!glXQueryExtension(dpy0, &error, &event)) {
+	if (!glXQueryExtension(dpy0, &error, &event)) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error %i: X server has no support for GLX extension\n",
 			__FILE__, __LINE__, error);
 		__builtin_exit(1);
 	}
 
-	/* choose visual by matching available params */
+	/* Choose visual by matching available parameters. */
 	int dbv[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
 	int sbv[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, None};
-	if((xvinf0 = glXChooseVisual(dpy0, DefaultScreen(dpy0), dbv)) == NULL) {
-		if((xvinf0 = glXChooseVisual(dpy0, DefaultScreen(dpy0), sbv)) == NULL) {
+	if ((xvinf0 = glXChooseVisual(dpy0, DefaultScreen(dpy0), dbv)) == NULL) {
+		if ((xvinf0 = glXChooseVisual(dpy0, DefaultScreen(dpy0), sbv)) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
 				"Error: No visual(double nor single) choosable",
 				__FILE__, __LINE__);
@@ -121,80 +115,81 @@ setup_glx(int argc, char **argv)
 		dbuff = 0;
 	}
 
-	/* create X colormap */
+	/* Create X colormap. */
 	Colormap cmap;
-	cmap=XCreateColormap(dpy0, RootWindow(dpy0, xvinf0->screen), xvinf0->visual, AllocNone);
+	cmap = XCreateColormap(dpy0, RootWindow(dpy0, xvinf0->screen), xvinf0->visual, AllocNone);
 
-	/* setup Xwindow attributes */
+	/* Setup Xwindow attributes. */
 	XSetWindowAttributes xwinattr;
 	xwinattr.colormap = cmap;
 	xwinattr.event_mask = KeyPressMask;
 
-	/* create an Xwindow with visual and attributes */
-	xwin0=XCreateWindow(dpy0, RootWindow(dpy0, xvinf0->screen), 0, 0, xwin0x, xwin0y, 0, xvinf0->depth, InputOutput, xvinf0->visual, CWColormap|CWEventMask, &xwinattr);
+	/* Create an Xwindow with visual and attributes. */
+	xwin0 = XCreateWindow(dpy0, RootWindow(dpy0, xvinf0->screen), 0, 0, xwin0x, xwin0y, 0, xvinf0->depth, InputOutput, xvinf0->visual, CWColormap|CWEventMask, &xwinattr);
 
-	/* set Xwindow properties */
+	/* Set Xwindow properties. */
 	XSetStandardProperties(dpy0, xwin0, "vrtater", "vrtater", None, argv, argc, NULL);
 
-	/* set gl X rendering context */
-	if((glxcontext0 = glXCreateContext(dpy0, xvinf0, NULL, GL_TRUE)) == NULL)
+	/* Set gl X rendering context. */
+	if ((glxcontext0 = glXCreateContext(dpy0, xvinf0, NULL, GL_TRUE)) == NULL)
 		__builtin_exit(1);
 
-	/* make Xwindow current and map it */
+	/* Make Xwindow current and map it. */
 	glXMakeCurrent(dpy0, xwin0, glxcontext0)   ;
 	XMapWindow(dpy0, xwin0);
 }
 
+/* Shutdown for given display and rendering libs. */
 void
 shutdown_glx(void)
 {
-	if(glxcontext0 != NULL) {
+	if (glxcontext0 != NULL) {
 		glXMakeCurrent(dpy0, None, NULL);
 		glXDestroyContext(dpy0, glxcontext0);
 		glxcontext0 = NULL;
 	}
 }
 
+/* Pre-alpha dialog interface.  note: The plan is to make a parent X window and
+   then one child for interfacing nodes and one for dialog.  The second child's
+   pointer is then passed to a setup function in dialog*.c for use and further
+   wrapping of any new dialog window. */
 void
 setup_dialog_interface(void)
 {
 	/* pre-alpha dialog version */
-	hmapf_t **p = (hmapf_t **)selectf_a;
+	hmapf_t **p = (hmapf_t **) selectf_a;
 	*p = diagtext0;
-	select_t text = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
+	select_t text = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
 	add_dialog(&text, diagtextmsg, strlen(diagtextmsg), diagtext0->dialog_len);
 }
 
+/* Shutdown for given dialog interface. */
 void
 shutdown_dialog_interface(void)
 {
 	;
 }
 
-/* state machine */
+/* Given argc/argv, run vrtater statefully while runnode equals 0. */
 void
 node(int argc, char **argv)
 {
-	/* renderer */
-	setup_glx(argc, argv);
+	XEvent xevent;
 
+	setup_glx(argc, argv);
 	generate_node_orgin();
 
-	/* fov */
-	fov0 = (hmapf_t *)p_hmapf(0); /* for now */
+	fov0 = (hmapf_t *) p_hmapf(0); /* for now */
 	fov0_available = 1; /* will be default in vanilla config file */
 
-	/* pre-alpha dialog */
-	hmapf_t **seltext = (hmapf_t **)selectf_a;
+	/* For pre-alpha dialog. */
+	hmapf_t **seltext = (hmapf_t **) selectf_a;
 	diagtext0 = fov0; /* default */
 
-	/* tug */
 	init_tug_io(); /* if any tug tend to it /w start_tug(init_tug_io()) */
-
-	/* modeling */
 	buf = &modbuf; /* start pointed to hmap model buffer */
 
-	/* fps indication, disabled below for now */
 	fps = 28.6; /* guess */
 	vrt_render_cyc = .034965;
 	frames = 0;
@@ -203,7 +198,7 @@ node(int argc, char **argv)
 	infcount = 0;
 	reads = 0;
 
-	/* hmap with fov for dpy0 */
+	/* hmap with fov for dpy0. */
 	fov0->ang_spd = 0; /* for now not used for fov hmap */
 	fov0->ang_dpl = 0; /* for now not used for fov hmap */
 	set_vf(&(fov0->vvel), 0, 0, 0, 0);
@@ -211,8 +206,7 @@ node(int argc, char **argv)
 	set_vf(&(fov0->vrel), 0, 1, 0, 1); /* up locally */
 	set_vf(&(fov0->vpos), 0, 0, 0, 0); /* oa@fp */
 
-
-	/* diag */
+	/* Some hmaps for diagnostic purpose follow. */
 	ryg = (hmapf_t *) p_hmapf(1);
 	ryg->ang_spd = .25;
 	ryg->ang_dpl = 0;
@@ -229,7 +223,6 @@ node(int argc, char **argv)
 	set_vf(&(ryg1->vpos), 0, 495, 10, 0);
 	form_mag_vf(&(ryg1->vpos));
 
-	/* diag */
 	diag1 = (hmapf_t *) p_hmapf(3);
 	diag1->ang_spd = .000012; 
 	set_vf(&(diag1->vvel), 0, .1, 0, .1);
@@ -278,28 +271,24 @@ node(int argc, char **argv)
 	set_vf(&(diag8->vpos), 0, 0, 0, 0);
 	cp_vf(&vrloc8, &(diag8->vpos));
 
-	/* interface nodes
-	   all events since last frame are summed, the new frame is drawn */
-
-	XEvent xevent;
-
-	while(runnode) {
-		while(XPending(dpy0)) {
+	/* Interface nodes. */
+	while (runnode) {
+		while (XPending(dpy0)) {
 			XNextEvent(dpy0, &xevent);
-			switch(xevent.type) {
+			switch (xevent.type) {
 
 				case KeyPress:
-				switch(XKeycodeToKeysym(dpy0, xevent.xkey.keycode, 0)) {
+				switch (XKeycodeToKeysym(dpy0, xevent.xkey.keycode, 0)) {
 
 					case VRT_KEY_tab:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_tab);
 					else
 						;
 					break;
 
 					case VRT_KEY_linefeed:
-					if(diagtext) {
+					if (diagtext) {
 						diagtext = 0;
 						diag_char('\n');
 					}
@@ -310,7 +299,7 @@ node(int argc, char **argv)
 					break;
 
 					case VRT_KEY_space:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_space);
 					else {
 						(&ifdpy0)->keypan *= (&ifdpy0)->adclpan;
@@ -323,127 +312,127 @@ node(int argc, char **argv)
 					break;
 
 					case VRT_KEY_comma:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_comma);
 					else
 						(&ifdpy0)->keyvvrt -= (&ifdpy0)->accvvrt * (&ifdpy0)->accel_adv;
 					break;
 
 					case VRT_KEY_0:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_0);
 					else
 						diagtext0 = p_hmapf(0);
 					break;
 
 					case VRT_KEY_1:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_1);
 					else
 						diagtext0 = p_hmapf(1);
 					break;
 
 					case VRT_KEY_2:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_2);
 					break;
 
 					case VRT_KEY_3:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_3);
 					break;
 
 					case VRT_KEY_4:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_4);
 					break;
 
 					case VRT_KEY_5:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_5);
 					break;
 
 					case VRT_KEY_6:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_6);
 					break;
 
 					case VRT_KEY_7:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_7);
 					break;
 
 					case VRT_KEY_8:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_8);
 					break;
 
 					case VRT_KEY_9:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_9);
 					break;
 
 					case VRT_KEY_semicolon:
-					if(!diagtext) {
+					if (!diagtext) {
 						(&ifdpy0)->keyroll -= (&ifdpy0)->aaccroll * (&ifdpy0)->aaccel_adv;
-						if((&ifdpy0)->keyroll < -M_PI)
+						if ((&ifdpy0)->keyroll < -M_PI)
 							(&ifdpy0)->keyroll = M_PI;
 					}
 					break;
 
 					case VRT_KEY_equal:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_equal);
 					break;
 
 					case VRT_KEY_backslash:
-					if(!diagtext) {
+					if (!diagtext) {
 						diagtext = 1;
-						if(!(dialogrecurrant++)) {
+						if (!(dialogrecurrant++)) {
 							setup_dialog_interface();
 						}
 					}
 					break;
 
 					case VRT_KEY_a:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_a);
 					else {
 						(&ifdpy0)->keypan += (&ifdpy0)->aaccpan * (&ifdpy0)->aaccel_adv;
-						if((&ifdpy0)->keypan > M_PI)
+						if ((&ifdpy0)->keypan > M_PI)
 							(&ifdpy0)->keypan = -M_PI;
 					}
 					break;
 
 					case VRT_KEY_b:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_b);
 					break;
 
 					case VRT_KEY_c:
-					if(diagtext) 
+					if (diagtext) 
 						diag_char(VRT_KEYCODE_c);
 					else
 						(&ifdpy0)->keyvside += (&ifdpy0)->accvside * (&ifdpy0)->accel_adv;
 					break;
 
 					case VRT_KEY_d:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_d);
 					else {
 						(&ifdpy0)->keypan -= (&ifdpy0)->aaccpan * (&ifdpy0)->aaccel_adv;
-						if((&ifdpy0)->keypan < -M_PI)
+						if ((&ifdpy0)->keypan < -M_PI)
 							(&ifdpy0)->keypan = M_PI;
 					}
 					break;
 
 					case VRT_KEY_e:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_e);
 					break;
 
 					case VRT_KEY_f:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_f);
 					else {
 						diag_node_key_f();
@@ -451,7 +440,7 @@ node(int argc, char **argv)
 					break;
 
 					case VRT_KEY_g:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_g);
 					else {
 						diag_node_key_g();
@@ -459,7 +448,7 @@ node(int argc, char **argv)
 					break;
 
 					case VRT_KEY_h:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_h);
 					else {
 						diag_node_key_h();
@@ -467,12 +456,12 @@ node(int argc, char **argv)
 					break;
 
 					case VRT_KEY_i:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_i);
 					break;
 
 					case VRT_KEY_j:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_j);
 					else {
 						runnode = 0; /* for now */
@@ -480,110 +469,110 @@ node(int argc, char **argv)
 					break;
 
 					case VRT_KEY_k:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_k);
 					else {
 						(&ifdpy0)->keyroll += (&ifdpy0)->aaccroll * (&ifdpy0)->aaccel_adv;
-						if((&ifdpy0)->keyroll > M_PI)
+						if ((&ifdpy0)->keyroll > M_PI)
 							(&ifdpy0)->keyroll = -M_PI;
 					}
 					break;
 
 					case VRT_KEY_l:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_l);
 					else {
 						(&ifdpy0)->keytilt += (&ifdpy0)->aacctilt * (&ifdpy0)->aaccel_adv;
-						if((&ifdpy0)->keytilt > M_PI)
+						if ((&ifdpy0)->keytilt > M_PI)
 							(&ifdpy0)->keytilt = -M_PI;
 					}
 					break;
 
 					case VRT_KEY_m:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_m);
 					break;
 
 					case VRT_KEY_n:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_n);
 					break;
 
 					case VRT_KEY_o:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_o);
 					else {
 						(&ifdpy0)->keytilt -= (&ifdpy0)->aacctilt * (&ifdpy0)->aaccel_adv;
-						if((&ifdpy0)->keytilt < -M_PI)
+						if ((&ifdpy0)->keytilt < -M_PI)
 							(&ifdpy0)->keytilt = M_PI;
 					}
 					break;
 
 					case VRT_KEY_p:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_p);
 					else
 						(&ifdpy0)->keyvvrt += (&ifdpy0)->accvvrt * (&ifdpy0)->accel_adv;
 					break;
 
 					case VRT_KEY_q:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_q);
 					break;
 
 					case VRT_KEY_r:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_r);
 					break;
 
 					case VRT_KEY_s:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_s);
 					else
 						(&ifdpy0)->keyvfwd -= (&ifdpy0)->accvfwd * (&ifdpy0)->accel_adv;
 					break;
 
 					case VRT_KEY_t:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_t);
 					break;
 
 					case VRT_KEY_u:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_u);
 					break;
 
 					case VRT_KEY_v:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_v);
 					break;
 
 					case VRT_KEY_w:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_w);
 					else
 						(&ifdpy0)->keyvfwd += (&ifdpy0)->accvfwd * (&ifdpy0)->accel_adv;
 					break;
 
 					case VRT_KEY_x:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_x);
 					break;
 
 					case VRT_KEY_y:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_y);
 					break;
 
 					case VRT_KEY_z:
-					if(diagtext)
+					if (diagtext)
 						diag_char(VRT_KEYCODE_z);
 					else
 						(&ifdpy0)->keyvside -= (&ifdpy0)->accvside * (&ifdpy0)->accel_adv;
 					break;
 
 					case VRT_KEY_del:
-					if(diagtext) {
+					if (diagtext) {
 						*seltext = diagtext0;
 						select_t del = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
 						write_dialog(&del, "");
@@ -604,13 +593,12 @@ node(int argc, char **argv)
 			}
 		}
 
-		/* adjust interfaced hmaps per any node input
-		   sum in curvilinear fore/backwards acceleration feedback */
+		/* Sum in curvilinear fore/backwards acceleration feedback. */
 		tele_magz_vf(&(fov0->vvel), &(fov0->vvel),
 			(fov0->vvel.m * fov0->vvel.m) /
 			(fov0->vvel.m + (fov0->vvel.m * (&ifdpy0)->accel_crv)));
 
-		/* accelerate, summing d/t/t with d/t for (+/-)fwd, side */
+		/* Accelerate, summing d/t/t with d/t for (+/-)fwd, side. */
 		vf_t dpl, dpl2, dpl3;
 		tele_magz_vf(&(fov0->vaxi), &dpl, (&ifdpy0)->keyvfwd);
 		sum_vf(&dpl, &(fov0->vvel), &(fov0->vvel));
@@ -621,50 +609,50 @@ node(int argc, char **argv)
 		tele_magz_vf(&(fov0->vrel), &dpl3, (&ifdpy0)->keyvvrt);
 		sum_vf(&(fov0->vvel), &dpl3, &(fov0->vvel));
 
-		/* further adjust interfaced hmaps while representing node
-		   output.  per display(dpy) per frame, set the field of view
-		   (fov) per the hmap's holding any.  a focal plane is
+		/* Further adjust interfaced hmaps while representing node
+		   output.  Per display(dpy) per frame, set the field of view
+		   (fov) per the hmap's holding any.  A focal plane is
 		   represented by vectors vrel and side, and an optical axis
-		   by vector vaxi.  roll is represented by a combination of
+		   by vector vaxi.  Roll is represented by a combination of
 		   vrel and side.  vpos is represented when applied by the
 		   renderer to a matrix translation of the inverse of
 		   fov0->vpos before rendering, and back again before
 		   returning. */
 
-		/* calculate a basis vector for tilt */
+		/* Calculate a basis vector for tilt. */
 		vf_t side;
 		cprod_vf(&(fov0->vaxi), &(fov0->vrel), &side);
 		normz_vf(&side, &side);
 
-		/* roll rel and side around axial */
+		/* Roll rel and side around axial. */
 		rotate_vf(&(fov0->vrel), &(fov0->vaxi), (&ifdpy0)->keyroll);
 		rotate_vf(&side, &(fov0->vaxi), (&ifdpy0)->keyroll);
 
-		/* pan side and axial around rel */
+		/* Pan side and axial around rel. */
 		rotate_vf(&side, &(fov0->vrel), -(&ifdpy0)->keypan);
 		rotate_vf(&(fov0->vaxi), &(fov0->vrel), -(&ifdpy0)->keypan);
 
-		/* tilt axial and rel around side */
+		/* Tilt axial and rel around side. */
 		rotate_vf(&(fov0->vaxi), &side, -(&ifdpy0)->keytilt);
 		rotate_vf(&(fov0->vrel), &side, -(&ifdpy0)->keytilt);
 
-		/* base's are maintained in their normalized form */
+		/* Base's are maintained in their normalized form. */
 		normz_vf(&(fov0->vaxi), &(fov0->vaxi));
 		normz_vf(&(fov0->vrel), &(fov0->vrel));
 
 
-		/* fov0 is passed and rendered first to set fp_oa */
+		/* fov0 is passed and rendered first to set fp_oa. */
 		init_next_buffer();
 		proc_hmapf(fov0, VRT_MASK_LOD_INF, 1);
 
-		/* regenerate next frame's worth of hmaps modifying hmap
+		/* Regenerate next frame's worth of hmaps modifying hmap
 		   position vs. vvel, and (soon rotation/)vpos through
-		   intersection of hmaps.  lod envelopes are centered around
-		   fov0->vpos'.  just above, hmap fov0 was processed vs. the
-		   near lod envelope so it is skipped in regenerate_scene() */
+		   intersection of hmaps.  Lod envelopes are centered around
+		   fov0->vpos'.  Just above, hmap fov0 was processed vs. the
+		   near lod envelope so it is skipped in regenerate_scene. */
 		regenerate_scene(&(fov0->vpos));
 
-		/* rotate scene rendered vs. fov0->vpos'(set in last call) */
+		/* Rotate scene rendered vs. fov0->vpos'(set in last call). */
 		glRotatef((&ifdpy0)->keyroll * 180 / M_PI,
 			fov0->vaxi.x, fov0->vaxi.y, fov0->vaxi.z);
 		glRotatef(-(&ifdpy0)->keypan * 180 / M_PI,
@@ -673,7 +661,6 @@ node(int argc, char **argv)
 			side.x, side.y, side.z);
 
 #ifdef DIAG_INTERFACE
-		/* positional */
 		__builtin_printf("\nfov0\n");
 		__builtin_printf("  vpos: x %f y %f z %f m %f\n",
 			fov0->vpos.x, fov0->vpos.y,
@@ -699,28 +686,27 @@ node(int argc, char **argv)
 			(&ifdpy0)->keytilt, (&ifdpy0)->keyvfwd,
 			(&ifdpy0)->keyvvrt, (&ifdpy0)->keyvside);
 
-		/* pre-alpha dialog */
-		hmapf_t **p = (hmapf_t **)selectf_a;
+		hmapf_t **p = (hmapf_t **) selectf_a;
 		*p = diagtext0;
-		select_t kbd = { 0, 1, (hmapf_t **)p, 0, NULL };
+		select_t kbd = { 0, 1, (hmapf_t **) p, 0, NULL };
 		dialog(&kbd);
 #endif
 
 #ifdef DIAG_TIME
-		/* fps: sample interval sfreq, set above, should be proportional
-		   considering the sample granularity used.  at the moment this
-		   is disabled pending further reading.  for now using
+		/* fps: Sample interval sfreq, set above, should be proportional
+		   considering the sample granularity used.  At the moment this
+		   is disabled pending further reading.  For now using
 		   vrt_render_cyc default value as scale for state increment.
 		   vrtater time dependant calculations will likely be determined
-		   primarily vs. the video hardware */
-		if(!(frames++ % sfreq)) {
-			if(!run++) {
+		   primarily vs. the video hardware. */
+		if (!(frames++ % sfreq)) {
+			if (!run++) {
 				start = time(NULL);
 			} else {
 				run -= 2;
 				stop = time(NULL);
-				fps = (float)frames / (float)(stop - start);
-				if(!isinf(fps)) {
+				fps = (float) frames / (float) (stop - start);
+				if (!isinf(fps)) {
 					vrt_render_cyc = 1 / fps;
 					reads++;
 				} else {
@@ -734,60 +720,63 @@ node(int argc, char **argv)
 			reads, reads + infcount);
 #endif
 
-		/* renderer renders apon, inside of, and outside of hmaps */
+		/* Render. */
 		glPushMatrix();
 		render_vobspace(fov0_available);
 		glPopMatrix();
 
-		/* draw to dpy0 */
-		if(dbuff)
+		/* Draw to dpy0. */
+		if (dbuff)
 			glXSwapBuffers(dpy0, xwin0);
 		else
 			glFlush();
 
-		/* start of new frame.  not clearing identity matrix.  will
-		   let it stack.  a function to periodically align hmap's
-		   will follow at some point, clearing the identity matrix */
+		/* Start of new frame.  Not clearing identity matrix.  Will
+		   let it stack.  A function to periodically align hmap's
+		   will follow at some point, clearing the identity matrix. */
 		glMatrixMode(GL_MODELVIEW);
 	}
 
-	/* shutdown node-orgin */
+	/* Shutdown node-orgin. */
 	close_vobspace(0); /* now, for now */
 	close_node_orgin(); /* note: move to callback_close_vobspace() */
 	shutdown_glx();
 }
 
-/* diag.  modify sela element 1 dialog by adding c to end of selection */
+/* Temporary diagnostic to append c to the hmap dialog of the first element of
+   selectf_a. */
 void
 diag_char(char c)
 {
-	/* pre-alpha dialog version */
-	hmapf_t **p = (hmapf_t **)selectf_a;
+	hmapf_t **p = (hmapf_t **) selectf_a;
 	*p = diagtext0;
-	select_t dialog_sela = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
-	*scbuf = (int)c;
-	add_dialog(&dialog_sela, (char *)scbuf, 1, diagtext0->dialog_len);
+	select_t dialog_sela = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
+	*scbuf = (int) c;
+	add_dialog(&dialog_sela, (char *) scbuf, 1, diagtext0->dialog_len);
 }
 
-/* diag.  prompted by lowercase f, g, h, j(!when diag-text input on) run this */
+/* Temporary diagnostic to run test on keypress f.  (!during diag-text). */
 void
 diag_node_key_f(void)
 {
 	diag_generator_key_f();
 }
 
+/* Temporary diagnostic to run test on keypress g. */
 void
 diag_node_key_g(void)
 {
 	diag_generator_key_g();
 }
 
+/* Temporary diagnostic to run test on keypress h. */
 void
 diag_node_key_h(void)
 {
 	diag_generator_key_h();
 }
 
+/* Temporary diagnostic to run test on keypress j. */
 void
 diag_node_key_j(void)
 {
@@ -799,45 +788,51 @@ diag_node_key_j(void)
 		"session.c, renderer, more...\n");
 }
 
-/* tending to curr_session_t and prev_caller_session_t info.
-   referencing session info generated thru session.c, selection of available
-   nodes for calling(cuing) and running, as well as the previous caller archive
-   that allows sessions to be continued.  connections are achieved based on
-   configuration files, or calls herein */
+/* Tend to curr_session_t and prev_caller_session_t info referencing session
+   info generated thru session.c selection of available nodes for calling(cuing)
+   and running, as well as the previous caller archive that allows sessions to
+   be continued.  Connections are achieved based on configuration files, or
+   calls herein. */
 void
 tendto_curr_sessions(void)
 {
-	/* conditionally connect_vobspace(), etc... */
+	/* Conditionally connect_vobspace(), etc... */
 	;
 }
 
-/* as a caller node-orgin, connect cued session session.
-   notes: session represents a node-partial to be transfered from a caller
-   node-orgin.  this will be obvious from the directional sense visible looking
-   at all_sessions data from within the interface to be provided herein.  remote
-   nodes added to the running set for this node-partial by session code will
-   maintain their own representation of given node-partial.  success is assumed
-   while implied session_t remains in all_sessions data.  reads from remote node
-   will succeed with no data until session sync or closed */
+/* As a caller node-orgin, connect cued session session.  notes: session
+   represents a node-partial to be transfered from a caller node-orgin.  This
+   will be obvious from the directional sense visible looking at all_sessions
+   data from within the interface to be provided herein.  Remote nodes added to
+   the running set for session node-partial will maintain their own
+   representation of given node-partial.  Success is assumed while implied
+   session_t remains in all_sessions data.  Reads from remote node will succeed
+   with no data until session sync or closed. */
 int
 connect_called_partialspace(session_t *session)
 {
 	char passwd[] = "";
 	return accept_called_partial_session(session, passwd);
 }
-/* as a called node-orgin, connect cued session session.
-   notes: session represents a node-partial present in called node-orgin.  success
-   is assumed while implied session_t remains in all_sessions data.  reads from
-   remote node will succeed with no data until session sync or closed */
+
+/* As a called node-orgin, connect with cued session session.  notes: session
+   represents a node-partial present in called running instance of vrtater with
+   a receiving node-partial.  Success is assumed while implied session_t remains
+   in all_sessions data.  Reads from remote node will succeed with no data until
+   session sync or closed. */
 int
 connect_caller_partialspace(session_t *session)
 {
 	return accept_caller_partial_session(session);
 }
 
+/* For any node-partial, hmaps therein originating out of different nodes will
+   all have a unique name in local vobspace.  A session filter(or by other
+   means) when implemented, will indicate that unique sets of hmaps may share
+   configured supported features as a union. */
 void
 cfg_session_filter(void)
 {
-	/* name a list of lists of sessions */
+	/* Name a list of lists of sessions. */
 	;
 }

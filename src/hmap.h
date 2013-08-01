@@ -153,11 +153,12 @@ enum { /* select_t specbits */
 #define VRT_MASK_SRCH_BKW (1 << VRT_ORDINAL_SRCH_BKW)
 };
 
-/* enumerated levels of detail
-   these are used by attribs.c for sorting hmaps and generator.c for selecting
-   a set of lod envelopes desireable vs. positional code.  they also provide
-   render*.c with a determined average distance of hmaps from viewpoint(vpt)
-   given */
+/* Enumerated levels of detail.  These are used by attribs.c for sorting hmaps
+   and generator.c for selecting a set of lod envelopes desireable vs.
+   positional code.  They also provide render*.c with a determined average
+   distance of hmaps from viewpoint(vpt) given and are configurable therein.
+   note: currently under review is the possible combining of these with bound
+   size. */
 enum {
 	VRT_ORDINAL_LOD_INF,
 #define VRT_MASK_LOD_INF (1 << VRT_ORDINAL_LOD_INF)
@@ -169,7 +170,7 @@ enum {
 #define VRT_MASK_LOD_FAR (1 << VRT_ORDINAL_LOD_FAR)
 };
 
-/* selection buffers */
+/* Selection buffers. */
 extern hmapf_t *selectf_a;
 extern hmapf_t *selectf_b;
 

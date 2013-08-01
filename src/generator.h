@@ -11,11 +11,10 @@
 #include "hmap.h"
 #include "partial.h"
 
-/* generator_opts_t
-   these are all set by ifnode**.c, some through data maintained in dialog.c
-   balance_criteria is still in the works, and may be proposed as some hybrid
-   of bits vs. a quantity once needed.  vobspace_criteria, still in the works
-   is listed below */
+/* These generator options are all set by ifnode**.c, some through data
+   maintained in dialog.c.  balance_criteria is still in the works, and may be
+   proposed as some hybrid of bits vs. a quantity once needed.
+    vobspace_criteria bit defines are still in the works, are listed below. */
 struct generator_opts {
 	btoggles_t balance_criteria; /* balance_filter options */
 	btoggles_t vobspace_criteria; /* context options */
@@ -24,8 +23,8 @@ struct generator_opts {
 	double when; /* shutdown, ... */
 } genopts;
 
-/* generator_opts_t vobspace_criteria.  effective while held high, some of these
-   where noted, will be cleared after use */
+/* generator_opts_t vobspace_criteria.  Effective while held high, some of these
+   where noted, will be cleared after use. */
 enum {
 	VRT_ORDINAL_SHUTDOWN,
 #define VRT_MASK_SHUTDOWN (1 << VRT_ORDINAL_SHUTDOWN)
@@ -48,11 +47,11 @@ void diag_ls_partials(int full);
 void close_vobspace(double time_till_closed);
 void close_node_orgin(void);
 int resize_node_orgin(int, int);
-/* diag */
+/* Diagnostics. */
 void diag_generator_key_f(void);
 void diag_generator_key_g(void);
 void diag_generator_key_h(void);
-/* generator supported calls for tug input */
+/* Supported calls for bus input. */
 void generator_hapticNormill(void);
 void generator_intersection(void);
 

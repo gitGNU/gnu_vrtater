@@ -9,7 +9,7 @@
 #include "vectors.h"
 #include "hmap.h"
 
-/* building block face counts */
+/* Building block face counts. */
 #define VRT_CAPC_FCOUNT 5
 #define VRT_ICOSAHEDRON_C_FCOUNT 20
 #define VRT_CUBE_C_FCOUNT 12

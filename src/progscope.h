@@ -12,7 +12,7 @@
 #define PI_180 0.017453292519943
 #define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
 
-/* patch diagnostic */
+/* Patch diagnostic. */
 #define DIAG_PARTIAL
 #define DIAG_INTERFACE_OFF
 #define DIAG_TIME_OFF

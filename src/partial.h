@@ -23,9 +23,9 @@ typedef struct list_s list_t;
 
 /* partial */
 struct partial_space {
-	session_t session; /* maps from node-orgin are masked into this session */
+	session_t session; /* maps from node-orgin are masked into session */
 	list_t *list; /* session name and list of all hmaps in this partial */
-	char *desc; /* set when calling mk_partial() */
+	char *desc; /* set when calling mk_partial */
 	hmapf_t *nodemap; /* hmap describing the volume of given partial */
 	int running; /* is in session code's running set */
 };

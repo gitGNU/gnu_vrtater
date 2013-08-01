@@ -18,7 +18,7 @@ void (*fparr[])() = {
 	&call_intersection
 };
 
-/* given pre selected hmaps, call a transform */
+/* Given pre selected hmaps, call function out of transform.c */
 void
 transform(int t)
 {

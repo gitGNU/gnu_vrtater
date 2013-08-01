@@ -51,7 +51,7 @@ usage(void)
 		"usage: vrtater [-?h] [-d[level]] [-f partial-node-name] "
 		"[-o[node-orgin-name]]\n\n"
 		"--brief                Run with brief console messages\n"
-		"--diag         -d      Apply tug diagnostic mode /w opt level\n"
+		"--diag         -d      Apply tug diagnostic mode with optional level\n"
 		"--find-node    -f      Start with a remote node search\n"
 		"--help         -?      Print this usage message\n"
 		"--node-orgin   -o      Start with default or given node-orgin\n"
@@ -150,9 +150,9 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* read defaults */
-	vrt_hmaps_max = 30;
+	/* Read defaults. */
+	vrt_hmaps_max = 30; /* for now */
 
 	/* vrtater */
-	node(argc, argv); /* is a state machine */
+	node(argc, argv);
 }

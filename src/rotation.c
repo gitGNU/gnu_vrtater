@@ -6,9 +6,9 @@
 #include <math.h>
 #include "vectors.h"
 
-/* given a 3d vector orgin be that place where it would have 0 magnitude,
-   rotate v around axi by dpl, where v and axi share the same orgin
-   desires: cycle saving optimizations */
+/* Given a 3d vector orgin be that place where it would have 0 magnitude,
+   rotate v around axi by dpl, where v and axi share the same orgin.
+   desires: Cycle saving optimizations. */
 vf_t
 *rotate_vf(vf_t *v, vf_t *axi, float dpl )
 {

@@ -10,10 +10,10 @@
 #include "vectors.h"
 #include "bittoggles.h"
 
-hmapf_t *a_hmaps;
-unsigned int attached_hmaps;  /* maintained by attach_hmapf(), detach_hmapf() */
+hmapf_t *vohspace;
+unsigned int attached_hmaps;  /* maintained by attach_hmapf, detach_hmapf */
 
-/* lod envelopes */
+/* Lod envelopes. */
 unsigned int sort_perif_ratio; /* sort per n'th pass */
 unsigned int sort_far_ratio;
 float near_threshf;
