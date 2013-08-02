@@ -40,12 +40,12 @@ list_t *mk_partial_maps_list(session_t *session, char *desc);
 void rm_partial_maps_list(list_t *list);
 listed_t *add_to_partial_maps_list(list_t *list, hmapf_t *map);
 int subtract_from_partial_maps_list(list_t *list, hmapf_t *map);
-int diag_hmaps_in_partial(session_t *partial);
-void diag_ls_partials(int full);
 void close_vobspace(double time_till_closed);
 void close_node_orgin(void);
 int resize_node_orgin(int, int);
 /* Diagnostics. */
+void diag_ls_partials(int full);
+int diag_hmaps_in_partial(session_t *partial);
 void diag_generator_key_f(void);
 void diag_generator_key_g(void);
 void diag_generator_key_h(void);

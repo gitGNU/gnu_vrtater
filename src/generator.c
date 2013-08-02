@@ -39,14 +39,12 @@ void init_selection_buffers(void);
 void generate_vohspace(void);
 void callback_close_vobspace(void);
 
-/* Immediate feedback tests. */
+/* Tests. */
 void test_select_partial_set(void);
 void test_send_partial_changes(void);
 void test_detach_all_partials(void);
-
-/* Diagnostics for hapmaps. */
-void cphmaptest(hmapf_t *, hmapf_t *);
-void hmapwrap_unwraptst(hmapf_t *);
+void test_cphmap(hmapf_t *, hmapf_t *);
+void test_hmapwrap_unwrap(hmapf_t *);
 
 /* Allocate for a and b selection buffers. */
 void
@@ -500,6 +498,66 @@ subtract_from_partial_maps_list(list_t *list, hmapf_t *map)
 	return 0;
 }
 
+/* Shut down all calling connections to local nodes at when, /w timed messages.
+   Meanwhile disconnect from any called nodes.  Still in template form. */
+void
+close_vobspace(double when)
+{
+	/* node-orgin closeing */
+	/* dlg(VRT_VOBSPACE,
+		"this node will be closing in" dlgprntime(when - timer(now));
+	   what = VRT_CLOSE;
+	   fork_child_timer_callback(when, what);
+	*/
+	;
+}
+
+/* Callback for close_vobspace.  Still in template form. */
+void
+callback_close_vobspace(void)
+{
+	/* dlg(VRT_VOBSPACE_CLOSED, "vobspace" dlg(VRT_NODEDSC) "closing now");
+	   rndr(VRT_VOBSPACE_CLOSED);
+	   cancel_sessions(&sessions);
+	*/
+	;
+}
+
+/* Remove all partials currently defined then free all allocated memory. */
+void
+close_node_orgin(void)
+{
+	int i;
+	partial_t **p = (partial_t **) partial_generator_list;
+
+	for (i = partials_count; i > 0; i--)
+		rm_partial(*p);
+
+	free_vohspace_memory();
+}
+
+/* Resize vohspace memory allowing for size hmaps.  When supported, if
+   keep_connected is non-zero, maintain connections while doing so.  When
+   supported also allow for decreasing of hmap memory. */
+int
+resize_node_orgin(int size, int keep_connected)
+{
+	if (size < vrt_hmaps_max) {
+		__builtin_fprintf(stderr,  "vrtater: "
+			"Error: Reducing hmap memory currently unsupported\n");
+		return(-1);
+	} else {
+		if (keep_connected)
+			;
+		else {
+			close_node_orgin();
+			vrt_hmaps_max = size;
+			generate_node_orgin();
+		}
+		return(0);
+	}
+}
+
 /* Temporary diagnostic to list partials to stdout.  If full is nonzero, also
    list all hmaps present per each partial. */
 void
@@ -623,69 +681,9 @@ test_detach_all_partials(void)
 		rm_partial(*p);
 }
 
-/* Shut down all calling connections to local nodes at when, /w timed messages.
-   Meanwhile disconnect from any called nodes.  Still in template form. */
-void
-close_vobspace(double when)
-{
-	/* node-orgin closeing */
-	/* dlg(VRT_VOBSPACE,
-		"this node will be closing in" dlgprntime(when - timer(now));
-	   what = VRT_CLOSE;
-	   fork_child_timer_callback(when, what);
-	*/
-	;
-}
-
-/* Callback for close_vobspace.  Still in template form. */
-void
-callback_close_vobspace(void)
-{
-	/* dlg(VRT_VOBSPACE_CLOSED, "vobspace" dlg(VRT_NODEDSC) "closing now");
-	   rndr(VRT_VOBSPACE_CLOSED);
-	   cancel_sessions(&sessions);
-	*/
-	;
-}
-
-/* Remove all partials currently defined then free all allocated memory. */
-void
-close_node_orgin(void)
-{
-	int i;
-	partial_t **p = (partial_t **) partial_generator_list;
-
-	for (i = partials_count; i > 0; i--)
-		rm_partial(*p);
-
-	free_vohspace_memory();
-}
-
-/* Resize vohspace memory allowing for size hmaps.  When supported, if
-   keep_connected is non-zero, maintain connections while doing so.  When
-   supported also allow for decreasing of hmap memory. */
-int
-resize_node_orgin(int size, int keep_connected)
-{
-	if (size < vrt_hmaps_max) {
-		__builtin_fprintf(stderr,  "vrtater: "
-			"Error: Reducing hmap memory currently unsupported\n");
-		return(-1);
-	} else {
-		if (keep_connected)
-			;
-		else {
-			close_node_orgin();
-			vrt_hmaps_max = size;
-			generate_node_orgin();
-		}
-		return(0);
-	}
-}
-
 /* Diagnostic test: Run transform cp_hmapf with hmap ref arg's a to b. */
 void
-cphmaptest(hmapf_t *a, hmapf_t *b)
+test_cphmap(hmapf_t *a, hmapf_t *b)
 {
 	hmapf_t **p;
 
@@ -702,7 +700,7 @@ cphmaptest(hmapf_t *a, hmapf_t *b)
 /* Diagnostic test: Run transforms to wrap and then unwrap map from vohspace to
    a kind of file form, then back. */
 void
-hmapwrap_unwraptst(hmapf_t *map)
+test_hmapwrap_unwrap(hmapf_t *map)
 {
 	hmapf_t **p = (hmapf_t **) selectf_a;
 	*(p++) = map;

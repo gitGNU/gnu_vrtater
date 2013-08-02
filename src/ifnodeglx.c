@@ -743,51 +743,6 @@ node(int argc, char **argv)
 	shutdown_glx();
 }
 
-/* Temporary diagnostic to append c to the hmap dialog of the first element of
-   selectf_a. */
-void
-diag_char(char c)
-{
-	hmapf_t **p = (hmapf_t **) selectf_a;
-	*p = diagtext0;
-	select_t dialog_sela = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
-	*scbuf = (int) c;
-	add_dialog(&dialog_sela, (char *) scbuf, 1, diagtext0->dialog_len);
-}
-
-/* Temporary diagnostic to run test on keypress f.  (!during diag-text). */
-void
-diag_node_key_f(void)
-{
-	diag_generator_key_f();
-}
-
-/* Temporary diagnostic to run test on keypress g. */
-void
-diag_node_key_g(void)
-{
-	diag_generator_key_g();
-}
-
-/* Temporary diagnostic to run test on keypress h. */
-void
-diag_node_key_h(void)
-{
-	diag_generator_key_h();
-}
-
-/* Temporary message about exit key sequence. */
-void
-diag_message(void)
-{
-	__builtin_printf("For now, please use j to exit "
-		"vrtater GNU free software.\n"
-		"Please send patches, or become a maintainer, "
-		"see README.\n"
-		"Outreach drive (eta. mid Aug) coming, for "
-		"session.c, renderer, more...\n");
-}
-
 /* Tend to curr_session_t and prev_caller_session_t info referencing session
    info generated thru session.c selection of available nodes for calling(cuing)
    and running, as well as the previous caller archive that allows sessions to
@@ -835,4 +790,49 @@ cfg_session_filter(void)
 {
 	/* Name a list of lists of sessions. */
 	;
+}
+
+/* Temporary diagnostic to append c to the hmap dialog of the first element of
+   selectf_a. */
+void
+diag_char(char c)
+{
+	hmapf_t **p = (hmapf_t **) selectf_a;
+	*p = diagtext0;
+	select_t dialog_sela = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
+	*scbuf = (int) c;
+	add_dialog(&dialog_sela, (char *) scbuf, 1, diagtext0->dialog_len);
+}
+
+/* Temporary diagnostic to run test on keypress f. */
+void
+diag_node_key_f(void)
+{
+	diag_generator_key_f();
+}
+
+/* Temporary diagnostic to run test on keypress g. */
+void
+diag_node_key_g(void)
+{
+	diag_generator_key_g();
+}
+
+/* Temporary diagnostic to run test on keypress h. */
+void
+diag_node_key_h(void)
+{
+	diag_generator_key_h();
+}
+
+/* Temporary message about exit key sequence. */
+void
+diag_message(void)
+{
+	__builtin_printf("For now, please use j to exit "
+		"vrtater GNU free software.\n"
+		"Please send patches, or become a maintainer, "
+		"see README.\n"
+		"Outreach drive (eta. mid Aug) coming, for "
+		"session.c, renderer, more...\n");
 }
