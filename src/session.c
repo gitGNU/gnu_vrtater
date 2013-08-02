@@ -22,9 +22,9 @@ init_sessions(void)
 {
 	int i;
 	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++)
-		(&a_all_sessions[i])->session = 0;
+		(&all_sessions[i])->session = 0;
 	for (i = 0; i < VRT_MAX_PREV_CALLER_SESSIONS; i++)
-		(&a_prev_caller_sessions[i])->session = 0;
+		(&prev_caller_sessions[i])->session = 0;
 }
 
 /* For now, produce a random session name/number 0-65536/0-65536 in session.
@@ -74,9 +74,9 @@ set_node_partial(session_t *session)
    to value generated from .vrtater/session/ln_seedfiles if file(s) exist
    therein.  Otherwise, generate new session name. */
 int
-generate_session_name_from_files_in_dir(session_t *s)
+generate_session_name_from_files_in_dir(session_t *session)
 {
-	*s = (0 | (session_t) (rand() << 16)); /* for now */
+	*session = (0 | (session_t) (rand() << 16)); /* for now */
 
 	return 0;
 }
@@ -106,7 +106,7 @@ session_descriptions(void)
 /* Return reference to any previous caller sessions given in configured backup
    of node-partial. */
 prev_caller_sessions_t *
-prev_caller_sessions(void)
+previous_caller_sessions(void)
 {
 	return prev_caller_sessions;
 }
@@ -155,7 +155,7 @@ accept_caller_partial_session(session_t *session_num)
 session_desc_t *
 match_vs_all_sessions(session_t *session_num)
 {
-	session_desc_t *p = a_all_sessions;
+	session_desc_t *p = all_sessions;
 	int i;
 	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++, p++)
 		if ((p->session == *session_num) | (p->session == 0))
