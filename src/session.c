@@ -153,12 +153,12 @@ accept_caller_partial_session(session_t *session_num)
 
 /* Return reference to session description matching session_num. */
 session_desc_t *
-match_vs_all_sessions(session_t *session_num)
+match_vs_all_sessions(session_t *session)
 {
 	session_desc_t *p = all_sessions;
 	int i;
 	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++, p++)
-		if ((p->session == *session_num) | (p->session == 0))
+		if ((p->session == *session) | (p->session == 0))
 			return p;
 	__builtin_printf("session.c: non 0 terminated a_all_sessions[]");
 	return 0;

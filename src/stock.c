@@ -309,29 +309,29 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	return hmap;
 }
 
-/* Add triangle referenced by av to hmap data referenced by ppd. */
+/* Add triangle referenced by av to hmap data referenced through *p. */
 void
-add_tri_to_hmapf(vf_t *av, vf_t **ppd)
+add_tri_to_hmapf(vf_t *av, vf_t **p)
 {
 	int i;
-	vf_t *p;
+	vf_t *v;
 
-	p = av;
-	for (i = 0; i < 3; i++, p++, (*ppd)++) {
-		(*ppd)->x = p->x;
-		(*ppd)->y = p->y;
-		(*ppd)->z = p->z;
-		(*ppd)->m = p->m;
+	v = av;
+	for (i = 0; i < 3; i++, v++, (*p)++) {
+		(*p)->x = v->x;
+		(*p)->y = v->y;
+		(*p)->z = v->z;
+		(*p)->m = v->m;
 	}
 }
 
-/* Add vertice referenced by p to hmap data referenced by ppd. */
+/* Add vertice referenced by v to hmap data referenced through *p. */
 void
-add_vf_to_hmap(vf_t *p, vf_t **ppd)
+add_vf_to_hmap(vf_t *v, vf_t **p)
 {
-	(*ppd)->x = p->x;
-	(*ppd)->y = p->y;
-	(*ppd)->z = p->z;
-	(*ppd)->m = p->m;
-	(*ppd)++;
+	(*p)->x = v->x;
+	(*p)->y = v->y;
+	(*p)->z = v->z;
+	(*p)->m = v->m;
+	(*p)++;
 }
