@@ -25,8 +25,6 @@ session_t node_orgin;
 
 /* External */
 unsigned int vrt_hmaps_max;
-hmapf_t *selectf_a;
-hmapf_t *selectf_b;
 
 /* Diagnostics for partial space. */
 #define DIAG_PARTIAL
@@ -50,21 +48,19 @@ void test_detach_all_partials(void);
 void cphmaptest(hmapf_t *, hmapf_t *);
 void hmapwrap_unwraptst(hmapf_t *);
 
-/* Allocate for a and b selection buffers.  note: As a null pointer is sometimes
-   usefull as a terminator there is always an allocation for an extra
-   reference. */
+/* Allocate for a and b selection buffers. */
 void
 init_selection_buffers(void)
 {
 	selectf_a = NULL;
-	if ((selectf_a = (hmapf_t *) malloc((vrt_hmaps_max + 1) * sizeof(hmapf_t *))) == NULL) {
+	if ((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for selectf_a\n",
 			__FILE__, __LINE__);
 		abort();
 	}
 	selectf_b = NULL;
-	if ((selectf_b = (hmapf_t *) malloc((vrt_hmaps_max + 1) * sizeof(hmapf_t *))) == NULL) {
+	if ((selectf_b = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for selectf_b\n",
 			__FILE__, __LINE__);
@@ -86,6 +82,7 @@ generate_node_orgin(void)
 	partials_count = 0;
 	generate_vohspace();
 	init_renderer();
+	init_sessions();
 
 	return 0;
 }
@@ -178,16 +175,17 @@ regenerate_scene(vf_t *vpt)
 	/* Sort hmaps and cue them for drawing. */
 	sort_proc_hmaps(vpt);
 
-	/* Fill selectf_a with ref's to hmaps to be transfered. */
-	/* ... */
+	/* For each partial write selectf_a with ref's to hmaps to be transfered
+	   and call buffer_maps_to_peer_partial(still in testing). */
 
-	session_sync();
+	sync_sessions();
 
 	/* Reading from selectf_b, tend to any incoming hmaps that code in
-	   session.c has retrieved from other nodes.  This may include calling
-	   node_partial_dialog per partial, after resetting VRT_MASK_DIALOG_MODS
-	   and writing those to selectf_a. */
-	/* ... */
+	   session.c has retrieved from other nodes.  This implies first
+	   calling may include calling recieve_maps_from_peer_partial(still in
+	   the works) for all partials while calling node_partial_dialog per
+	   partial after resetting VRT_MASK_DIALOG_MODS and writing those to
+	   selectf_a. */
 
 	/* For now, simulate dialog introduced through modeling by transforming
 	   some node-orgin dialog to hmap 15 then calling node_orgin_dialog. */
@@ -281,7 +279,7 @@ mk_partial(char *desc, hmapf_t *nodemap)
 	(*incpartial)->nodemap->name = (*incpartial)->session | (session_t) (*incpartial)->nodemap->index;
 	(*incpartial)->nodemap->attribs.sign |= (VRT_MASK_PARTIAL | VRT_MASK_PARTIAL_MODS);
 
-	select_partial_set((*incpartial)->list, &sel);
+	(&sel)->counta = select_partial_set((*incpartial)->list, (&sel)->seta);
 	diag_selection(&sel);
 	__builtin_printf("  description:\n%s\n  nodemap: %x\n",
 		(*incpartial)->desc, (int) ((*incpartial)->nodemap)->name);
@@ -319,11 +317,11 @@ rm_partial(partial_t *partial)
 			*incswap++ = *incpartial;
 		} else {
 			__builtin_printf(" removing: partial %x (%i/%i)\n%s\n",
-				(int) partial->list->session,
+				(int) *(partial->list->session),
 				(((int) (incpartial - i) - (int) partial_generator_list) / (int) sizeof(partial_t *)) + 1,
 				partials_count, (*incpartial)->desc);
 			/* remove partial list leaving maps selected */
-			(&sel)->counta = select_partial_set(partial->list, &sel);
+			(&sel)->counta = select_partial_set(partial->list, (&sel)->seta);
 			rm_partial_maps_list(partial->list);
 		}
 	}
@@ -341,7 +339,7 @@ rm_partial(partial_t *partial)
 	recycle(&sel);
 
 	/* Free partial and write reduced partial_generator_list from swap. */
-	__builtin_printf(" freeing %x\n", (int) partial->list->session);
+	__builtin_printf(" freeing %x\n", (int) partial->session);
 	free(partial);
 	partials_count--;
 	free(partial_generator_list);
@@ -502,23 +500,6 @@ subtract_from_partial_maps_list(list_t *list, hmapf_t *map)
 	return 0;
 }
 
-/* depreciated
-   reference hmaps in partial_session as null terminated list in selectf_a */
-void
-select_hmaps_in_partial(session_t *partial_session)
-{
-	int i;
-	hmapf_t *map, **selection;
-
-	map = vohspace;
-	selection = (hmapf_t **) selectf_a;
-
-	for (i = 0; i < vrt_hmaps_max; i++, map++)
-		if ((map->name & 0xffff0000) == *partial_session)
-			*(selection++) = map;
-	*selection = NULL;
-}
-
 /* Temporary diagnostic to list partials to stdout.  If full is nonzero, also
    list all hmaps present per each partial. */
 void
@@ -548,7 +529,7 @@ diag_hmaps_in_partial(session_t *session)
 	partial = (partial_t **) partial_generator_list;
 	for (i = 0; i < partials_count; i++, partial++) {
 		if (*session == (*partial)->session) {
-			select_partial_set((*partial)->list, &sel);
+			(&sel)->counta = select_partial_set((*partial)->list, (&sel)->seta);
 			diag_selection(&sel);
 			return (*partial)->list->count;
 		}
@@ -593,10 +574,10 @@ test_select_partial_set(void)
 	select_t sel = {  0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
 	partial = (partial_t **) partial_generator_list;
-	select_partial_set(find_partial((&(*partial)->session)), &sel);
+	(&sel)->counta = select_partial_set(find_partial((&(*partial)->session)), (&sel)->seta);
 	diag_selection(&sel);
 	partial++;
-	select_partial_set(find_partial((&(*partial)->session)), &sel);
+	(&sel)->counta = select_partial_set(find_partial((&(*partial)->session)), (&sel)->seta);
 	diag_selection(&sel);
 }
 
@@ -626,7 +607,7 @@ test_send_partial_changes(void)
 	/* Send all partials. */
 	partial = (partial_t **) partial_generator_list;
 	for (i = 0; i < partials_count; i++, partial++) {
-		(&sel)->counta = select_partial_set((*partial)->list, &sel);
+		(&sel)->counta = select_partial_set((*partial)->list, (&sel)->seta);
 		buffer_maps_to_peer_partial(&((*partial)->session), &sel);
 	}
 }

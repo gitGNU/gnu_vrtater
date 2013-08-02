@@ -38,7 +38,7 @@ unsigned int passes;
 
 /* Renderer. */
 float vrt_render_cyc;
-int fov0_index;
+int fov0_name;
 
 /* External. */
 unsigned int vrt_hmaps_max;
@@ -509,10 +509,10 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	   intersection on the first alternate.  It arrives immediately before
 	   sort_proc_hmaps per frame, then again in sort. */
 	if (lod & VRT_MASK_LOD_INF) {
-		fov0_index = m->index;
+		fov0_name = m->name;
 		*sela = m; /* for intersection */
 	} else { /* skip hmap holding fov0 unless it has VRT_MASK_LOD_INF */
-		if (m->index == fov0_index)
+		if (m->name == fov0_name)
 			return;
 	}
 

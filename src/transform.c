@@ -25,11 +25,9 @@ float vrt_render_cyc; /* external */
    session_filter prehand.  note: This function was to be called hapticNormill,
    as vrtater has much of it's inspiration in a haptic feedback project that
    took place to a significant extent at a certain most cozy mill, that project
-   inspired by another moreso well known haptic feedback project related.  The
-   name will change to join_hmaps in the next commit, this note eventually
-   moving to CREDITS. */
+   inspired by another moreso well known haptic feedback project related. */
 int
-hapticNormill(select_t *sel)
+join_hmaps(select_t *sel)
 {
 	return 0;
 }

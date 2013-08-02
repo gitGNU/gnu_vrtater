@@ -49,7 +49,7 @@ struct prev_caller_sessions {
 typedef struct prev_caller_sessions prev_caller_sessions_t;
 
 void init_sessions(void);
-void session_sync(void);
+void sync_sessions(void);
 session_desc_t *p_session_desc(void);
 prev_caller_sessions_t *p_prev_caller_sessions(void);
 int set_node_orgin(session_t *);
@@ -60,6 +60,6 @@ int accept_called_partial_session(session_t *, char *passwd);
 int accept_caller_partial_session(session_t *);
 int close_sessions(session_desc_t *);
 void buffer_maps_to_peer_partial(session_t *s, select_t *sel);
-hmapf_t *recieve_maps_from_peer_partial(session_t *s, hmapf_t **maps);
+hmapf_t *recieve_maps_from_peer_partial(session_t *s, select_t *sel);
 
 #endif /* VRT_SESSION_H */

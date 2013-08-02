@@ -28,15 +28,15 @@
 hmapf_t *
 hmapf_icosahedron_c(session_t *session, float r)
 {
+	int i, j;
+	vf_t av[3], *tri, *vmap, *pd, **ppd = &pd;
+	hmapf_t *hmap;
+
 	int icosahedron_c_idx[VRT_ICOSAHEDRON_C_FCOUNT][3] = {{0, 1, 3}, {0, 3, 5}, {0, 5, 4}, {0, 4, 2}, {0, 2, 1}, {1, 7, 3}, {3, 7, 9}, {3, 9, 5}, {5, 9, 10}, {4, 5, 10}, {4, 10, 8}, {2, 4, 8}, {2, 8, 6}, {1, 2, 6}, {1, 6, 7}, {6, 11, 7}, {7, 11, 9}, {9, 11, 10}, {8, 10, 11}, {6, 8, 11}};
 
 	float a_icosahedron_c[12][3] = {{0, ISL2+ENDH, 0}, {0, ISL2, ATIP}, {-LNK, ISL2, WKY}, {LNK, ISL2, WKY}, {-ETIP, ISL2, -AEDG}, {ETIP, ISL2, -AEDG}, {-ETIP, -ISL2, AEDG}, {ETIP, -ISL2, AEDG}, {-LNK, -ISL2, -WKY}, {LNK, -ISL2, -WKY}, {0, -ISL2, -ATIP}, {0, -ISL2-ENDH, 0}};
 
-	int i, j;
-	vf_t av[3], *tri;
-
 	/* Attach an hmap. */
-	hmapf_t *hmap;
 	if (!(hmap = hmapf(session)))
 		return NULL;
 
@@ -49,7 +49,6 @@ hmapf_icosahedron_c(session_t *session, float r)
 
 	/* Allocate for hmap data. */
 	hmap->vmap_total = VRT_ICOSAHEDRON_C_FCOUNT * 3;
-	vf_t *vmap;
 	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
@@ -59,10 +58,7 @@ hmapf_icosahedron_c(session_t *session, float r)
 	hmap->vmap = vmap; /* maintain vmap in hmap */
 
 	/* Fill in hmap data. */
-	vf_t *pd;
-	vf_t **ppd = &pd;
 	*ppd = hmap->vmap;
-
 	for (i = 0; i < VRT_ICOSAHEDRON_C_FCOUNT; i++) {
 		for (j=0, tri=av; j<3; j++, tri++) {
 			tri->x = a_icosahedron_c[icosahedron_c_idx[i][j]][0] * r;
@@ -82,14 +78,13 @@ hmapf_t *
 hmapf_cube_c(session_t *session, float l, float w, float h)
 {
 	int i, j;
+	vf_t av[3], *tri, *vmap, *pd, **ppd = &pd;
+	hmapf_t *hmap;
 
 	int cube_c_idx[VRT_CUBE_C_FCOUNT][3] = {{2, 3, 1}, {1, 0, 2}, {6, 7, 3}, {3, 2, 6}, {7, 5, 1}, {1, 3, 7}, {5, 4, 0}, {0, 1, 5}, {4, 6, 2}, {2, 0, 4}, {4, 5, 7}, {7, 6, 4}};
 
 	float a_cube_c[8][3] = {{-QDR_SZ, QDR_SZ, -QDR_SZ}, {QDR_SZ, QDR_SZ, -QDR_SZ}, {-QDR_SZ, QDR_SZ, QDR_SZ}, {QDR_SZ, QDR_SZ, QDR_SZ}, {-QDR_SZ, -QDR_SZ, -QDR_SZ}, {QDR_SZ, -QDR_SZ, -QDR_SZ}, {-QDR_SZ, -QDR_SZ, QDR_SZ}, {QDR_SZ, -QDR_SZ, QDR_SZ}};
 
-	vf_t av[3], *tri;
-
-	hmapf_t *hmap;
 	if (!(hmap = hmapf(session)))
 		return NULL;
 
@@ -102,7 +97,6 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 	hmap->attribs.kg = l * w * h;
 
 	hmap->vmap_total = VRT_CUBE_C_FCOUNT * 3;
-	vf_t *vmap;
 	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
@@ -111,10 +105,7 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 	}
 	hmap->vmap = vmap; /* maintain vmap in hmap */
 
-	vf_t *pd;
-	vf_t **ppd = &pd;
 	*ppd = hmap->vmap;
-
 	for (i = 0; i < VRT_CUBE_C_FCOUNT; i++) {
 		for (j=0, tri=av; j<3; j++, tri++) {
 			tri->x = a_cube_c[cube_c_idx[i][j]][0] * l;
@@ -137,11 +128,12 @@ hmapf_t *
 hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 {
 	int i, j;
+	vf_t a, b, c, *tri, *itr, *vmap;
+	hmapf_t *hmap;
 	float yoffset = l / 2; /* scaling vs. y axis of hmap */
 	float halfa = 2 * M_PI / e; /* half corner angle */
 	float lpthread = l / (t + 1); /* cylinder length per thread */
 	float incthread = lpthread / e; /* increment sum for thread */
-	vf_t a, b, c, *itr, *tri; /* vrtater coords */
 
 #define CYL_MORE_IMPLEMENTED_SOMETIME
 #ifdef CYL_MORE_IMPLEMENTED
@@ -156,7 +148,6 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	float tproffs = tprend / e; /* taper offset */
 #endif
 
-	hmapf_t *hmap;
 	if (!(hmap = hmapf(session)))
 		return NULL;
 
@@ -168,8 +159,6 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	form_mag_vf(&(hmap->envelope.vsz));
 
 	hmap->vmap_total = 3 * ((e * 2 * (3 + t)) - 2);
-
-	vf_t *vmap;
 	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",

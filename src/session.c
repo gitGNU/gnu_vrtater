@@ -13,7 +13,7 @@ prev_caller_sessions_t a_prev_caller_sessions[VRT_MAX_PREV_CALLER_SESSIONS];
 int complete_negotiation(session_desc_t *);
 session_desc_t *match_vs_all_sessions(session_t *);
 int close_session(session_desc_t *);
-void generate_session_name_from_files_in_dir(session_t *);
+int generate_session_name_from_files_in_dir(session_t *);
 int get_session_name_from_file_in_dir(session_t *);
 
 /* Called last when generating node-orgin. */
@@ -39,7 +39,7 @@ read_from_network(void)
    functions per incoming hmap.  Wrap functions provide int list input to and
    expect same output from buffers herein. */
 void
-session_sync(void)
+sync_sessions(void)
 {
 	;
 }
@@ -62,13 +62,13 @@ p_prev_caller_sessions(void)
 /* For now, produce a random session name/number 0-65536/0-65536 in session.
    Return zero on success.  notes: The session name produced/retrieved needs no
    connection.  Given session will however appear in a_all_sessions[].
-   Currently session_t is a a long long unsigned int.  For now however, it is
-   treated as an int for simplicity.  When it does change, there will be some
-   adjustment needed for whatever structure is chosen.  A set of functions for
-   converting and testing the eventual session name's may needs be implemented
-   to ease this.  As it stands, vrt_hmaps_max must be <= 65536 and session
-   uniqueness has a 1:65536 chance of being unique.  This is pretty sub-optimal,
-   however it will be fine for testing sessions. */
+   Currently session_t is of int type.  This will require expansion somehow.
+   When it does change, there will be some adjustment needed for new struct
+   details chosen.  A set of functions for converting and testing the eventual
+   session name's may thus needs be implemented or found.  As it stands,
+   vrt_hmaps_max must be <= 65536 and session uniqueness has a 1:65536 chance
+   of being unique.  This is pretty sub-optimal, however it will be fine for
+   testing sessions. */
 int
 set_node_orgin(session_t *session)
 {
@@ -199,10 +199,12 @@ close_sessions(session_desc_t *p)
 /* Set session and value referenced by ~/.vrtater/session/ln_session/uniqueness,
    to value generated from .vrtater/session/ln_seedfiles if file(s) exist
    therein.  Otherwise, generate new session name. */
-void
+int
 generate_session_name_from_files_in_dir(session_t *s)
 {
 	*s = (0 | (session_t) (rand() << 16)); /* for now */
+
+	return 0;
 }
 
 /* Get value referenced by ~/.vrtater/session/ln_session/uniqueness.  Set
@@ -210,17 +212,16 @@ generate_session_name_from_files_in_dir(session_t *s)
 int
 get_session_name_from_file_in_dir(session_t *session)
 {
-	int rval = 1;
-	return rval;
+	return 0;
 }
 
-/* Send to each node connected to session, hmaps referenced in NULL terminated
-   selectf_a referenced by sel.  notes: Outbound hmaps are referenced per call
-   per given session in the running set, and include only non-node-orgin hmaps
-   with relevant changes.  These may be sent in reduced form and restored apon
-   reception through a set of functions (transform.c) affecting network transfer
-   and file formatting of hmap data.  Functions hmapwrapf and hmapunwrapf are
-   currently scheduled to be extended for this purpose.  Each set would then be
+/* Send to each node connected to session, hmaps referenced in selectf_a given
+   sel->counta.  notes: Outbound hmaps are referenced per call per given session
+   in the running set, and include only non-node-orgin hmaps with relevant
+   changes.  These may be sent in reduced form and restored apon reception
+   through a set of functions (transform.c) affecting network transfer and file
+   formatting of hmap data.  Functions hmapwrapf and hmapunwrapf are currently
+   scheduled to be extended for this purpose.  Each set would then be
    transformed by hmapwrapf into a format suitable for writing to a buffer
    through int pointer passed.  These then become delivered for each ip address
    implied. */
@@ -239,14 +240,14 @@ buffer_maps_to_peer_partial(session_t *session, select_t *sel)
 }
 
 /* For any recieved hmap data unpacked thru hmapunwrapf and connected to
-   session, write reference(s) in NULL terminated list setb.  Return reference
-   to setb or NULL if none.  notes:  As caller will be calling for each session
-   seperately, int list input from session associated nodes could be kept in a
-   form conducive to this instead of everything in one buffer.  It could thus
-   follow that the hmaps would be best allocated and unwrapped as their data
-   arrives, then keeping a linked list of references to those. */
+   session, write reference(s) in selectf_b setting sel->countb.  Return
+   reference to setb or NULL if none.  notes:  As caller will be calling for
+   each session seperately, int list input from session associated nodes could
+   be kept in a form conducive to this instead of everything in one buffer.
+   It could thus follow that the hmaps would be best allocated and unwrapped as
+   their data arrives, then keeping a linked list of references to those. */
 hmapf_t *
-recieve_maps_from_peer_partial(session_t *session, hmapf_t **setb)
+recieve_maps_from_peer_partial(session_t *session, select_t *sel)
 {
 	hmapf_t *rval = NULL;
 	return rval;

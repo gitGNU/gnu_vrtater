@@ -6,7 +6,7 @@
 #if !(defined VRT_BITTOGGLES_H)
 #define VRT_BITTOGGLES_H
 
-typedef unsigned int btoggles_t; 
+typedef int btoggles_t; 
 
 int test_sw(btoggles_t, btoggles_t *);
 void set_sw(btoggles_t, btoggles_t *);

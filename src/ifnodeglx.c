@@ -75,7 +75,7 @@ void diag_char(char c);
 void diag_node_key_f(void);
 void diag_node_key_g(void);
 void diag_node_key_h(void);
-void diag_node_key_j(void);
+void diag_message(void);
 
 /* Setup for given display and rendering libs. */
 void
@@ -295,7 +295,7 @@ node(int argc, char **argv)
 					break;
 
 					case VRT_KEY_esc:
-					diag_node_key_j();
+					diag_message();
 					break;
 
 					case VRT_KEY_space:
@@ -776,14 +776,14 @@ diag_node_key_h(void)
 	diag_generator_key_h();
 }
 
-/* Temporary diagnostic to run test on keypress j. */
+/* Temporary message about exit key sequence. */
 void
-diag_node_key_j(void)
+diag_message(void)
 {
 	__builtin_printf("For now, please use j to exit "
 		"vrtater GNU free software.\n"
-		"No emails so far. :_( Please send patches, "
-		"or become a maintainer, see README.\n"
+		"Please send patches, or become a maintainer, "
+		"see README.\n"
 		"Outreach drive (eta. mid Aug) coming, for "
 		"session.c, renderer, more...\n");
 }

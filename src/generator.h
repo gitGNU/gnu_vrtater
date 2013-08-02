@@ -14,7 +14,7 @@
 /* These generator options are all set by ifnode**.c, some through data
    maintained in dialog.c.  balance_criteria is still in the works, and may be
    proposed as some hybrid of bits vs. a quantity once needed.
-    vobspace_criteria bit defines are still in the works, are listed below. */
+   vobspace_criteria bit defines are still in the works, are listed below. */
 struct generator_opts {
 	btoggles_t balance_criteria; /* balance_filter options */
 	btoggles_t vobspace_criteria; /* context options */
@@ -40,9 +40,7 @@ list_t *mk_partial_maps_list(session_t *session, char *desc);
 void rm_partial_maps_list(list_t *list);
 listed_t *add_to_partial_maps_list(list_t *list, hmapf_t *map);
 int subtract_from_partial_maps_list(list_t *list, hmapf_t *map);
-void select_hmaps_in_partial(session_t *);
-int diag_hmaps_in_partial(session_t *partial_session);
-partial_t *diag_partial_by_ordinal(unsigned int idx);
+int diag_hmaps_in_partial(session_t *partial);
 void diag_ls_partials(int full);
 void close_vobspace(double time_till_closed);
 void close_node_orgin(void);

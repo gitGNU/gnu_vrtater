@@ -32,7 +32,7 @@ hmapf(session_t *session)
 }
 
 /* Return reference to hmap vs. it's index i.  note: This function, although
-   quick, is useless with any partial connection.  It will be removed when
+   quick, is unworkable with any partial connection.  It will be removed when
    alpha version is ready.  Function to replace it will match on session name
    instead. */
 hmapf_t *
@@ -53,7 +53,7 @@ hmap_count(void)
    vohspace memory can be resized while running all node-partial's and
    node-orgin, this search may be rather suboptimal, as vrt_hmaps_max hmaps are
    always searched regardless of whether they are attached or not. */
-int
+unsigned int
 search_vohspace(hmapf_t **listout, btoggles_t signs, btoggles_t modes)
 {
 	int i, count = 0;

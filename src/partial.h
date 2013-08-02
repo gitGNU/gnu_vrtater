@@ -34,7 +34,7 @@ typedef struct partial_space partial_t;
 partial_t *partial_generator_list;
 int partials_count;
 
-int select_partial_set(list_t *list, select_t *sel);
+int select_partial_set(list_t *list, hmapf_t **maps);
 list_t *find_partial(session_t *partial_session);
 
 #endif /* VRT_PARTIAL_H */
