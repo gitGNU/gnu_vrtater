@@ -174,7 +174,7 @@ render_hmapf(hmapf_t *hmap, int lod)
 	glTranslatef(vpt->x, vpt->y, vpt->z);
 }
 
-/* Render apon hmaps and also therein and thereout of those.  Where
+/* Render vobspace apon hmaps and also therein and thereout of those.  Where
    fov_available is true, caller specifies that the renderer may modify fov0
    attribs.  This function is called immediately before buffer is drawn to dpy0.
    Viewpoint vpt is the position of hmap fov0. */

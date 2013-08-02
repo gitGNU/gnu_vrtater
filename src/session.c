@@ -7,14 +7,14 @@
 #include "session.h"
 
 /* For now.  These will soon be allocated when running. */
-session_desc_t a_all_sessions[VRT_MAX_CUED_SESSIONS];
-prev_caller_sessions_t a_prev_caller_sessions[VRT_MAX_PREV_CALLER_SESSIONS];
+session_desc_t all_sessions[VRT_MAX_CUED_SESSIONS];
+prev_caller_sessions_t prev_caller_sessions[VRT_MAX_PREV_CALLER_SESSIONS];
 
-int complete_negotiation(session_desc_t *);
-session_desc_t *match_vs_all_sessions(session_t *);
-int close_session(session_desc_t *);
 int generate_session_name_from_files_in_dir(session_t *);
 int get_session_name_from_file_in_dir(session_t *);
+session_desc_t *match_vs_all_sessions(session_t *);
+int complete_negotiation(session_desc_t *);
+void read_from_network(void);
 
 /* Called last when generating node-orgin. */
 void
@@ -25,38 +25,6 @@ init_sessions(void)
 		(&a_all_sessions[i])->session = 0;
 	for (i = 0; i < VRT_MAX_PREV_CALLER_SESSIONS; i++)
 		(&a_prev_caller_sessions[i])->session = 0;
-}
-
-/* Read to buffers from ip addr's associated with remote node sessions. */
-void
-read_from_network(void)
-{
-	;
-}
-
-/* Send and recieve hmaps, and otherwise tend to any remote node sessions.
-   notes: Peers in a partial need to apply the correct options to the wrap
-   functions per incoming hmap.  Wrap functions provide int list input to and
-   expect same output from buffers herein. */
-void
-sync_sessions(void)
-{
-	;
-}
-
-/* Return reference to all currently called, cued, and running sessions. */
-session_desc_t *
-p_session_desc(void)
-{
-	return a_all_sessions;
-}
-
-/* Return reference to any previous caller sessions given in configured backup
-   of node-partial. */
-prev_caller_sessions_t *
-p_prev_caller_sessions(void)
-{
-	return a_prev_caller_sessions;
 }
 
 /* For now, produce a random session name/number 0-65536/0-65536 in session.
@@ -102,11 +70,45 @@ set_node_partial(session_t *session)
 	return 0; /* for now */
 }
 
+/* Set session and value referenced by ~/.vrtater/session/ln_session/uniqueness,
+   to value generated from .vrtater/session/ln_seedfiles if file(s) exist
+   therein.  Otherwise, generate new session name. */
+int
+generate_session_name_from_files_in_dir(session_t *s)
+{
+	*s = (0 | (session_t) (rand() << 16)); /* for now */
+
+	return 0;
+}
+
+/* Get value referenced by ~/.vrtater/session/ln_session/uniqueness.  Set
+   session to this value.  For now return true on success. */
+int
+get_session_name_from_file_in_dir(session_t *session)
+{
+	return 0;
+}
+
 /* Search for available nodes matching desc.  note: This would be nice... */
 void
 list_nodes(char *desc)
 {
 	;
+}
+
+/* Return reference to all currently called, cued, and running sessions. */
+session_desc_t *
+session_descriptions(void)
+{
+	return all_sessions;
+}
+
+/* Return reference to any previous caller sessions given in configured backup
+   of node-partial. */
+prev_caller_sessions_t *
+prev_caller_sessions(void)
+{
+	return prev_caller_sessions;
 }
 
 /* This may cue a session for given or list_nodes remote node address. */
@@ -119,32 +121,6 @@ call_session(char *address)
 	   responce. */
 	/* ... */
 
-	return 0;
-}
-
-/* Connect session described in session_desc.  For now return true on success.
-   notes: Consideration for the eventuality that remote nodes may share the same
-   ip address assumes that all associated nodes may be allowed to be included in
-   the running set if session_desc is accepted by the person running node-orgin.
-   This means that the exchange of a list of composite session_t data with it's
-   session_desc_t data should be supported.  These then would all be included in
-   the running set associated with ip. */
-int
-complete_negotiation(session_desc_t *session_desc)
-{
-	return 1;
-}
-
-/* Return reference to session description matching session_num. */
-session_desc_t *
-match_vs_all_sessions(session_t *session_num)
-{
-	session_desc_t *p = a_all_sessions;
-	int i;
-	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++, p++)
-		if ((p->session == *session_num) | (p->session == 0))
-			return p;
-	__builtin_printf("session.c: non 0 terminated a_all_sessions[]");
 	return 0;
 }
 
@@ -175,44 +151,47 @@ accept_caller_partial_session(session_t *session_num)
 	return rval;
 }
 
-/* Close session referenced by session_desc. */
-int
-close_session(session_desc_t *session_desc)
+/* Return reference to session description matching session_num. */
+session_desc_t *
+match_vs_all_sessions(session_t *session_num)
 {
+	session_desc_t *p = a_all_sessions;
+	int i;
+	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++, p++)
+		if ((p->session == *session_num) | (p->session == 0))
+			return p;
+	__builtin_printf("session.c: non 0 terminated a_all_sessions[]");
 	return 0;
 }
 
-/* Close sessions referenced by p. */
+/* Connect session described in session_desc.  For now return true on success.
+   notes: Consideration for the eventuality that remote nodes may share the same
+   ip address assumes that all associated nodes may be allowed to be included in
+   the running set if session_desc is accepted by the person running node-orgin.
+   This means that the exchange of a list of composite session_t data with it's
+   session_desc_t data should be supported.  These then would all be included in
+   the running set associated with ip. */
 int
-close_sessions(session_desc_t *p)
+complete_negotiation(session_desc_t *session_desc)
 {
-	session_desc_t *q;
-	q = p;
-
-	while (q != NULL) {
-		close_session(q);
-		q++;
-	}
-	return 0;
+	return 1;
 }
 
-/* Set session and value referenced by ~/.vrtater/session/ln_session/uniqueness,
-   to value generated from .vrtater/session/ln_seedfiles if file(s) exist
-   therein.  Otherwise, generate new session name. */
-int
-generate_session_name_from_files_in_dir(session_t *s)
+/* Send and recieve hmaps, and otherwise tend to any remote node sessions.
+   notes: Peers in a partial need to apply the correct options to the wrap
+   functions per incoming hmap.  Wrap functions provide int list input to and
+   expect same output from buffers herein. */
+void
+sync_sessions(void)
 {
-	*s = (0 | (session_t) (rand() << 16)); /* for now */
-
-	return 0;
+	;
 }
 
-/* Get value referenced by ~/.vrtater/session/ln_session/uniqueness.  Set
-   session to this value.  For now return true on success. */
-int
-get_session_name_from_file_in_dir(session_t *session)
+/* Read to buffers from ip addr's associated with remote node sessions. */
+void
+read_from_network(void)
 {
-	return 0;
+	;
 }
 
 /* Send to each node connected to session, hmaps referenced in selectf_a given
@@ -251,4 +230,11 @@ recieve_maps_from_peer_partial(session_t *session, select_t *sel)
 {
 	hmapf_t *rval = NULL;
 	return rval;
+}
+
+/* Close session referenced by session_desc. */
+int
+close_session(session_desc_t *session_desc)
+{
+	return 0;
 }

@@ -16,7 +16,7 @@ union meta_unit_u {
 };
 typedef union meta_unit_u meta_u;
 
-int hapticNormill(select_t *);
+int join_hmaps(select_t *);
 int intersection(select_t *);
 int group_hmaps(select_t *);
 int extend_hmaps(select_t *);
