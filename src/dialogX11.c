@@ -16,7 +16,7 @@
 void cfg_recycler(void);
 void cfg_balance(void);
 void set_groups(void);
-void read_dialog_set(hmapf_t **, int);
+void diag_read_dialog_set(hmapf_t **, int);
 
 
 /* Passthrough function per state increment. */
@@ -38,7 +38,7 @@ node_partial_dialog(select_t *sel, session_t *partial)
 	/* For now function as a pre-alpha version diagnostic and simply write
 	   first element of selectf_a to stdout. */
 	select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
-	read_dialog_set((&totty)->seta, (&totty)->counta);
+	diag_read_dialog_set((&totty)->seta, (&totty)->counta);
 
 	; /* proc remote options eg: VRT_MASK_HOLD */
 }
@@ -50,7 +50,7 @@ int *
 node_orgin_dialog(select_t *sel)
 {
 	select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
-	read_dialog_set((&totty)->seta, (&totty)->counta);
+	diag_read_dialog_set((&totty)->seta, (&totty)->counta);
 
 	; /* features */
 		
@@ -75,10 +75,9 @@ set_groups()
 	;
 }
 
-/* Depreciated.  Now a diagnostic to read and present any dialog in selectf_a to
-   stdout. */
+/* Diagnostic to read and present mapcount hmap dialog data in set to stdout. */
 void
-read_dialog_set(hmapf_t **set, int mapcount)
+diag_read_dialog_set(hmapf_t **set, int mapcount)
 {
 	int i, j;
 	hmapf_t **map;

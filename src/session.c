@@ -76,7 +76,7 @@ set_node_partial(session_t *session)
 /* Set session and value referenced by ~/.vrtater/session/ln_session/uniqueness,
    to value generated from .vrtater/session/ln_seedfiles if file(s) exist
    therein, then returning zero.  Otherwise, generate new session name returning
-   nonzero. */
+   VRT_VANILLA_SESSION or something else for any error. */
 int
 generate_session_name_from_files_in_dir(session_t *session)
 {
