@@ -12,6 +12,10 @@
 #define PI_180 0.017453292519943
 #define ANG_AFS 1.697652 /* from geomutil.c (not yet ready for inclusion) */
 
+/* Canned return values. */
+#define SUCCESS 0
+#define VRT_VANILLA_SESSION 1
+
 /* Patch diagnostic. */
 #define DIAG_PARTIAL
 #define DIAG_INTERFACE_OFF
