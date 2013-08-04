@@ -36,8 +36,7 @@ ifdpy_t ifdpy0 = {0,
 	0, .011281, .85,
 	0, .008281, .85,
 	0, .008281, .85};
-hmapf_t *fov0, *buf, modbuf;
-int *mbuf, scbuf[2] = { '\0', '\0' };
+hmapf_t *fov0;
 int fov0_available = 0;
 int runnode = 1;
 int diagtext = 0;
@@ -188,7 +187,6 @@ node(int argc, char **argv)
 	diagtext0 = fov0; /* default */
 
 	init_tug_io(); /* if any tug tend to it /w start_tug(init_tug_io()) */
-	buf = &modbuf; /* start pointed to hmap model buffer */
 
 	fps = 28.6; /* guess */
 	vrt_render_cyc = .034965;
@@ -689,7 +687,7 @@ node(int argc, char **argv)
 		hmapf_t **p = (hmapf_t **) selectf_a;
 		*p = diagtext0;
 		select_t kbd = { 0, 1, (hmapf_t **) p, 0, NULL };
-		dialog(&kbd);
+		node_orgin_dialog(&kbd);
 #endif
 
 #ifdef DIAG_TIME
@@ -797,11 +795,13 @@ cfg_session_filter(void)
 void
 diag_char(char c)
 {
+	int sc[2] = { '\0', '\0' };
+
 	hmapf_t **p = (hmapf_t **) selectf_a;
 	*p = diagtext0;
 	select_t dialog_sela = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
-	*scbuf = (int) c;
-	add_dialog(&dialog_sela, (char *) scbuf, 1, diagtext0->dialog_len);
+	*sc = (int) c;
+	add_dialog(&dialog_sela, (char *) sc, 1, diagtext0->dialog_len);
 }
 
 /* Temporary diagnostic to run test on keypress f. */
