@@ -311,6 +311,7 @@ sort_proc_hmaps(vf_t *vpt)
 			}
 		}
 		dlr_n = (dlr_n + 1) % 2; /* flip direction */
+		return;
 
 	} else { /* rl */
 
@@ -336,6 +337,7 @@ sort_proc_hmaps(vf_t *vpt)
 			}
 		}
 		dlr_n = (dlr_n + 1) % 2; /* flip direction */
+		return;
 	}
 
 	/* Perif hmaps. */
@@ -376,6 +378,7 @@ sort_proc_hmaps(vf_t *vpt)
 				}
 			}
 			dlr_p = (dlr_p + 1) % 2; /* flip direction */
+			return;
 		}
 	} else {
 		if (!(passes % sort_perif_ratio)) {
@@ -414,6 +417,7 @@ sort_proc_hmaps(vf_t *vpt)
 				}
 			}
 			dlr_p = (dlr_p + 1) % 2; /* flip direction */
+			return;
 		}
 	}
 
