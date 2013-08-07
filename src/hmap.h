@@ -32,7 +32,7 @@ enum { /* attribs_t sign, tested at least once every state increment */
 	VRT_ORDINAL_DETACH, /* code in generator.c will detach this hmap */
 #define VRT_MASK_DETACH (1 << VRT_ORDINAL_DETACH)
 	VRT_ORDINAL_DIALOG, /* dialog may be buffered in hmaps */
-#define	VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
+#define VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
 	VRT_ORDINAL_PARTIAL, /* is in a partial */
 #define VRT_MASK_PARTIAL (1 << VRT_ORDINAL_PARTIAL)
 	VRT_ORDINAL_VERTICE_MODS, /* unaffix this locally when sending */

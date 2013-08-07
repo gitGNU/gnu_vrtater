@@ -166,6 +166,129 @@ recycle(select_t *sel)
 	return 0;
 }
 
+/* Make a copy of (for now) a single hmap referenced as first item in
+   *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
+   Receiving hmap retains name/index, session_filter, position, and kfactord. */
+int
+cp_hmapf(select_t *sel)
+{
+	hmapf_t *a, *b;
+	vf_t *av, *bv;
+	int i, *ad, *bd;
+
+	a = *(sel->seta);
+	b = *(sel->setb);
+	b->vvel.x = a->vvel.x;
+	b->vvel.y = a->vvel.y;
+	b->vvel.z = a->vvel.z;
+	b->vvel.m = a->vvel.m;
+	b->vaxi.x = a->vaxi.x;
+	b->vaxi.y = a->vaxi.y;
+	b->vaxi.z = a->vaxi.z;
+	b->vaxi.m = a->vaxi.m;
+	b->vrel.x = a->vrel.x;
+	b->vrel.y = a->vrel.y;
+	b->vrel.z = a->vrel.z;
+	b->vrel.m = a->vrel.m;
+	b->vpre.x = a->vpre.x;
+	b->vpre.y = a->vpre.y;
+	b->vpre.z = a->vpre.z;
+	b->vpre.m = a->vpre.m;
+	b->ang_spd = a->ang_spd;
+	b->ang_dpl = a->ang_dpl;
+	b->attribs.sign = a->attribs.sign;
+	b->attribs.mode = a->attribs.mode;
+	b->attribs.balance_filter = a->attribs.balance_filter;
+	b->attribs.kg = a->attribs.kg;
+	b->attribs.kfactorm = a->attribs.kfactorm;
+	b->envelope.geom = a->envelope.geom;
+	b->envelope.vsz.x = a->envelope.vsz.x;
+	b->envelope.vsz.y = a->envelope.vsz.y;
+	b->envelope.vsz.z = a->envelope.vsz.z;
+	b->envelope.vsz.m = a->envelope.vsz.m;
+	b->draw.geom = a->draw.geom;
+
+	if (a->vmap_total) {
+		free(b->vmap);
+		b->vmap = NULL;
+		if ((b->vmap = (vf_t *) malloc(a->vmap_total * sizeof(vf_t))) == NULL) {
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: could not malloc vertice data "
+				"copying hmap %i to %i\n",
+				__FILE__, __LINE__, a->index, a->index);
+			abort();
+		}
+		av = a->vmap;
+		bv = b->vmap;
+		for (i = 0; i < a->vmap_total; i++, av++, bv++) {
+			bv->x = av->x;
+			bv->y = av->y;
+			bv->z = av->z;
+			bv->m = av->m;
+		}
+		b->vmap_total = a->vmap_total;
+	}
+
+	if (a->dialog_len) {
+		free(b->dialog);
+		b->dialog = NULL;
+	   if ((b->dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: could not malloc dialog data copying hmap %i to %i\n",
+				__FILE__, __LINE__, a->index, b->index);
+			abort();
+		}
+		ad = a->dialog;
+		bd = b->dialog;
+		for (i = 0; i < a->dialog_len; i++)
+			*bd++ = *ad++;
+		b->dialog_len = a->dialog_len;
+	}
+
+	return 0;
+}
+
+/* For c series hmaps, invert surface normals of (for now) a single hmap
+   referenced as first item in *(sel->seta) by inverting the precedence of
+   drawing for each vertice. */
+int
+surface_inv_hmapf(select_t *sel)
+{
+	int i;
+	hmapf_t *map;
+	vf_t *org, *cpy;
+
+	map = *(sel->seta);
+	org = map->vmap;
+	if ((cpy = (vf_t *) malloc(map->vmap_total * sizeof(vf_t))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+		"Error: Could not malloc vertice data when inverting hmap %i\n",
+		__FILE__, __LINE__, map->index);
+		abort();
+	}
+
+	for (i = 0; i < map->vmap_total; i++) {
+		cpy->x = org->x;
+		cpy->y = org->y;
+		cpy->z = org->z;
+		(cpy++)->m = (org++)->m;
+	}
+
+	org = map->vmap;
+	for (i = map->vmap_total; i > 0; i--) {
+		org->x = (--cpy)->x;
+		org->y = cpy->y;
+		org->z = cpy->z;
+		(org++)->m = cpy->m;
+	}
+
+	free(cpy);
+	return 0;
+}
+
+
+/* hmap transformative functions affecting ip network or filesystem. */
+
 /* Format and write to a proto .vrtmap, hmap referenced in the selection buffer
    to network or file.  This will be further optimized for sending over net by
    removing anything that can not be calculated inherently or has not changed,
@@ -339,128 +462,8 @@ hmapunwrapf(select_t *sel)
 	return 0;
 }
 
-/* Make a copy of (for now) a single hmap referenced as first item in
-   *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
-   Receiving hmap retains name/index, session_filter, position, and kfactord. */
-int
-cp_hmapf(select_t *sel)
-{
-	hmapf_t *a, *b;
-	vf_t *av, *bv;
-	int i, *ad, *bd;
 
-	a = *(sel->seta);
-	b = *(sel->setb);
-	b->vvel.x = a->vvel.x;
-	b->vvel.y = a->vvel.y;
-	b->vvel.z = a->vvel.z;
-	b->vvel.m = a->vvel.m;
-	b->vaxi.x = a->vaxi.x;
-	b->vaxi.y = a->vaxi.y;
-	b->vaxi.z = a->vaxi.z;
-	b->vaxi.m = a->vaxi.m;
-	b->vrel.x = a->vrel.x;
-	b->vrel.y = a->vrel.y;
-	b->vrel.z = a->vrel.z;
-	b->vrel.m = a->vrel.m;
-	b->vpre.x = a->vpre.x;
-	b->vpre.y = a->vpre.y;
-	b->vpre.z = a->vpre.z;
-	b->vpre.m = a->vpre.m;
-	b->ang_spd = a->ang_spd;
-	b->ang_dpl = a->ang_dpl;
-	b->attribs.sign = a->attribs.sign;
-	b->attribs.mode = a->attribs.mode;
-	b->attribs.balance_filter = a->attribs.balance_filter;
-	b->attribs.kg = a->attribs.kg;
-	b->attribs.kfactorm = a->attribs.kfactorm;
-	b->envelope.geom = a->envelope.geom;
-	b->envelope.vsz.x = a->envelope.vsz.x;
-	b->envelope.vsz.y = a->envelope.vsz.y;
-	b->envelope.vsz.z = a->envelope.vsz.z;
-	b->envelope.vsz.m = a->envelope.vsz.m;
-	b->draw.geom = a->draw.geom;
-
-	if (a->vmap_total) {
-		free(b->vmap);
-		b->vmap = NULL;
-		if ((b->vmap = (vf_t *) malloc(a->vmap_total * sizeof(vf_t))) == NULL) {
-			__builtin_fprintf(stderr, "vrtater:%s:%d: "
-				"Error: could not malloc vertice data "
-				"copying hmap %i to %i\n",
-				__FILE__, __LINE__, a->index, a->index);
-			abort();
-		}
-		av = a->vmap;
-		bv = b->vmap;
-		for (i = 0; i < a->vmap_total; i++, av++, bv++) {
-			bv->x = av->x;
-			bv->y = av->y;
-			bv->z = av->z;
-			bv->m = av->m;
-		}
-		b->vmap_total = a->vmap_total;
-	}
-
-	if (a->dialog_len) {
-		free(b->dialog);
-		b->dialog = NULL;
-	   if ((b->dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
-			__builtin_fprintf(stderr, "vrtater:%s:%d: "
-				"Error: could not malloc dialog data copying hmap %i to %i\n",
-				__FILE__, __LINE__, a->index, b->index);
-			abort();
-		}
-		ad = a->dialog;
-		bd = b->dialog;
-		for (i = 0; i < a->dialog_len; i++)
-			*bd++ = *ad++;
-		b->dialog_len = a->dialog_len;
-	}
-
-	return 0;
-}
-
-/* For c series hmaps, invert surface normals of (for now) a single hmap
-   referenced as first item in *(sel->seta) by inverting the precedence of
-   drawing for each vertice. */
-int
-surface_inv_hmapf(select_t *sel)
-{
-	int i;
-	hmapf_t *map;
-	vf_t *org, *cpy;
-
-	map = *(sel->seta);
-	org = map->vmap;
-	if ((cpy = (vf_t *) malloc(map->vmap_total * sizeof(vf_t))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-		"Error: Could not malloc vertice data when inverting hmap %i\n",
-		__FILE__, __LINE__, map->index);
-		abort();
-	}
-
-	for (i = 0; i < map->vmap_total; i++) {
-		cpy->x = org->x;
-		cpy->y = org->y;
-		cpy->z = org->z;
-		(cpy++)->m = (org++)->m;
-	}
-
-	org = map->vmap;
-	for (i = map->vmap_total; i > 0; i--) {
-		org->x = (--cpy)->x;
-		org->y = cpy->y;
-		org->z = cpy->z;
-		(org++)->m = cpy->m;
-	}
-
-	free(cpy);
-	return 0;
-}
-
-
-/* Functions affecting allocation of hmap data. */
+/* hmap transformative functions affecting allocation. */
 
 /* hmap dialog referenced  selectf_a recieves allocation of len + 1 int's. */
 int
