@@ -50,9 +50,9 @@ float vrt_render_cyc; /* external */
 /* Temporary diagnostics. */
 hmapf_t *ryg, *ryg1, *diag1, *diag2, *diag3, *diag4, *diag5, *diag6, *diag8;
 vf_t diag = { 0, 10, 0, 10 };
-vf_t isb = { 5,  0,  0, 5 };
-vf_t jsb = {  0, 5,  0, 5 };
-vf_t ksb = {  0,  0, 5, 5 };
+vf_t isb = { 5, 0, 0, 5 };
+vf_t jsb = { 0, 5, 0, 5 };
+vf_t ksb = { 0, 0, 5, 5 };
 vf_t vrloc8 = { 0, 0, -80, 80 };
 
 /* Pre-alpha dialog. */

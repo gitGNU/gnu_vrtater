@@ -608,7 +608,8 @@ diag_generator_key_f(void)
 void
 diag_generator_key_g(void)
 {
-	test_select_partial_set();
+	//test_select_partial_set();
+	test_hmapwrap_unwrap(p_hmapf(19));
 }
 
 /* Temporary diagnostic to run test on keypress h. */
@@ -702,14 +703,88 @@ test_cphmap(hmapf_t *a, hmapf_t *b)
 void
 test_hmapwrap_unwrap(hmapf_t *map)
 {
-	hmapf_t **p = (hmapf_t **) selectf_a;
-	*(p++) = map;
-	*p = NULL;
-	select_t s = { VRT_MASK_NULL_TERMINATED, 0, (hmapf_t **) selectf_a, 0, NULL};
-	__builtin_printf("hmapwrapf() test\n");
-	hmapwrapf(&s); /* from selection buf to file */
-	__builtin_printf("hmapunwrapf() test\n");
-	hmapunwrapf(&s); /* from file to vobspace or selection buf */
+	int i, *buffer = NULL; /* ref for allocated .vrtater int data */
+	hmapf_t **m, **maps_in = (hmapf_t **) selectf_a;
+	hmapf_t **maps_out = (hmapf_t **) selectf_b;
+	select_t s = { 0, 0, maps_in, 0, maps_out };
+	hmapf_t *extra;
+	vf_t extra_location = { 0, 10000, 0, 10000 };
+
+	*(maps_in++) = map;
+	(&s)->counta += 1;
+	if ((extra = hmapf_icosahedron_c(&node_orgin, .01)) != NULL)
+		nportf(extra, &extra_location);
+	*maps_in = extra;
+
+	__builtin_printf("\nhmapwrapf() test\n");
+
+#ifdef DIAG_STF
+	/* Single to file. */
+	__builtin_printf("Single to file\n");
+	(&s)->counta = 1;
+	char *filename = "temp.hmap";
+	hmapwrapf(&s, 0, filename, NULL);
+#endif
+#ifdef DIAG_CTF
+	/* Compounded to file. */
+	__builtin_printf("Compounded to file\n");
+	(&s)->counta = 2;
+	char *filename = "temp.hmap";
+	hmapwrapf(&s, VRT_MASK_OPT_COMPOUNDED, filename, NULL);
+#endif
+#ifdef DIAG_STB
+	/* Single to buffer.  This would be used by code in session.c */
+	__builtin_printf("Single to buffer\n");
+	(&s)->counta = 1;
+	hmapwrapf(&s, VRT_MASK_OPT_INTERNET, NULL, (int **) &buffer);
+#endif
+#ifdef DIAG_CTB
+	/* Compounded to buffer.  This would be used by code in session.c */
+	__builtin_printf("Compounded to buffer\n");
+	(&s)->counta = 2;
+	hmapwrapf(&s, VRT_MASK_OPT_INTERNET | VRT_MASK_OPT_COMPOUNDED, NULL, (int **) &buffer);
+#endif
+
+	__builtin_printf("\nhmapunwrapf() test\n");
+
+#ifdef DIAG_FF
+	/* From file. */
+	__builtin_printf("From file\n");
+	hmapunwrapf(&s, NULL, filename, NULL);
+	/* Test that hmap is selected. */
+	m = (&s)->setb;
+	for (i = 0; i < (&s)->countb; i++, m++) {
+		(*m)->ang_spd += .05;
+		__builtin_printf("map %i index %i\n", i, (*m)->index);
+	}
+#endif
+#ifdef DIAG_FFS
+	/* From file using given session name. */
+	__builtin_printf("From file using given session name\n");
+	session_t test = 0x80860000;
+	hmapunwrapf(&s, (session_t *) &test, filename, NULL);
+	/* Test that hmap is selected. */
+	m = (&s)->setb;
+	for (i = 0; i < (&s)->countb; i++, m++) {
+		(*m)->ang_spd += .05;
+		__builtin_printf("map %i index %i\n", i, (*m)->index);
+	}
+#endif
+#ifdef DIAG_FB
+	/* From buffer (allocated int data). */
+	__builtin_printf("From buffer\n");
+	session_t test = 0x80860000;
+	/* Use reported session name vs. any in data. */
+	hmapunwrapf(&s, (session_t *) &test, NULL, buffer);
+	/* Test that hmap is selected. */
+	m = (&s)->setb;
+	for (i = 0; i < (&s)->countb; i++, m++) {
+		(*m)->ang_spd += .05;
+		__builtin_printf("map %i index %i\n", i, (*m)->index);
+	}
+#endif
+	if (buffer)
+		free(buffer);
 }
 
 /* Tug support: The following are a list of transform wrappers vs. bus input. */

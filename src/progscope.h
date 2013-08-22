@@ -22,5 +22,12 @@
 #define DIAG_TIME_OFF
 #define DIAG_INTERSECTION_OFF
 #define DIAG_EFFECT
+#define DIAG_STF_OFF
+#define DIAG_CTF
+#define DIAG_STB_OFF
+#define DIAG_CTB_OFF
+#define DIAG_FF_OFF
+#define DIAG_FFS
+#define DIAG_FB_OFF
 
 #endif /* VRT_PROGSCOPE_H */

@@ -10,7 +10,8 @@
 /* External. */
 unsigned int vrt_hmaps_max;
 
-/* Attach an empty hmap to given session. */
+/* Attach an empty hmap to given session.  Applied index reflects hmaps ordinal
+   position in vohspace for node-orgin maps. */
 hmapf_t *
 hmapf(session_t *session)
 {
@@ -24,7 +25,7 @@ hmapf(session_t *session)
 			"Error: Attempted to exceed hmap limit\n"); */
 		return NULL;
 	}
-	p->name = *session | (session_t) p->index;
+	p->name = (*session & 0xffff0000) | (session_t) p->index; /* for now */
 	__builtin_printf("generated hmap %x (index %i, free maps %u/%u)\n",
 		(int) p->name, p->index, vrt_hmaps_max - attached_hmaps,
 		vrt_hmaps_max);
@@ -33,12 +34,29 @@ hmapf(session_t *session)
 
 /* Return reference to hmap vs. it's index i.  note: This function, although
    quick, is unworkable with any partial connection.  It will be removed when
-   alpha version is ready.  Function to replace it will match on session name
-   instead. */
+   alpha version is ready.  Function mapname will replace it, matching on
+   session name instead. */
 hmapf_t *
 p_hmapf(int i)
 {
 	return &vohspace[i];
+}
+
+/* Return reference to hmap vs. session, and null if no match.  note: This
+   function, is undesireably slow, yet will be usefull for now.  It will be
+   replaced as soon as issue's of storing vohspace are resolved. */
+hmapf_t *
+mapref(session_t *session)
+{
+	int i;
+	hmapf_t *map;
+
+	map = vohspace;
+	for (i = 0; i < vrt_hmaps_max; i++, map++) {
+		if (*session == (session_t) map->name)
+			return map;
+	}
+	return NULL;
 }
 
 /* Return current number of hmaps in use out of vrt_hmaps_max available. */

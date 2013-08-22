@@ -192,8 +192,10 @@ complete_negotiation(session_desc_t *session_desc)
 
 /* Send and recieve hmaps, and otherwise tend to any remote node sessions.
    notes: Peers in a partial need to apply the correct options to the wrap
-   functions per incoming hmap.  Wrap functions provide int list input to and
-   expect same output from buffers herein. */
+   functions per incoming hmap.  This is achieved and used by the wrap functions
+   with an options field after the header(count of bytes) in an hmap file.
+   Wrap functions provide an hmap file as a list of integers and should receive
+   input identical to what they would produce. */
 void
 sync_sessions(void)
 {
@@ -233,12 +235,13 @@ buffer_maps_to_peer_partial(session_t *session, select_t *sel)
 
 /* For any recieved hmap data unpacked thru hmapunwrapf and connected to
    session, write reference(s) in sel selectf_b setting sel countb.  Return
-   reference to selectf_b or NULL if none.  notes:  As caller will be calling
-   for each session seperately, int list input from session associated nodes
-   could be kept in a form conducive to this instead of everything in one
+   reference to selectf_b or NULL if none.  The data begins with it's size in
+   bytes, followed by options and then session name.  notes:  As caller will be
+   calling for each session seperately, int list input from session associated
+   nodes could be kept in a form conducive to this instead of everything in one
    buffer.  It could thus follow that the hmaps would be best allocated and
    unwrapped as their data arrives, then keeping a linked list of references to
-   those. */
+   those stacked in vohspace. */
 hmapf_t *
 recieve_maps_from_peer_partial(session_t *session, select_t *sel)
 {

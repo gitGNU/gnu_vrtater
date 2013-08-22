@@ -119,7 +119,7 @@ init_vohspace(void)
 	/* Set hmaps to null default. */
 	p = vohspace;
 	for (i = 0; i < vrt_hmaps_max; i++, p++) {
-		p->name = (session_t)0;
+		p->name = (session_t) 0;
 		p->vpos.x = 0;
 		p->vpos.y = 0;
 		p->vpos.z = 0;
@@ -196,7 +196,7 @@ attach_hmapf(void)
 
 	for (i = 0; i < vrt_hmaps_max; i++, p++) {
 		if (!(p->attribs.mode &= VRT_MASK_ATTACHED)) {
-			p->index = i; /* caller index */
+			p->index = i; /* node-orgin unique index */
 			p->attribs.mode |= VRT_MASK_ATTACHED;
 			attached_hmaps++;
 			return p;

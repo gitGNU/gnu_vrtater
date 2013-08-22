@@ -7,6 +7,7 @@
 #define VRT_TRANSFORM_H
 
 #include "hmap.h"
+#include "bittoggles.h"
 
 /* meta_u */
 union meta_unit_u {
@@ -18,20 +19,18 @@ typedef union meta_unit_u meta_u;
 
 /* Options to hmap transform functions affecting ip network or filesystem. */
 enum {
-	VRT_ORDINAL_OPT_SESSION_NAME,
-#define VRT_MASK_OPT_SESSION_NAME (1 << VRT_ORDINAL_OPT_SESSION_NAME)
+	VRT_ORDINAL_OPT_NULL_SESSION_NAME,
+#define VRT_MASK_OPT_NULL_SESSION_NAME (1 << VRT_ORDINAL_OPT_NULL_SESSION_NAME)
 	VRT_ORDINAL_OPT_COMPOUNDED,
 #define VRT_MASK_OPT_COMPOUNDED (1 << VRT_ORDINAL_OPT_COMPOUNDED)
 	VRT_ORDINAL_OPT_MINIMAL,
 #define VRT_MASK_OPT_MINIMAL (1 << VRT_ORDINAL_OPT_MINIMAL)
 	VRT_ORDINAL_OPT_UPDATE,
 #define VRT_MASK_OPT_UPDATE (1 << VRT_ORDINAL_OPT_UPDATE)
-	VRT_ORDINAL_OPT_FULL,
-#define VRT_MASK_OPT_FULL (1 << VRT_ORDINAL_OPT_FULL)
-	VRT_ORDINAL_OPT_COMPRESS,
-#define VRT_MASK_OPT_COMPRESS (1 << VRT_ORDINAL_COMPRESS)
-	VRT_ORDINAL_OPT_ENCRYPT
-#define VRT_MASK_OPT_ENCRYPT (1 << VRT_ORDINAL_OPT_ENCRYPT)
+	VRT_ORDINAL_OPT_COMPRESSED,
+#define VRT_MASK_OPT_COMPRESSED (1 << VRT_ORDINAL_OPT_COMPRESSED)
+	VRT_ORDINAL_OPT_ENCRYPTED
+#define VRT_MASK_OPT_ENCRYPTED (1 << VRT_ORDINAL_OPT_ENCRYPTED)
 };
 
 int join_hmaps(select_t *);
@@ -41,8 +40,8 @@ int extend_hmaps(select_t *);
 int recycle(select_t *);
 int cp_hmapf(select_t *);
 int surface_inv_hmapf(select_t *);
-int hmapwrapf(select_t *);
-int hmapunwrapf(select_t *);
+int hmapwrapf(select_t *, btoggles_t options, char *filename, int **output);
+int hmapunwrapf(select_t *, session_t *, char *filename, int *input);
 int alloc_dialog(select_t *, int len);
 int add_dialog(select_t *, char *s, int count, int offset);
 int write_dialog(select_t *, char *s);

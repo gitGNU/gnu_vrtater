@@ -176,6 +176,7 @@ extern hmapf_t *selectf_b;
 
 hmapf_t *hmapf(session_t *);
 hmapf_t *p_hmapf(int i);
+hmapf_t *mapref(session_t *session);
 unsigned int hmap_count(void);
 unsigned int search_vohspace(hmapf_t **, btoggles_t signs, btoggles_t modes);
 void diag_selection(select_t *sel); /* diagnostic */

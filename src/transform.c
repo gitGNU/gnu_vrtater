@@ -4,6 +4,8 @@
 */
 
 #include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -289,177 +291,539 @@ surface_inv_hmapf(select_t *sel)
 
 /* hmap transformative functions affecting ip network or filesystem. */
 
-/* Format and write to a proto .vrtmap, hmap referenced in the selection buffer
-   to network or file.  This will be further optimized for sending over net by
-   removing anything that can not be calculated inherently or has not changed,
-   for example the magnitudes of vectors as these may calculated on unwrap,
-   hmaps with positional changes and no data changes(see: attribs.sign bits
-   VRT_MASK_VERTICE_MODS and VRT_MASK_DIALOG_MODS), hmap index and pointers to
-   data(useless outside of node).  This will then lead to a revised hmapunwrapf.
-   For now assume file/network is meta_u a_file_net_io[10000].  Later actually
-   do the file write or format it for the network. */
-meta_u a_file_net_io[10000]; /* for now */
+/* Format and write hmaps in selectf_a vs. sel, in format specified by options,
+   named name(if applicable) or available referenced by output.  filename and
+   output are exclusive, therefore filename must be null where reference output
+   is to be used.  If filename is omitted, caller is expected to free data
+   referenced by output after use.  Any file written will recieve .vrtater
+   extension and be readable by hmapunwrapf now and in future versions.
+   If VRT_MASK_OPT_COMPOUNDED is set there may be multiple maps. */
 int
-hmapwrapf(select_t *sel)
+hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 {
-	int *pb = (int *) a_file_net_io;
-	int *d, *pi = (int *) &a_file_net_io[1];
+	int fd, *outbuf, *nxtmapsz, *dlg, *pb, *pi, i, j;
+	int bufsz = 0;
 	float *pf;
-	int i = 0;
-	int j = 0;
-	hmapf_t *h;
+	hmapf_t **maps;
 	vf_t *v;
+	ssize_t nwritten = 0;
 
-	h = *(sel->seta);
-	*pi++ = (int) (h->name >> 16);
-	*pi++ = (int) (h->name & 0xffff);
-	*pi++ = h->index;
-	pf = (float *) pi;
-	*pf++ = h->vpos.x;
-	*pf++ = h->vpos.y;
-	*pf++ = h->vpos.z;
-	*pf++ = h->vpos.m;
-	*pf++ = h->vvel.x;
-	*pf++ = h->vvel.y;
-	*pf++ = h->vvel.z;
-	*pf++ = h->vvel.m;
-	*pf++ = h->vaxi.x;
-	*pf++ = h->vaxi.y;
-	*pf++ = h->vaxi.z;
-	*pf++ = h->vaxi.m;
-	*pf++ = h->vrel.x;
-	*pf++ = h->vrel.y;
-	*pf++ = h->vrel.z;
-	*pf++ = h->vrel.m;
-	*pf++ = h->vpre.x;
-	*pf++ = h->vpre.y;
-	*pf++ = h->vpre.z;
-	*pf++ = h->vpre.m;
-	*pf++ = h->ang_spd;
-	*pf++ = h->ang_dpl;
-	pi = (int *) pf;
-	*pi++ = h->attribs.sign;
-	*pi++ = h->attribs.mode;
-	*pi++ = h->attribs.session_filter;
-	*pi++ = h->attribs.balance_filter;
-	pf = (float *) pi;
-	*pf++ = h->attribs.kg;
-	pi = (int *) pf;
-	*pi++ = h->attribs.kfactorm;
-	*pi++ = h->attribs.kfactord;
-	*pi++ = h->envelope.geom;
-	pf = (float *) pi;
-	*pf++ = h->envelope.vsz.x;
-	*pf++ = h->envelope.vsz.y;
-	*pf++ = h->envelope.vsz.z;
-	*pf++ = h->envelope.vsz.m;
-	pi = (int *) pf;
-	*pi++ = h->draw.geom;
-	*pi++ = h->vmap_total;
-	pf = (float *) pi;
-	v = h->vmap;
-	while (i++ < h->vmap_total) {
-		*pf++ = v->x;
-		*pf++ = v->y;
-		*pf++ = v->z;
-		*pf++ = v->m;
-		v++;
+	/* Allocate outbuf of bufsz bytes for file write or ip network send. */
+	maps = sel->seta;
+	for (i = 0; i < sel->counta; i++, maps++)
+		bufsz += sizeof(hmapf_t) + ((*maps)->vmap_total * sizeof(vf_t)) + (((*maps)->dialog_len + 1) * sizeof(int));
+	if ((outbuf = (int *) malloc(bufsz)) == NULL) {
+		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+			"Error: Could not malloc for outbuf\n",
+			__FILE__, __LINE__);
+		abort();
 	}
-	pi = (int *) pf;
-	*pi++ = h->dialog_len;
-	d = h->dialog;
-	while (j++ < h->dialog_len)
-		*pi++ = *d++;
-	*pb = abs((int) pi - (int) pb) / sizeof(int);
+
+	/* If not a file write, caller will reference outbuf as output. */
+	if (output)
+		*output = (int *) outbuf;
+
+	__builtin_printf("Bufsz is %i bytes\n", bufsz);
+
+	maps = sel->seta;
+	pb = (int *) outbuf; /* pb is start of file. */
+	pi = (int *) pb + 1; /* a space for dotvrtater size vs. int */
+	*pi++ = (int) options;
+
+	__builtin_printf("total_hmaps is %i\n", sel->counta);
+
+	for (i = 0; i < sel->counta; i++, maps++) {
+
+		if (options & VRT_MASK_OPT_COMPOUNDED) {
+			nxtmapsz = pi++; /* a space per map size vs. int */
+
+			__builtin_printf("hmap is compounded\n");
+
+		}
+
+		if (!(options & VRT_MASK_OPT_NULL_SESSION_NAME)) {
+			*pi++ = (int) ((*maps)->name >> 16);
+			*pi++ = (int) ((*maps)->name & 0xffff);
+			__builtin_printf("Wrapping map %x\n", (int) (*maps)->name);
+		} else {
+			__builtin_printf("hmap file recieves no session name\n");
+		}
+
+		if (!(options & VRT_MASK_OPT_MINIMAL)) {
+			*pi++ = (*maps)->index;
+		} else {
+
+			__builtin_printf("hmap file is written minimally\n");
+
+		}
+
+		pf = (float *) pi;
+		*pf++ = (*maps)->vpos.x;
+		*pf++ = (*maps)->vpos.y;
+		*pf++ = (*maps)->vpos.z;
+
+		if (!(options & VRT_MASK_OPT_MINIMAL))
+			*pf++ = (*maps)->vpos.m;
+
+		*pf++ = (*maps)->vvel.x;
+		*pf++ = (*maps)->vvel.y;
+		*pf++ = (*maps)->vvel.z;
+
+		if (!(options & VRT_MASK_OPT_MINIMAL))
+			*pf++ = (*maps)->vvel.m;
+
+		*pf++ = (*maps)->vaxi.x;
+		*pf++ = (*maps)->vaxi.y;
+		*pf++ = (*maps)->vaxi.z;
+
+		if (!(options & VRT_MASK_OPT_MINIMAL))
+			*pf++ = (*maps)->vaxi.m;
+
+		*pf++ = (*maps)->vrel.x;
+		*pf++ = (*maps)->vrel.y;
+		*pf++ = (*maps)->vrel.z;
+
+		if (!(options & VRT_MASK_OPT_MINIMAL))
+			*pf++ = (*maps)->vrel.m;
+
+		*pf++ = (*maps)->vpre.x;
+		*pf++ = (*maps)->vpre.y;
+		*pf++ = (*maps)->vpre.z;
+
+		if (!(options & VRT_MASK_OPT_MINIMAL))
+			*pf++ = (*maps)->vpre.m;
+
+		*pf++ = (*maps)->ang_spd;
+		*pf++ = (*maps)->ang_dpl;
+
+		if (options & VRT_MASK_OPT_UPDATE) {
+
+			__builtin_printf("hmap file is an update\n");
+
+			break;
+		}
+		pi = (int *) pf;
+		*pi++ = (*maps)->attribs.sign;
+		*pi++ = (*maps)->attribs.mode;
+		*pi++ = (*maps)->attribs.session_filter;
+		*pi++ = (*maps)->attribs.balance_filter;
+		pf = (float *) pi;
+		*pf++ = (*maps)->attribs.kg;
+		pi = (int *) pf;
+		*pi++ = (*maps)->attribs.kfactorm;
+		*pi++ = (*maps)->attribs.kfactord;
+
+		*pi++ = (*maps)->envelope.geom;
+		pf = (float *) pi;
+		*pf++ = (*maps)->envelope.vsz.x;
+		*pf++ = (*maps)->envelope.vsz.y;
+		*pf++ = (*maps)->envelope.vsz.z;
+
+		if (!(options & VRT_MASK_OPT_MINIMAL))
+			*pf++ = (*maps)->envelope.vsz.m;
+
+		pi = (int *) pf;
+		*pi++ = (*maps)->draw.geom;
+
+		*pi++ = (*maps)->vmap_total;
+		if ((*maps)->vmap_total) {
+			pf = (float *) pi;
+			v = (*maps)->vmap;
+			for (j = 0; j < (*maps)->vmap_total; j++) {
+				*pf++ = v->x;
+				*pf++ = v->y;
+				*pf++ = v->z;
+				*pf++ = v->m;
+				v++;
+			}
+			pi = (int *) pf;
+		}
+		__builtin_printf("vmap total %i\n", (*maps)->vmap_total);
+
+		*pi++ = (*maps)->dialog_len;
+		if ((*maps)->dialog_len) {
+			dlg = (*maps)->dialog;
+			j = 0;
+			for (j = 0; j < (*maps)->dialog_len; j++)
+				*pi++ = *dlg++;
+		}
+		__builtin_printf("dialog_len %i\n", (*maps)->dialog_len);
+
+		if (options & VRT_MASK_OPT_COMPOUNDED) {
+			/* Write map size at beginning of map. */
+			*nxtmapsz = abs((int) pi - (int) nxtmapsz) / sizeof(int);
+
+			__builtin_printf("nxtmapsz is %i\n", *nxtmapsz);
+
+		}
+	}
+	*pb = abs((int) pi - (int) pb) / sizeof(int); /* write length at pb */
+
+	__builtin_printf("total count is %i\n", *pb);
+
+	if (options & VRT_MASK_OPT_ENCRYPTED) {
+		__builtin_printf("hmap file is encrypted\n");
+	}
+
+	if (options & VRT_MASK_OPT_COMPRESSED) {
+		__builtin_printf("hmap file is compressed\n");
+	}
+
+	if (filename) {
+
+		if ((fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0644)) == -1) {
+			__builtin_printf("Couldn't create %s\n", filename);
+			return(-1);
+		}
+
+		if((*pb * 4) == bufsz) { /* for now */
+			nwritten = write(fd, (char *) outbuf, bufsz);
+			__builtin_printf("%s: %i bytes written\n",
+				filename, (int) nwritten);
+		} else
+			return -1;
+	}
+
+	close(fd);
 	return 0;
 }
 
-/* Read .vrtmap file/transfer formated hmap into selection buffer.  For now
-   assume file/network is meta_u a_file_net_io[10000].  For now display it's
-   contents to stdout.  Later write it to an hmap, allocating for vf_t's and
-   dialog.  As anything that can be calculated inherently will be omitted from
-   an hmap file, this function will eventually be revised. */
+/* Read .vrtater file data filename or input, unwrapping and referencing it's
+   hmap(s) into selectf_b vs. sel and writing or overwriting them into vohspace
+   based on options within data.  Set VRT_OPT_MASK_BUFFER for each hmap implied.
+   If filename is not given input references data.  When input is not null,
+   caller is expected to free input after use.  If VRT_MASK_OPT_COMPOUNDED is
+   set there may be multiple maps.  If session is given an index unique for
+   node-orgin and node-orgin originating maps is applied and map(s) implied
+   are then part of session.  notes: Once resizing of vohspace is fully
+   supported, a check for enough space would be done in advance of each new map
+   placement with a resize call conditionally. */
 int
-hmapunwrapf(select_t *sel)
+hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 {
-	float *fl = (float *) a_file_net_io;
-	int i, graph, space, ctrl, null, *in = (int *) a_file_net_io;
+	int fd, size, sum = 0;
+	char *filebuf = NULL;
+	int total_maps = 0;
+	int i, graph, space, ctrl, null, *pi, *dialog = NULL;
+	float *pf;
 	graph = 0; space = 0; ctrl = 0; null = 0;
+	vf_t *rebuild;
+	ssize_t nread;
+	off_t filesz;
+	btoggles_t options;
+	hmapf_t **map;
+	session_t current;
 
-	__builtin_printf("hmapf size: %i\n", (int) *in++); fl++;
-	__builtin_printf("vobnum: %i:", (int) *in++); fl++;
-	__builtin_printf("%i\n", (int) *in++); fl++;
-	__builtin_printf("index: %i\n", (int) *in++); fl++;
-	__builtin_printf("pos: %f %f %f %f\n",
-		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
-	in++; in++; in++; in++;
-	__builtin_printf("vel: %f %f %f %f\n",
-		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
-	in++; in++; in++; in++;	
-	__builtin_printf("axi: %f %f %f %f\n",
-		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
-	in++; in++; in++; in++;	
-	__builtin_printf("rel: %f %f %f %f\n",
-		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
-	in++; in++; in++; in++;	
-	__builtin_printf("pre: %f %f %f %f\n",
-		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
-	in++; in++; in++; in++;	
-	__builtin_printf("ang_spd: %f\n", (float) *fl++); in++;
-	__builtin_printf("ang_dpl: %f\n", (float) *fl++); in++;
-	__builtin_printf("attribs bits: 0x%x\n", (int) *in++); fl++;
-	__builtin_printf("attribs modifiers: 0x%x\n", (int) *in++); fl++;
-	__builtin_printf("session filter: 0x%x\n", (int) *in++); fl++;
-	__builtin_printf("balance filter: 0x%x\n", (int) *in++); fl++;
-	__builtin_printf("kg: %f\n", (float) *fl++); in++;
-	__builtin_printf("kfactorm: %i\n", (int) *in++); fl++;
-	__builtin_printf("kfactord: %i\n", (int) *in++); fl++;
-	__builtin_printf("bound geom: %i\n", (int) *in++); fl++;
-	__builtin_printf("bound size: %f %f %f %f\n", \
-		(float) *fl++, (float) *fl++, (float) *fl++, (float) *fl++);
-	in++; in++; in++; in++;	
-	__builtin_printf("draw geom: %i\n", (int) *in++); fl++;
-	int vmap_total = (int) *in;
-	__builtin_printf("vmap_total: %i\n", (int) *in++); fl++;
-	i = 0;
-	while (i < vmap_total) {
-		__builtin_printf("vf %i: %f", i + 1, (float) *fl++); in++;
-		__builtin_printf(" %f", (float) *fl++); in++;
-		__builtin_printf(" %f", (float) *fl++); in++;
-		__builtin_printf(" %f\n", (float) *fl++); in++;
-		i++;
-	}
-	int dialog_len = (int) *in;
-	__builtin_printf("dialog_len: %i\n", (int) *in++); fl++;
-	i = 0;
-	__builtin_printf("dialog:\n");
-	while (i < dialog_len) {
-		/* print !last char 1 thru 7 of rows of 8 chars */
-		for (;!((i%8)==7) && ((i+1)%dialog_len);i++) {
-			if (iscntrl((char) *in)) { ctrl += 1; }
-			if (isgraph((char) *in)) { graph += 1; }
-			if (isspace((char) *in)) { space += 1; }
-			if (!(*in)) { null += 1; }
-			__builtin_printf("%10.8x", (int) *in++); fl++;
+	if (filename) {
+		/* Read from filename. */
+		if ((fd = open(filename, O_RDONLY)) == -1) {
+			__builtin_printf("hmapunwrap: Couldn't open %s\n", filename);
+			return -1;
 		}
-		if ((i+1)%dialog_len) { /* print !last char 8 in row of 8 */
-			if (iscntrl((char) *in)) { ctrl += 1; }
-			if (isgraph((char) *in)) { graph += 1; }
-			if (isspace((char) *in)) { space += 1; }
-			if (!(*in)) { null += 1; }
-			__builtin_printf("%10.8x\n", (int) *in++); fl++;
-			i++;
-		} else { /* last char */
-			if (iscntrl((char) *in)) { ctrl += 1; }
-			if (isgraph((char) *in)) { graph += 1; }
-			if (isspace((char) *in)) { space += 1; }
-			if (!(*in)) { null += 1; }
-			__builtin_printf("%10.8x\n", (int) *in++); fl++;
-			i++; i++;
+		filesz = lseek(fd, (off_t) 0, SEEK_END);
+		lseek(fd, (off_t) 0, SEEK_SET);
+		__builtin_printf("Reading %i bytes from %s\n",
+			(int) filesz, filename);
+
+		if ((filebuf = (char *) malloc((int) filesz)) == NULL) {
+			__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+				"Error: Could not malloc for "
+				"hmap file input buffer\n",
+				__FILE__, __LINE__);
+			abort();
 		}
+		nread = read(fd, filebuf, filesz);
+
+		pi = (int *) filebuf;
+
+	} else {
+		__builtin_printf("hmapunwrapf: Reading from session buffer\n");
+		pi = input;
 	}
-	__builtin_printf("dialog gscn: %i %i %i %i\n", graph, space, ctrl, null);
-	return 0;
+
+	size = *pi;
+	__builtin_printf("Unwrapping %i sizeof(int) sized elements\n", (int) *pi++);
+
+	options = *pi++;
+	print_toggles("options ", (btoggles_t *) &options);
+
+	map = sel->setb;
+
+	/* Place all maps in the .vrtater file into vohspace. */
+	while (size > sum) {
+
+		/* Determine size for this map. */
+		if (options & VRT_MASK_OPT_COMPOUNDED) {
+			__builtin_printf("hmapf size: %i\n", (int) *pi + 1);
+			sum += (*pi++ + 1);
+		} else
+			sum = size;
+
+__builtin_printf("Byte total this pass %i\n", sum);
+
+
+		/* If data sessionless, hmapf requires session or break. If not,
+		   use session if provided else data provided session for hmapf.
+		   Use mapref to mask out hmapf where this is an update.  Skip
+		   over index in data where non minimal as hmapf sets it. */
+		if (options & VRT_MASK_OPT_NULL_SESSION_NAME) {
+
+			if (session) {
+				current = (session_t) *session;
+				if (!(*map = hmapf(&current)))
+					break;
+					sel->countb += 1;
+				__builtin_printf("Argued session %x\n", (int) current);
+			} else
+				break;
+		} else {
+
+			if (session) {
+				current = *session;
+				pi++;
+				pi++;
+				__builtin_printf("Using argued session %x\n", (int) current);
+			} else {
+				current = (session_t) (*pi++ << 16);
+				current |= (session_t) *pi++;
+				__builtin_printf("Last valid session %x\n", (int) current);
+			}
+			if ((*map = mapref(&current)) != NULL) {
+
+				/* Update one map with name current. */
+				__builtin_printf("Updating one map %x\n",
+					(int) current);
+				sel->countb += 1;
+			} else {
+
+				/* Build new map. */
+				if (!(*map = hmapf(&current)))
+					break;
+				sel->countb += 1;
+			}
+		}
+		__builtin_printf("Added/updated map %x index %i\n",
+			(int) (*map)->name, (*map)->index);
+
+		if (!(options & VRT_MASK_OPT_MINIMAL))
+			pi++; /* skip index part of data */
+
+		pf = (float *) pi;
+
+		rebuild = &((*map)->vpos);
+		rebuild->x = (float) *pf++;
+		rebuild->y = (float) *pf++;
+		rebuild->z = (float) *pf++;
+
+		if (options & VRT_MASK_OPT_MINIMAL)
+			form_mag_vf(rebuild);
+		else
+			rebuild->m = (float) *pf++;
+
+		/* test */
+		rebuild->y += 30.0;
+		form_mag_vf(rebuild);
+
+		__builtin_printf("pos: %f %f %f %f\n",
+			rebuild->x, rebuild->y, rebuild->z, rebuild->m);
+
+		rebuild = &((*map)->vvel);
+		rebuild->x = (float) *pf++;
+		rebuild->y = (float) *pf++;
+		rebuild->z = (float) *pf++;
+
+		if (options & VRT_MASK_OPT_MINIMAL)
+			form_mag_vf(rebuild);
+		else
+			rebuild->m = (float) *pf++;
+
+		__builtin_printf("vel: %f %f %f %f\n",
+			rebuild->x, rebuild->y, rebuild->z, rebuild->m);
+
+		rebuild = &((*map)->vaxi);
+		rebuild->x = (float) *pf++;
+		rebuild->y = (float) *pf++;
+		rebuild->z = (float) *pf++;
+
+		if (options & VRT_MASK_OPT_MINIMAL)
+			form_mag_vf(rebuild);
+		else
+			rebuild->m = (float) *pf++;
+
+		__builtin_printf("axi: %f %f %f %f\n",
+			rebuild->x, rebuild->y, rebuild->z, rebuild->m);
+
+		rebuild = &((*map)->vrel);
+		rebuild->x = (float) *pf++;
+		rebuild->y = (float) *pf++;
+		rebuild->z = (float) *pf++;
+
+		if (options & VRT_MASK_OPT_MINIMAL)
+			form_mag_vf(rebuild);
+		else
+			rebuild->m = (float) *pf++;
+
+		__builtin_printf("rel: %f %f %f %f\n",
+			rebuild->x, rebuild->y, rebuild->z, rebuild->m);
+
+		rebuild = &((*map)->vpre);
+		rebuild->x = (float) *pf++;
+		rebuild->y = (float) *pf++;
+		rebuild->z = (float) *pf++;
+
+		if (options & VRT_MASK_OPT_MINIMAL)
+			form_mag_vf(rebuild);
+		else
+			rebuild->m = (float) *pf++;
+
+		__builtin_printf("pre: %f %f %f %f\n",
+			rebuild->x, rebuild->y, rebuild->z, rebuild->m);
+
+		__builtin_printf("ang_spd: %f\n", (float) *pf);
+		(*map)->ang_spd = *pf++;
+		__builtin_printf("ang_dpl: %f\n", (float) *pf);
+		(*map)->ang_dpl = *pf++;
+
+		if (options & VRT_MASK_OPT_UPDATE)
+			break; /* for now includes positional attribs only */
+
+		pi = (int *) pf;
+
+		__builtin_printf("attribs sign: 0x%x\n", (int) *pi);
+		(*map)->attribs.sign = *pi++ | VRT_MASK_BUFFER;
+		__builtin_printf("attribs mode: 0x%x\n", (int) *pi);
+		(*map)->attribs.mode = *pi++;
+		__builtin_printf("session filter: 0x%x\n", (int) *pi);
+		(*map)->attribs.session_filter = *pi++;
+		__builtin_printf("balance filter: 0x%x\n", (int) *pi);
+		(*map)->attribs.balance_filter = *pi++;
+
+		pf = (float *) pi;
+
+		__builtin_printf("kg: %f\n", (float) *pf);
+		(*map)->attribs.kg = *pf++;
+
+		pi = (int *) pf;
+
+		__builtin_printf("kfactorm: %i\n", (int) *pi);
+		(*map)->attribs.kfactorm = *pi++;
+		__builtin_printf("kfactord: %i\n", (int) *pi);
+		(*map)->attribs.kfactord = *pi++;
+
+		__builtin_printf("bound geom: %i\n", (int) *pi);
+		(*map)->envelope.geom = *pi++;
+
+		pf = (float *) pi;
+
+		rebuild = &((*map)->envelope.vsz);
+		rebuild->x = (float) *pf++;
+		rebuild->y = (float) *pf++;
+		rebuild->z = (float) *pf++;
+
+		if (options & VRT_MASK_OPT_MINIMAL)
+			form_mag_vf(rebuild);
+		else
+			rebuild->m = (float) *pf++;
+
+		__builtin_printf("bound size: %f %f %f %f\n",
+			rebuild->x, rebuild->y, rebuild->z, rebuild->m);
+
+		pi = (int *) pf;
+
+		__builtin_printf("draw geometry: %i\n", (int) *pi);
+		(*map)->draw.geom = *pi++;
+
+		__builtin_printf("vmap_total: %i\n", (int) *pi);
+		if (((*map)->vmap_total = (int) *pi++)) {
+
+			if (((*map)->vmap = (vf_t *) malloc((*map)->vmap_total * sizeof(vf_t))) == NULL) {
+				__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+					"Error: Could not malloc for vmap\n",
+					__FILE__, __LINE__);
+				abort();
+			}
+
+			pf = (float *) pi;
+
+			rebuild = (*map)->vmap;
+			for (i = 0; i < (*map)->vmap_total; i++, rebuild++) {
+				__builtin_printf("vf %i: %f", i + 1, (float) *pf);
+				rebuild->x = (float) *pf++;
+				__builtin_printf(" %f", (float) *pf);
+				rebuild->y = (float) *pf++;
+				__builtin_printf(" %f", (float) *pf);
+				rebuild->z = (float) *pf++;
+				if (options & VRT_MASK_OPT_MINIMAL) {
+					form_mag_vf(rebuild);
+					__builtin_printf(" auto\n");
+				} else {
+					__builtin_printf(" %f\n", (float) *pf);
+					rebuild->m = (float) *pf++;
+				}
+			}
+
+			pi = (int *) pf;
+		}
+
+
+		__builtin_printf("dialog_len: %i\n", (int) *pi);
+		if (((*map)->dialog_len = (int) *pi++)) {
+
+			if (((*map)->dialog = (int *) malloc(((*map)->dialog_len + 1) * sizeof(int))) == NULL) {
+				__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+					"Error: Could not malloc for dialog\n",
+					__FILE__, __LINE__);
+				abort();
+			}
+
+			dialog = (*map)->dialog;
+			for (i = 0; i < (*map)->dialog_len;) {
+				/* print !last char 1 to 7 of rows of 8 chars */
+				for (;!((i%8)==7) && ((i+1)%(*map)->dialog_len); i++) {
+					if (iscntrl((char) *pi)) { ctrl += 1; }
+					if (isgraph((char) *pi)) { graph += 1; }
+					if (isspace((char) *pi)) { space += 1; }
+					if (!(*pi)) { null += 1; }
+					__builtin_printf("%10.8x", (int) *pi);
+					*dialog++ = *pi++;
+				}
+				if ((i+1)%(*map)->dialog_len) {
+					/* print !last char 8 in row of 8 */
+					if (iscntrl((char) *pi)) { ctrl += 1; }
+					if (isgraph((char) *pi)) { graph += 1; }
+					if (isspace((char) *pi)) { space += 1; }
+					if (!(*pi)) { null += 1; }
+					__builtin_printf("%10.8x\n", (int) *pi);
+					*dialog++ = *pi++;
+					i++;
+				} else { /* last char */
+					if (iscntrl((char) *pi)) { ctrl += 1; }
+					if (isgraph((char) *pi)) { graph += 1; }
+					if (isspace((char) *pi)) { space += 1; }
+					if (!(*pi)) { null += 1; }
+					__builtin_printf("%10.8x\n", (int) *pi);
+					*dialog++ = *pi++;
+					i += 2;
+				}
+			}
+		}
+		__builtin_printf("dialog gscn: %i %i %i %i\n", graph, space, ctrl, null);
+		total_maps++;
+		map++;
+	}
+
+	if (filename)
+		close(fd);
+	if (filebuf)
+		free(filebuf);
+
+	if (!(sel->counta = total_maps)) {
+		__builtin_printf("hmapunwrapf: Error, total maps %i\n", sel->counta);
+		return -1;
+	} else {
+		__builtin_printf("Total maps %i\n", sel->counta);
+		return 0;
+	}
 }
 
 
