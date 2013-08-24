@@ -113,7 +113,7 @@ main(int argc, char **argv)
 			else {
 				__builtin_fprintf(stderr, "vrtater: Error: "
 					"syntax -f, --find-node, requires "
-					" a node search string.\n");
+					" a node search string\n");
 				abort();
 			}
 			break;

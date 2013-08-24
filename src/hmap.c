@@ -15,9 +15,9 @@ unsigned int vrt_hmaps_max;
 hmapf_t *
 hmapf(session_t *session)
 {
-	hmapf_t *p;
+	hmapf_t *map;
 
-	if ((p = attach_hmapf()) == NULL) {
+	if ((map = attach_hmapf()) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: All hmaps are currently attached\n",
 			__FILE__, __LINE__);
@@ -25,16 +25,16 @@ hmapf(session_t *session)
 			"Error: Attempted to exceed hmap limit\n"); */
 		return NULL;
 	}
-	p->name = (*session & 0xffff0000) | (session_t) p->index; /* for now */
+	map->name = (*session & 0xffff0000) | map->index; /* for now */
 	__builtin_printf("generated hmap %x (index %i, free maps %u/%u)\n",
-		(int) p->name, p->index, vrt_hmaps_max - attached_hmaps,
+		map->name, map->index, vrt_hmaps_max - attached_hmaps,
 		vrt_hmaps_max);
-	return p;
+	return map;
 }
 
 /* Return reference to hmap vs. it's index i.  note: This function, although
    quick, is unworkable with any partial connection.  It will be removed when
-   alpha version is ready.  Function mapname will replace it, matching on
+   alpha version is ready.  Function mapref will replace it, matching on
    session name instead. */
 hmapf_t *
 p_hmapf(int i)
@@ -42,7 +42,7 @@ p_hmapf(int i)
 	return &vohspace[i];
 }
 
-/* Return reference to hmap vs. session, and null if no match.  note: This
+/* Return reference to hmap vs. session, and NULL if no match.  note: This
    function, is undesireably slow, yet will be usefull for now.  It will be
    replaced as soon as issue's of storing vohspace are resolved. */
 hmapf_t *
@@ -53,7 +53,7 @@ mapref(session_t *session)
 
 	map = vohspace;
 	for (i = 0; i < vrt_hmaps_max; i++, map++) {
-		if (*session == (session_t) map->name)
+		if (*session == map->name)
 			return map;
 	}
 	return NULL;
@@ -67,10 +67,10 @@ hmap_count(void)
 }
 
 /* Search vohspace for hmaps holding any of signs or modes given, and write
-   references for those in listout.  Return count of matches referenced.  Until
-   vohspace memory can be resized while running all node-partial's and
-   node-orgin, this search may be rather suboptimal, as vrt_hmaps_max hmaps are
-   always searched regardless of whether they are attached or not. */
+   references for those in listout.  Return count of matches referenced.
+   note: Until vohspace memory can be resized while running all node-partial's
+   and node-orgin, this search may be rather suboptimal, as vrt_hmaps_max hmaps
+   are always searched regardless of whether they are attached or not. */
 unsigned int
 search_vohspace(hmapf_t **listout, btoggles_t signs, btoggles_t modes)
 {

@@ -21,7 +21,7 @@
 #include "rendergl.h"
 #endif /* VRT_RENDER_GL */
 
-session_t node_orgin;
+session_t node_orgin = 0;
 
 /* External */
 unsigned int vrt_hmaps_max;
@@ -74,14 +74,14 @@ generate_node_orgin(void)
 {
 	init_selection_buffers();
 	init_vohspace();
-	set_node_orgin(&node_orgin);
-	__builtin_printf("generated node-orgin %x\n", (int) node_orgin);
+	set_node_orgin(&node_orgin, ""); /* for now */
 	partial_generator_list = NULL;
 	partials_count = 0;
 	generate_vohspace();
 	init_renderer();
 	init_sessions();
 
+	__builtin_printf("generated node-orgin %x\n", node_orgin);
 	return 0;
 }
 
@@ -90,7 +90,7 @@ void
 generate_vohspace(void)
 {
 	int i;
-	hmapf_t *p;
+	hmapf_t *map;
 	vf_t d, portal = { 560, 560, 560, 969.94845 };
 
 	set_vf(&d, 0, .01, -.03, 0);
@@ -99,69 +99,68 @@ generate_vohspace(void)
 	/* Here hmaps will be added to node-orgin vs. config file.  For now
 	   add the following given vrt_hmaps_max. */
 	for (i = 0; i < 1; i++)
-		if ((p = hmapf_icosahedron_c(&node_orgin, .01)) != NULL)
-			nportf(p, sum_vf(&d, &portal, &portal));
+		if ((map = hmapf_icosahedron_c(&node_orgin, .01)) != NULL)
+			nportf(map, sum_vf(&d, &portal, &portal));
 	for (i = 0; i < 2; i++)
-		if ((p = hmapf_cube_c(&node_orgin, 3, 3, 3)) != NULL)
-			nportf(p, sum_vf(&d, &portal, &portal));
+		if ((map = hmapf_cube_c(&node_orgin, 3, 3, 3)) != NULL)
+			nportf(map, sum_vf(&d, &portal, &portal));
 	for (i = 0; i < 6; i++)
-		if ((p = hmapf_icosahedron_c(&node_orgin, 2)) != NULL)
-			nportf(p, sum_vf(&d, &portal, &portal));
+		if ((map = hmapf_icosahedron_c(&node_orgin, 2)) != NULL)
+			nportf(map, sum_vf(&d, &portal, &portal));
 	for (i = 0; i < 10; i++)
-		if ((p = hmapf_cube_c(&node_orgin, 100, 100, 100)) != NULL)
-			nportf(p, sum_vf(&d, &portal, &portal));
+		if ((map = hmapf_cube_c(&node_orgin, 100, 100, 100)) != NULL)
+			nportf(map, sum_vf(&d, &portal, &portal));
 	for (i = 0; i < 1; i++)
-		if ((p = hmapf_cylinder_c(&node_orgin, 10, 25, 13.5, 0)) != NULL)
-			nportf(p, sum_vf(&d, &portal, &portal));
+		if ((map = hmapf_cylinder_c(&node_orgin, 10, 25, 13.5, 0)) != NULL)
+			nportf(map, sum_vf(&d, &portal, &portal));
 
 #ifdef DIAG_PARTIAL
 	/* Make 2 partials then remove them below on close_node. */
-	hmapf_t **buffer;
+	hmapf_t **buffer = (hmapf_t **) selectf_a;
+	select_t t = { 0, 1, buffer, 0, NULL};
 
 	/* Outer hmap for node-orgin. */
-	if ((p = hmapf_cylinder_c(&node_orgin, 80.5, 25, 112, 0)) != NULL) {
-		p->ang_spd = 0;
-		p->ang_dpl = .761799;
-		set_vf(&(p->vvel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(p->vaxi), -.5, 1, 0, 0));
-		form_mag_vf(set_vf(&(p->vpos), -200, 500, 0, 0));
+	if ((map = hmapf_cylinder_c(&node_orgin, 80.5, 25, 112, 0)) != NULL) {
+		map->ang_spd = 0;
+		map->ang_dpl = .761799;
+		set_vf(&(map->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
+		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
 	}
 
 	/* Inner hmap, to be attached to other nodes. */
-	if ((p = hmapf_cylinder_c(&node_orgin, 80, 25, 111.5, 0)) != NULL) {
-		p->ang_spd = 0;
-		p->ang_dpl = .761799;
-		set_vf(&(p->vvel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(p->vaxi), -.5, 1, 0, 0));
-		form_mag_vf(set_vf(&(p->vpos), -200, 500, 0, 0));
+	if ((map = hmapf_cylinder_c(&node_orgin, 80, 25, 111.5, 0)) != NULL) {
+		map->ang_spd = 0;
+		map->ang_dpl = .761799;
+		set_vf(&(map->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
+		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
 	}
-	buffer = (hmapf_t **) selectf_a;
-	*buffer = p;
-	select_t t = { 0, 0, (hmapf_t **) selectf_a, 0, NULL};
+	*buffer = map;
 	surface_inv_hmapf(&t);
 
-	thenode = mk_partial(thenode_message, p);
+	thenode = mk_partial(thenode_message, map);
 
 	/* Next partial. */
-	if ((p = hmapf_cylinder_c(&node_orgin, 80.5, 25, 112, 0)) != NULL) {
-		p->ang_spd = 0;
-		p->ang_dpl = -.761799;
-		set_vf(&(p->vvel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(p->vaxi), .5, 1, 0, 0));
-		form_mag_vf(set_vf(&(p->vpos), 200, 500, 0, 0));
+	if ((map = hmapf_cylinder_c(&node_orgin, 80.5, 25, 112, 0)) != NULL) {
+		map->ang_spd = 0;
+		map->ang_dpl = -.761799;
+		set_vf(&(map->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(map->vaxi), .5, 1, 0, 0));
+		form_mag_vf(set_vf(&(map->vpos), 200, 500, 0, 0));
 	}
 
-	if ((p = hmapf_cylinder_c(&node_orgin, 80, 25, 111.5, 0)) != NULL) {
-		p->ang_spd = 0;
-		p->ang_dpl = -.761799;
-		set_vf(&(p->vvel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(p->vaxi), .5, 1, 0, 0));
-		form_mag_vf(set_vf(&(p->vpos), 200, 500, 0, 0));
+	if ((map = hmapf_cylinder_c(&node_orgin, 80, 25, 111.5, 0)) != NULL) {
+		map->ang_spd = 0;
+		map->ang_dpl = -.761799;
+		set_vf(&(map->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(map->vaxi), .5, 1, 0, 0));
+		form_mag_vf(set_vf(&(map->vpos), 200, 500, 0, 0));
 	}
-	*buffer = p;
+	*buffer = map;
 	surface_inv_hmapf(&t);
 
-	nicenode = mk_partial(nicenode_message, p);
+	nicenode = mk_partial(nicenode_message, map);
 #endif /* DIAG_PARTIAL */
 }
 
@@ -185,8 +184,9 @@ regenerate_scene(vf_t *vpt)
 	   partial after resetting VRT_MASK_DIALOG_MODS and writing those to
 	   selectf_a. */
 
-	/* For now, simulate dialog introduced through modeling by transforming
-	   some node-orgin dialog to hmap 15 then calling node_orgin_dialog. */
+	/* For now, apply a test simulating dialog introduced through modeling
+	   by transforming some node-orgin dialog to hmap 15 then calling
+	   node_orgin_dialog. */
 	hmapf_t **map = (hmapf_t **) selectf_a;
 	static int recurrant = 0;
 	if (!recurrant++) {
@@ -219,14 +219,15 @@ mk_partial(char *desc, hmapf_t *nodemap)
 	select_t sel = { 0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
 	if ((partial = (partial_t *) malloc(sizeof(partial_t))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for partial struct\n",
 			__FILE__, __LINE__);
 		abort();
 	}
 
-	/* Get an empty node-partial session name. */
-	if ((lval = set_node_partial(&(partial->session))) != 0) {
+	/* Get an empty node-partial session name, for now. */
+	partial->session = 0;
+	if ((lval = set_node_partial(&(partial->session), "")) != 0) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Attemped addition of node-partial failed.\n"
 			"Perhaps vrt_max_*_sessions needs adjustment...\n",
@@ -235,11 +236,11 @@ mk_partial(char *desc, hmapf_t *nodemap)
 		return NULL;
 	} else
 		__builtin_printf("generated node-partial %x\n",
-			(int) partial->session);
+			partial->session);
 
 	/* Rewrite partial_generator_list, empty or not, in a swap buffer. */
 	if ((swap = (partial_t *) malloc((partials_count + 1) * sizeof(partial_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc swap for "
 			"partial_generator_list\n",
 			__FILE__, __LINE__);
@@ -256,7 +257,7 @@ mk_partial(char *desc, hmapf_t *nodemap)
 	free(partial_generator_list);
 	partial_generator_list = NULL;
 	if ((partial_generator_list = (partial_t *) malloc((partials_count + 1) * sizeof(partial_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc partial_generator_list\n",
 			__FILE__, __LINE__);
 		abort();
@@ -274,13 +275,13 @@ mk_partial(char *desc, hmapf_t *nodemap)
 	(*incpartial)->nodemap = nodemap;
 	(*incpartial)->list = mk_partial_maps_list(&(partial->session), desc);
 	add_to_partial_maps_list((*incpartial)->list, (*incpartial)->nodemap);
-	(*incpartial)->nodemap->name = (*incpartial)->session | (session_t) (*incpartial)->nodemap->index;
+	(*incpartial)->nodemap->name = (*incpartial)->session | (*incpartial)->nodemap->index;
 	(*incpartial)->nodemap->attribs.sign |= (VRT_MASK_PARTIAL | VRT_MASK_PARTIAL_MODS);
 
 	(&sel)->counta = select_partial_set((*incpartial)->list, (&sel)->seta);
 	diag_selection(&sel);
 	__builtin_printf("  description:\n%s\n  nodemap: %x\n",
-		(*incpartial)->desc, (int) ((*incpartial)->nodemap)->name);
+		(*incpartial)->desc, ((*incpartial)->nodemap)->name);
 
 	free(swap);
 
@@ -300,7 +301,7 @@ rm_partial(partial_t *partial)
 
 	/* Make a swap buffer of partials_count refrences. */
 	if ((swap = (partial_t *) malloc((partials_count) * sizeof(partial_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc partial_generator_list\n",
 			__FILE__, __LINE__);
 		abort();
@@ -315,8 +316,8 @@ rm_partial(partial_t *partial)
 			*incswap++ = *incpartial;
 		} else {
 			__builtin_printf(" removing: partial %x (%i/%i)\n%s\n",
-				(int) *(partial->list->session),
-				(((int) (incpartial - i) - (int) partial_generator_list) / (int) sizeof(partial_t *)) + 1,
+				*(partial->list->session),
+				(((int) (incpartial - i) - (int) partial_generator_list) / sizeof(partial_t *)) + 1,
 				partials_count, (*incpartial)->desc);
 			/* remove partial list leaving maps selected */
 			(&sel)->counta = select_partial_set(partial->list, (&sel)->seta);
@@ -326,7 +327,7 @@ rm_partial(partial_t *partial)
 
 	/* Test that the partial given was found. */
 	if ((int) (incswap - partials_count) == (int) partial_generator_list) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Partial given not found in "
 			"partial_generator_list\n",
 			__FILE__, __LINE__);
@@ -337,12 +338,12 @@ rm_partial(partial_t *partial)
 	recycle(&sel);
 
 	/* Free partial and write reduced partial_generator_list from swap. */
-	__builtin_printf(" freeing %x\n", (int) partial->session);
+	__builtin_printf(" freeing %x\n", partial->session);
 	free(partial);
 	partials_count--;
 	free(partial_generator_list);
 	if ((partial_generator_list = (partial_t *) malloc(partials_count * sizeof(partial_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc partial_generator_list\n",
 			__FILE__, __LINE__);
 		abort();
@@ -362,15 +363,15 @@ mk_partial_maps_list(session_t *session, char *desc)
 {
 	list_t *list;
 	if ((list = (list_t *) malloc(sizeof(list_t))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for partial_maps_list\n",
 			__FILE__, __LINE__);
 		abort();
 	}
 	list->session = session;
-	list->last = NULL; /* first in list will have a null precursor */
+	list->last = NULL; /* first in list will have a NULL precursor */
 	list->count = 0;
-	__builtin_printf(" new partial maps list: %x\n", (int) *session);
+	__builtin_printf(" new partial maps list: %x\n", *session);
 	return list;
 }
 
@@ -396,7 +397,7 @@ add_to_partial_maps_list(list_t *list, hmapf_t *map)
 	listed_t *listed;
 
 	if ((listed = (listed_t *) malloc(sizeof(listed_t))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for a partial_maps_list entry\n",
 			__FILE__, __LINE__);
 		abort();
@@ -528,10 +529,10 @@ void
 close_node_orgin(void)
 {
 	int i;
-	partial_t **p = (partial_t **) partial_generator_list;
+	partial_t **partial = (partial_t **) partial_generator_list;
 
 	for (i = partials_count; i > 0; i--)
-		rm_partial(*p);
+		rm_partial(*partial);
 
 	free_vohspace_memory();
 }
@@ -543,7 +544,7 @@ int
 resize_node_orgin(int size, int keep_connected)
 {
 	if (size < vrt_hmaps_max) {
-		__builtin_fprintf(stderr,  "vrtater: "
+		__builtin_fprintf(stderr, "vrtater: "
 			"Error: Reducing hmap memory currently unsupported\n");
 		return(-1);
 	} else {
@@ -608,8 +609,7 @@ diag_generator_key_f(void)
 void
 diag_generator_key_g(void)
 {
-	//test_select_partial_set();
-	test_hmapwrap_unwrap(p_hmapf(19));
+	test_hmapwrap_unwrap(p_hmapf(15));
 }
 
 /* Temporary diagnostic to run test on keypress h. */
@@ -659,7 +659,7 @@ test_send_partial_changes(void)
 		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
 		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
 	}
-	map->name = (*partial)->session | (session_t)map->index;
+	map->name = (*partial)->session | map->index;
 	add_to_partial_maps_list((*partial)->list, map);
 	map->attribs.sign |= (VRT_MASK_PARTIAL_MODS | VRT_MASK_PARTIAL);
 
@@ -688,13 +688,13 @@ test_cphmap(hmapf_t *a, hmapf_t *b)
 {
 	hmapf_t **p;
 
-	/* test copy_hmap() */
+	/* test cp_hmapf */
 	p = (hmapf_t **) selectf_a;
 	*p = a;
 	p = (hmapf_t **) selectf_b;
 	*p = b;
 	select_t t = { 0, 0, (hmapf_t **) selectf_a, 0, (hmapf_t **) selectf_b};
-	__builtin_printf("cphmaptest()\n");
+	__builtin_printf("cp_hmapf test\n");
 	cp_hmapf(&t);
 }
 
@@ -704,11 +704,12 @@ void
 test_hmapwrap_unwrap(hmapf_t *map)
 {
 	int i, *buffer = NULL; /* ref for allocated .vrtater int data */
-	hmapf_t **m, **maps_in = (hmapf_t **) selectf_a;
+	hmapf_t **testmap, **maps_in = (hmapf_t **) selectf_a;
 	hmapf_t **maps_out = (hmapf_t **) selectf_b;
 	select_t s = { 0, 0, maps_in, 0, maps_out };
 	hmapf_t *extra;
 	vf_t extra_location = { 0, 10000, 0, 10000 };
+	session_t testsession = 0x80860000;
 
 	*(maps_in++) = map;
 	(&s)->counta += 1;
@@ -716,7 +717,7 @@ test_hmapwrap_unwrap(hmapf_t *map)
 		nportf(extra, &extra_location);
 	*maps_in = extra;
 
-	__builtin_printf("\nhmapwrapf() test\n");
+	__builtin_printf("\nhmapwrapf test\n");
 
 #ifdef DIAG_STF
 	/* Single to file. */
@@ -745,42 +746,40 @@ test_hmapwrap_unwrap(hmapf_t *map)
 	hmapwrapf(&s, VRT_MASK_OPT_INTERNET | VRT_MASK_OPT_COMPOUNDED, NULL, (int **) &buffer);
 #endif
 
-	__builtin_printf("\nhmapunwrapf() test\n");
+	__builtin_printf("\nhmapunwrapf test\n");
 
 #ifdef DIAG_FF
 	/* From file. */
 	__builtin_printf("From file\n");
 	hmapunwrapf(&s, NULL, filename, NULL);
 	/* Test that hmap is selected. */
-	m = (&s)->setb;
-	for (i = 0; i < (&s)->countb; i++, m++) {
-		(*m)->ang_spd += .05;
-		__builtin_printf("map %i index %i\n", i, (*m)->index);
+	testmap = (&s)->setb;
+	for (i = 0; i < (&s)->countb; i++, testmap++) {
+		(*testmap)->ang_spd += .05;
+		__builtin_printf("map %i index %i\n", i, (*testmap)->index);
 	}
 #endif
 #ifdef DIAG_FFS
 	/* From file using given session name. */
 	__builtin_printf("From file using given session name\n");
-	session_t test = 0x80860000;
-	hmapunwrapf(&s, (session_t *) &test, filename, NULL);
+	hmapunwrapf(&s, (session_t *) &testsession, filename, NULL);
 	/* Test that hmap is selected. */
-	m = (&s)->setb;
-	for (i = 0; i < (&s)->countb; i++, m++) {
-		(*m)->ang_spd += .05;
-		__builtin_printf("map %i index %i\n", i, (*m)->index);
+	testmap = (&s)->setb;
+	for (i = 0; i < (&s)->countb; i++, testmap++) {
+		(*testmap)->ang_spd += .05;
+		__builtin_printf("map %i index %i\n", i, (*testmap)->index);
 	}
 #endif
 #ifdef DIAG_FB
 	/* From buffer (allocated int data). */
 	__builtin_printf("From buffer\n");
-	session_t test = 0x80860000;
 	/* Use reported session name vs. any in data. */
-	hmapunwrapf(&s, (session_t *) &test, NULL, buffer);
+	hmapunwrapf(&s, (session_t *) &testsession, NULL, buffer);
 	/* Test that hmap is selected. */
-	m = (&s)->setb;
-	for (i = 0; i < (&s)->countb; i++, m++) {
-		(*m)->ang_spd += .05;
-		__builtin_printf("map %i index %i\n", i, (*m)->index);
+	testmap = (&s)->setb;
+	for (i = 0; i < (&s)->countb; i++, testmap++) {
+		(*testmap)->ang_spd += .05;
+		__builtin_printf("map %i index %i\n", i, (*testmap)->index);
 	}
 #endif
 	if (buffer)

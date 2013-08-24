@@ -39,8 +39,7 @@ form_mag_vf(vf_t *a)
 
 /* Given vector a and desired magnitude m, set and return reference to vector
    result b with desired m and proportionally scaled direction.  If given a->m
-   is 0, b directional terms will reflect divide by zero return values.  If
-   result b has nullified direction components and given m, given a->m was 0. */
+   is 0, b directional terms will reflect divide by zero return values. */
 vf_t *
 tele_mag_vf(vf_t *a, vf_t *b, float m)
 {
@@ -72,7 +71,7 @@ tele_magz_vf(vf_t *a, vf_t *b, float n)
 			b->z = (a->z / a->m) * n;
 			b->m *= n < .0 ? -n : n;
 		}
-		/* Else a and b are null. */
+		/* Else a and b are the null vector. */
 	}
 	return b;
 }
@@ -135,7 +134,7 @@ normz_vf(vf_t *a, vf_t *b)
 			b->z = a->z / b->m;
 			b->m = 1.0;
 		}
-		/* Else a and b are null. */
+		/* Else a and b are the null vector. */
 	}
 	return b;
 }

@@ -48,7 +48,7 @@ intersection(select_t *sel)
 	   - determine bound geom
 	*/
 
-	hmapf_t *hmapa, *hmapb;
+	hmapf_t *mapa, *mapb;
 	vf_t *vvela, *vvelb;
 	vf_t vacca = {0, 0, 0, 0};
 	vf_t vaccb = {0, 0, 0, 0};
@@ -56,22 +56,22 @@ intersection(select_t *sel)
 	float touch, inter, ma, mb, scale;
 	float mva, mvb; /* for now */
 
-	hmapa = *(sel->seta);
-	hmapb = *(sel->setb);
+	mapa = *(sel->seta);
+	mapb = *(sel->setb);
 
 	scale = .00005;
 
-	dif_vf(&(hmapa->vpos), &(hmapb->vpos), &vdist);
-	touch = hmapa->envelope.vsz.x + hmapb->envelope.vsz.x;
+	dif_vf(&(mapa->vpos), &(mapb->vpos), &vdist);
+	touch = mapa->envelope.vsz.x + mapb->envelope.vsz.x;
 
-	if (hmapb->attribs.kg && (&vdist)->m < touch) {
+	if (mapb->attribs.kg && (&vdist)->m < touch) {
 
-		ma = hmapa->attribs.kg;
-		mb = hmapb->attribs.kg;
+		ma = mapa->attribs.kg;
+		mb = mapb->attribs.kg;
 		inter = touch - (&vdist)->m; /* -intersection */
 
 		/* Tend to hmap a. */
-		vvela = &(hmapa->vvel);
+		vvela = &(mapa->vvel);
 		/* m*v for now */
 		mva = ma * vvela->m;
 		/* Here calculate angle of reflection. */
@@ -82,7 +82,7 @@ intersection(select_t *sel)
 		sum_vf(&vacca, vvela, vvela);
 
 		/* Tend to hmap b. */
-		vvelb = &(hmapb->vvel);
+		vvelb = &(mapb->vvel);
 		mvb = mb * vvelb->m;
 		if (mvb)
 			tele_magz_vf(&vdist, &vaccb, scale * inter * ma / mvb);
@@ -90,48 +90,48 @@ intersection(select_t *sel)
 	}
 
 #ifdef DIAG_INTERSECTION
-	if (hmapb->index == 7) {
-		__builtin_printf("\n\nindex a: %i\n", hmapa->index);
+	if (mapb->index == 7) {
+		__builtin_printf("\n\nindex a: %i\n", mapa->index);
 		__builtin_printf("  vposa: x %f y %f z %f m %f\n",
-			hmapa->vpos.x, hmapa->vpos.y,
-			hmapa->vpos.z, hmapa->vpos.m);
+			mapa->vpos.x, hmapa->vpos.y,
+			mapa->vpos.z, hmapa->vpos.m);
 		__builtin_printf("  vvela: x %f y %f z %f m %f\n",
-			hmapa->vvel.x, hmapa->vvel.y,
-			hmapa->vvel.z, hmapa->vvel.m);
+			mapa->vvel.x, hmapa->vvel.y,
+			mapa->vvel.z, hmapa->vvel.m);
 		__builtin_printf("  vacca: x %f y %f z %f m %f\n",
 			(&vacca)->x, (&vacca)->y, (&vacca)->z, (&vacca)->m);
 		__builtin_printf("  vdist: x %f y %f z %f m %f\n",
 			(&vdist)->x, (&vdist)->y, (&vdist)->z, (&vdist)->m);
 		__builtin_printf("  vaxia: x %f y %f z %f m %f\n\n",
-			hmapa->vaxi.x, hmapa->vaxi.y,
-			hmapa->vaxi.z, hmapa->vaxi.m);
+			mapa->vaxi.x, hmapa->vaxi.y,
+			mapa->vaxi.z, hmapa->vaxi.m);
 		/* todo:
 		   Mass not assigned correctly. */
 		//__builtin_printf("   kg a: %f\n", ma);
-		__builtin_printf("    sza: %f\n", hmapa->envelope.vsz.x);
+		__builtin_printf("    sza: %f\n", mapa->envelope.vsz.x);
 		__builtin_printf("    mva: %f\n\n", mva);
 		__builtin_printf("  inter: %f\n", inter);
 		__builtin_printf("  touch: %f\n", touch);
 		__builtin_printf("  scale: %f\n\n", scale);
 		/* hmap other */
-		__builtin_printf("index b: %i\n", hmapb->index);
+		__builtin_printf("index b: %i\n", mapb->index);
 		__builtin_printf("  vposb: x %f y %f z %f m %f\n",
-			hmapb->vpos.x, hmapb->vpos.y,
-			hmapb->vpos.z, hmapb->vpos.m);
+			mapb->vpos.x, mapb->vpos.y,
+			mapb->vpos.z, mapb->vpos.m);
 		__builtin_printf("  vvelb: x %f y %f z %f m %f\n",
-			hmapb->vvel.x, hmapb->vvel.y,
-			hmapb->vvel.z, hmapb->vvel.m);
+			mapb->vvel.x, mapb->vvel.y,
+			mapb->vvel.z, mapb->vvel.m);
 		__builtin_printf("  vaccb: x %f y %f z %f m %f\n",
 			(&vaccb)->x, (&vaccb)->y, (&vaccb)->z, (&vaccb)->m);
 		__builtin_printf("  vaxib: x %f y %f z %f m %f\n\n",
-			hmapb->vaxi.x, hmapb->vaxi.y,
-			hmapb->vaxi.z, hmapb->vaxi.m);
+			mapb->vaxi.x, mapb->vaxi.y,
+			mapb->vaxi.z, mapb->vaxi.m);
 		 //__builtin_printf("   kg b: %f\n", mb);
-		__builtin_printf("    szb: %f\n", hmapb->envelope.vsz.x);
+		__builtin_printf("    szb: %f\n", mapb->envelope.vsz.x);
 		__builtin_printf("    mvb: %f\n\n", mvb);
 		usleep(10000);
 	}
-#endif /* DIAG_ISECTION */
+#endif /* DIAG_INTERSECTION */
 
 	return 0;
 }
@@ -158,19 +158,19 @@ int
 recycle(select_t *sel)
 {
 	int i;
-	hmapf_t **map = (hmapf_t **) (sel->seta);
+	hmapf_t **map = sel->seta;
 
 	for (i = 0; i < sel->counta; i++, map++) {
-		__builtin_printf(" recycling: %x\n", (int) (*map)->name);
+		__builtin_printf(" recycling: %x\n", (*map)->name);
 		(*map)->attribs.sign |= VRT_MASK_DETACH;
 	}
 
 	return 0;
 }
 
-/* Make a copy of (for now) a single hmap referenced as first item in
-   *(sel->seta) into hmap memory referenced as first item in *(sel->setb).
-   Receiving hmap retains name/index, session_filter, position, and kfactord. */
+/* Make a copy of (for now) a single hmap referenced thru sel->seta into hmap
+   memory referenced thru sel->setb.  Receiving hmap retains name/index,
+   session_filter, position, and kfactord. */
 int
 cp_hmapf(select_t *sel)
 {
@@ -236,7 +236,8 @@ cp_hmapf(select_t *sel)
 		b->dialog = NULL;
 	   if ((b->dialog = (int *) malloc(a->dialog_len * sizeof(int))) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
-				"Error: could not malloc dialog data copying hmap %i to %i\n",
+				"Error: could not malloc dialog data "
+				"copying hmap %i to %i\n",
 				__FILE__, __LINE__, a->index, b->index);
 			abort();
 		}
@@ -251,8 +252,8 @@ cp_hmapf(select_t *sel)
 }
 
 /* For c series hmaps, invert surface normals of (for now) a single hmap
-   referenced as first item in *(sel->seta) by inverting the precedence of
-   drawing for each vertice. */
+   refrenced thru sel->seta by inverting the precedence of drawing for each
+   vertice. */
 int
 surface_inv_hmapf(select_t *sel)
 {
@@ -293,7 +294,7 @@ surface_inv_hmapf(select_t *sel)
 
 /* Format and write hmaps in selectf_a vs. sel, in format specified by options,
    named name(if applicable) or available referenced by output.  filename and
-   output are exclusive, therefore filename must be null where reference output
+   output are exclusive, therefore filename must be NULL where reference output
    is to be used.  If filename is omitted, caller is expected to free data
    referenced by output after use.  Any file written will recieve .vrtater
    extension and be readable by hmapunwrapf now and in future versions.
@@ -301,8 +302,7 @@ surface_inv_hmapf(select_t *sel)
 int
 hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 {
-	int fd, *outbuf, *nxtmapsz, *dlg, *pb, *pi, i, j;
-	int bufsz = 0;
+	int fd, *pb, *pi, *outbuf, *dlg, *nxtmapsz, i, j, bufsz = 0;
 	float *pf;
 	hmapf_t **maps;
 	vf_t *v;
@@ -313,7 +313,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 	for (i = 0; i < sel->counta; i++, maps++)
 		bufsz += sizeof(hmapf_t) + ((*maps)->vmap_total * sizeof(vf_t)) + (((*maps)->dialog_len + 1) * sizeof(int));
 	if ((outbuf = (int *) malloc(bufsz)) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for outbuf\n",
 			__FILE__, __LINE__);
 		abort();
@@ -321,13 +321,13 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 
 	/* If not a file write, caller will reference outbuf as output. */
 	if (output)
-		*output = (int *) outbuf;
+		*output = outbuf;
 
 	__builtin_printf("Bufsz is %i bytes\n", bufsz);
 
 	maps = sel->seta;
-	pb = (int *) outbuf; /* pb is start of file. */
-	pi = (int *) pb + 1; /* a space for dotvrtater size vs. int */
+	pb = outbuf; /* pb is start of file. */
+	pi = pb + 1; /* a space for .vrtater size vs. int */
 	*pi++ = (int) options;
 
 	__builtin_printf("total_hmaps is %i\n", sel->counta);
@@ -450,10 +450,10 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 		__builtin_printf("dialog_len %i\n", (*maps)->dialog_len);
 
 		if (options & VRT_MASK_OPT_COMPOUNDED) {
-			/* Write map size at beginning of map. */
+			/* Write next maps size at beginning of map. */
 			*nxtmapsz = abs((int) pi - (int) nxtmapsz) / sizeof(int);
 
-			__builtin_printf("nxtmapsz is %i\n", *nxtmapsz);
+			__builtin_printf("hmapf size: %i\n", *nxtmapsz);
 
 		}
 	}
@@ -472,7 +472,8 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 	if (filename) {
 
 		if ((fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0644)) == -1) {
-			__builtin_printf("Couldn't create %s\n", filename);
+			__builtin_fprintf(stderr, "Error: Couldn't create %s\n",
+				filename);
 			return(-1);
 		}
 
@@ -491,7 +492,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 /* Read .vrtater file data filename or input, unwrapping and referencing it's
    hmap(s) into selectf_b vs. sel and writing or overwriting them into vohspace
    based on options within data.  Set VRT_OPT_MASK_BUFFER for each hmap implied.
-   If filename is not given input references data.  When input is not null,
+   If filename is not given input references data.  When input is not NULL,
    caller is expected to free input after use.  If VRT_MASK_OPT_COMPOUNDED is
    set there may be multiple maps.  If session is given an index unique for
    node-orgin and node-orgin originating maps is applied and map(s) implied
@@ -501,18 +502,15 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 int
 hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 {
-	int fd, size, sum = 0;
-	char *filebuf = NULL;
-	int total_maps = 0;
-	int i, graph, space, ctrl, null, *pi, *dialog = NULL;
+	int fd, i, sum, size, tl, graph, space, ctrl, null, *pi, *dialog = NULL;
 	float *pf;
-	graph = 0; space = 0; ctrl = 0; null = 0;
-	vf_t *rebuild;
+	char *filebuf = NULL;
 	ssize_t nread;
 	off_t filesz;
-	btoggles_t options;
 	hmapf_t **map;
+	vf_t *rebuild;
 	session_t current;
+	btoggles_t options;
 
 	if (filename) {
 		/* Read from filename. */
@@ -550,7 +548,7 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 	map = sel->setb;
 
 	/* Place all maps in the .vrtater file into vohspace. */
-	while (size > sum) {
+	for (tl = 0, sum = 0; size > sum; map++, tl++) {
 
 		/* Determine size for this map. */
 		if (options & VRT_MASK_OPT_COMPOUNDED) {
@@ -564,8 +562,7 @@ __builtin_printf("Byte total this pass %i\n", sum);
 
 		/* If data sessionless, hmapf requires session or break. If not,
 		   use session if provided else data provided session for hmapf.
-		   Use mapref to mask out hmapf where this is an update.  Skip
-		   over index in data where non minimal as hmapf sets it. */
+		   Use mapref to mask out hmapf call where this is an update. */
 		if (options & VRT_MASK_OPT_NULL_SESSION_NAME) {
 
 			if (session) {
@@ -619,10 +616,6 @@ __builtin_printf("Byte total this pass %i\n", sum);
 			form_mag_vf(rebuild);
 		else
 			rebuild->m = (float) *pf++;
-
-		/* test */
-		rebuild->y += 30.0;
-		form_mag_vf(rebuild);
 
 		__builtin_printf("pos: %f %f %f %f\n",
 			rebuild->x, rebuild->y, rebuild->z, rebuild->m);
@@ -765,7 +758,6 @@ __builtin_printf("Byte total this pass %i\n", sum);
 			pi = (int *) pf;
 		}
 
-
 		__builtin_printf("dialog_len: %i\n", (int) *pi);
 		if (((*map)->dialog_len = (int) *pi++)) {
 
@@ -775,6 +767,11 @@ __builtin_printf("Byte total this pass %i\n", sum);
 					__FILE__, __LINE__);
 				abort();
 			}
+
+			graph = 0;
+			space = 0;
+			ctrl = 0;
+			null = 0;
 
 			dialog = (*map)->dialog;
 			for (i = 0; i < (*map)->dialog_len;) {
@@ -806,10 +803,8 @@ __builtin_printf("Byte total this pass %i\n", sum);
 					i += 2;
 				}
 			}
+			__builtin_printf("dialog gscn: %i %i %i %i\n", graph, space, ctrl, null);
 		}
-		__builtin_printf("dialog gscn: %i %i %i %i\n", graph, space, ctrl, null);
-		total_maps++;
-		map++;
 	}
 
 	if (filename)
@@ -817,13 +812,8 @@ __builtin_printf("Byte total this pass %i\n", sum);
 	if (filebuf)
 		free(filebuf);
 
-	if (!(sel->counta = total_maps)) {
-		__builtin_printf("hmapunwrapf: Error, total maps %i\n", sel->counta);
-		return -1;
-	} else {
-		__builtin_printf("Total maps %i\n", sel->counta);
-		return 0;
-	}
+	__builtin_printf("Total maps %i\n", sel->countb);
+	return 0;
 }
 
 

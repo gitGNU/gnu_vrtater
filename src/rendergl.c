@@ -4,6 +4,7 @@
 */
 
 #include <GL/gl.h>
+#include <stdio.h>
 #include "rendergl.h"
 #include "vectors.h"
 #include "rotation.h"
@@ -51,18 +52,18 @@ init_next_buffer(void)
 
 /* Called per hmap per frame, draw hmap vs. lod given VRT_DRAWGEOM_* support. */
 void
-render_hmapf(hmapf_t *hmap, int lod)
+render_hmapf(hmapf_t *map, int lod)
 {
 	int i, j;
-	vf_t v, nv, edge, plane, *vmap = hmap->vmap;
+	vf_t v, nv, edge, plane, *vmap;
 	GLfloat glv[3][3], gln[3];
 
 	/* Tend to lod issues, possibly buffering hmaps, vs. lod value. */
 	switch (lod) {
 
 		case VRT_MASK_LOD_INF:
-		fov0 = hmap; /* vs. filter in proc_hmapf() sent once, first */
-		vpt = &(hmap->vpos);
+		fov0 = map; /* vs. filter in proc_hmapf sent once, first */
+		vpt = &(map->vpos);
 		break;
 
 		case VRT_MASK_LOD_NEAR:
@@ -78,55 +79,56 @@ render_hmapf(hmapf_t *hmap, int lod)
 	/* Translate to where the optical axis eminates from the focal plane. */
 	glTranslatef(-vpt->x, -vpt->y, -vpt->z);
 
-	switch (hmap->draw.geom) {
+	switch (map->draw.geom) {
 
 		case VRT_DRAWGEOM_NONE:
 		break;
 
 		case VRT_DRAWGEOM_TRIANGLES:
-		
-		for (i = 0; i < hmap->vmap_total / 3; i++) {
+
+		vmap = map->vmap;
+		for (i = 0; i < map->vmap_total / 3; i++) {
 			for (j = 0; j < 3; j++, vmap++) {
 
 				cp_vf(vmap, &v);
-				rotate_vf(&v, &(hmap->vaxi), hmap->ang_dpl);
+				rotate_vf(&v, &(map->vaxi), map->ang_dpl);
 
 				/* Format vertices for rendering. */
-				glv[j][0] = (GLfloat) (&v)->x + hmap->vpos.x;
-				glv[j][1] = (GLfloat) (&v)->y + hmap->vpos.y;
-				glv[j][2] = (GLfloat) (&v)->z + hmap->vpos.z;
+				glv[j][0] = (GLfloat) (&v)->x + map->vpos.x;
+				glv[j][1] = (GLfloat) (&v)->y + map->vpos.y;
+				glv[j][2] = (GLfloat) (&v)->z + map->vpos.z;
 
 				/* Add colors/effects for diagnostic use. */
-				if ((hmap->index >= 0) && (hmap->index <= 5)) {
-					if (hmap->index == 0) {
+				if ((map->index >= 0) && (map->index <= 5)) {
+					if (map->index == 0) {
 						YEL();
 						if (i == 0)
 							RED();
 					}
-					if (hmap->index == 1) {
+					if (map->index == 1) {
 						GRN();
 						if (i == 0)
 							RED();
 						if (i == 1)
 							YEL();
 					}
-					if (hmap->index == 2) {
+					if (map->index == 2) {
 						YEL();
 						if (i == 0)
 							RED();
 						if (i == 1)
 							GRN();
 					}
-					if (hmap->index == 3)
+					if (map->index == 3)
 						ORN();
-					if (hmap->index == 4)
+					if (map->index == 4)
 						BLU();
-					if (hmap->index == 5)
+					if (map->index == 5)
 						VLT();
 				} else
 					GRN();
 #ifdef DIAG_EFFECT
-				if ((hmap->index >= 20) & (hmap->index <= 23)) {
+				if ((map->index >= 20) & (map->index <= 23)) {
 					static int osc = 0;
 					if ((osc++) % 2) {
 						GRN();
@@ -162,13 +164,13 @@ render_hmapf(hmapf_t *hmap, int lod)
 		break;
 
 		case VRT_DRAWGEOM_LINES:
-		for (i = 0; i < hmap->vmap_total; i++) {
+		for (i = 0; i < map->vmap_total; i++) {
 			;
 		}
 		break;
 
 		default:
-		__builtin_printf("renderer: err, unsupported hmap geom.\n");
+		__builtin_fprintf(stderr, "Error: Unsupported hmap geometry\n");
 		break;
 	}
 	glTranslatef(vpt->x, vpt->y, vpt->z);

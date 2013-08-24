@@ -41,8 +41,10 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_DIALOG_MODS (1 << VRT_ORDINAL_DIALOG_MODS)
 	VRT_ORDINAL_PARTIAL_MODS, /* sync with nodes in running set */
 #define VRT_MASK_PARTIAL_MODS (1 << VRT_ORDINAL_PARTIAL_MODS)
-	VRT_ORDINAL_RENDER_DIALOG /* if set and implemented, render dialog */
+	VRT_ORDINAL_RENDER_DIALOG, /* if set and implemented, render dialog */
 #define VRT_MASK_RENDER_DIALOG (1 << VRT_ORDINAL_RENDER_DIALOG)
+	VRT_ORDINAL_PLAYFAIR /* option for node attribs symmetry checking */
+#define VRT_MASK_PLAYFAIR (1 << VRT_ORDINAL_PLAYFAIR)
 };
 
 enum { /* attribs_t mode, tested in context based functions */

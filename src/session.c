@@ -9,10 +9,10 @@
 
 /* For now.  These will soon be allocated when running. */
 session_desc_t all_sessions[VRT_MAX_CUED_SESSIONS];
-prev_caller_sessions_t prev_caller_sessions[VRT_MAX_PREV_CALLER_SESSIONS];
+caller_sessions_t caller_sessions[VRT_MAX_PREV_CALLER_SESSIONS];
 
-int generate_session_name_from_files_in_dir(session_t *);
-int get_session_name_from_file_in_dir(session_t *);
+int generate_session_name_from_files_in_dir(session_t *, char *seedfiles);
+int get_session_name_from_file_in_dir(session_t *, char *seedfiles);
 session_desc_t *match_vs_all_sessions(session_t *);
 int complete_negotiation(session_desc_t *);
 void read_from_network(void);
@@ -25,70 +25,72 @@ init_sessions(void)
 	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++)
 		(&all_sessions[i])->session = 0;
 	for (i = 0; i < VRT_MAX_PREV_CALLER_SESSIONS; i++)
-		(&prev_caller_sessions[i])->session = 0;
+		(&caller_sessions[i])->session = 0;
 }
 
-/* For now, produce a random session name/number 0-65536/0-65536 in session.
-   Return status to caller.  notes: The session name produced/retrieved needs no
-   connection.  Given session will however appear in a_all_sessions[].
-   Currently session_t is of int type.  This will require expansion somehow.
-   When it does change, there will be some adjustment needed for new struct
-   details chosen.  A set of functions for converting and testing the eventual
-   session name's may thus needs be implemented or found.  As it stands,
-   vrt_hmaps_max must be <= 65536 and session uniqueness has a 1:65536 chance
-   of being unique.  This is pretty sub-optimal, however it will be fine for
-   testing sessions. */
+/* Produce session name referenced by session also clobbering it's value to file
+   seedfiles/uniqueness and setting up a struct for session referenced in
+   all_sessions.  If session referenced 0, implement a random session name of
+   for now 16 bits with 16 bits of trailing zero's, else apply session given.
+   Return 0 if seedfiles/ had ordinary files therein, otherwise return 1.  If
+   seedfiles/ is not a directory fail returning -1.  If node-orgin changes
+   replace node-orgin in all_sessions.  notes: Same contents in seedfiles/ must
+   always produce same session name.  session name derived needs no connection
+   even though it appears in all_sessions.  Currently session_t is of int type
+   and has somewhat wimpy namespace leverage.  Expansion of the session name
+   then desires a set of functions for converting and testing expanded to
+   ease adjustment needed so these then would need to be implemented or found.
+   The current situation will hopefully be adequate for testing. */
 int
-set_node_orgin(session_t *session)
+set_node_orgin(session_t *session, char *seedfiles)
 {
-	/* If not provided generate a node-orgin session from
-	   .vrtater/session/ln_seedfiles/.  If ln_seedfiles/ is empty generate
-	   new session name returning VRT_VANILLA_SESSION. */
+	/* If not provided, generate a node-orgin session from seedfiles/. */
 	if (!(*session))
-		*session = (session_t) (rand() << 16); /* for now */
+		*session = rand() << 16; /* for now */
 
-	/* Backup node-orgin session .vrtater/session/ln_orgin/uniqueness to
-	   .vrtater/session/ln_orgin/, if one is running. */
+	/* Clobber session name to seedfiles/uniqueness. */
 	/* ... */
 
-	/* Set current session for node-orgin in .vrtater/session/ln_session. */
+	/* Write session info to all_sessions. */
 	/* ... */
 
-	return 0;
+	return 0; /* for now */
 }
 
-/* For now, produce a random session name/number 0-65536/0-65536 in session.
-   Return status to caller. */
+/* Produce session name referenced by session also clobbering it's value to file
+   seedfiles/uniqueness and setting up a struct for session referenced in
+   all_sessions.  If session referenced 0, implement a random session name of
+   for now 16 bits with 16 bits of trailing zero's, else apply session given.
+   Return 0 if seedfiles/ had ordinary files therein, otherwise return 1.  If
+   seedfiles/ is not a directory fail returning -1. */
 int
-set_node_partial(session_t *session)
+set_node_partial(session_t *session, char *seedfiles)
 {
-	/* If any, backup last node-partial to .vrtater/session/ln_partial/. */
+	/* If not provided, generate a node-partial session from seedfiles/. */
+	if (!(*session))
+		*session = rand() << 16; /* for now */
+
+	/* Clobber session name to seedfiles/uniqueness. */
 	/* ... */
 
-	/* If not provided generate a node-partial session from
-	   .vrtater/session/ln_seedfiles/.  If ln_seedfiles/ is empty generate
-	   new session name returning VRT_VANILLA_SESSION. */
-	*session = (session_t) (rand() << 16);
+	/* Write session info to all_sessions. */
+	/* ... */
 
-	return 0;
+	return 0; /* for now */
 }
 
-/* Set session and value referenced by ~/.vrtater/session/ln_session/uniqueness,
-   to value generated from .vrtater/session/ln_seedfiles if file(s) exist
-   therein, then returning zero.  Otherwise, generate new session name returning
-   VRT_VANILLA_SESSION or something else for any error. */
+/* Generate session name referenced by session from files in seedfiles/.  Return
+   0, else -1 on error. */
 int
-generate_session_name_from_files_in_dir(session_t *session)
+generate_session_name_from_files_in_dir(session_t *session, char *seedfiles)
 {
-	*session = (0 | (session_t) (rand() << 16)); /* for now */
-
 	return 0;
 }
 
-/* Get value referenced by ~/.vrtater/session/ln_session/uniqueness.  Set
-   session to this value.  Return zero on success. */
+/* Copy session name in seedfiles/uniqueness to struct referenced by session.
+   Return 0, else -1 on error. */
 int
-get_session_name_from_file_in_dir(session_t *session)
+get_session_name_from_file_in_dir(session_t *session, char *seedfiles)
 {
 	return 0;
 }
@@ -108,11 +110,11 @@ session_descriptions(void)
 }
 
 /* Return reference to any previous caller sessions given in configured backup
-   of node-partial.  Return null pointer if none. */
-prev_caller_sessions_t *
+   of node-partial.  Return NULL if none. */
+caller_sessions_t *
 previous_caller_sessions(void)
 {
-	return prev_caller_sessions;
+	return caller_sessions;
 }
 
 /* This may cue a session for given or list_nodes remote node ip address.
@@ -121,7 +123,7 @@ int
 call_session(char *address)
 {
 	/* Try to cue on remote with previous and current session numbers.
-	   If successfull, cued session will appear in a_all_sessions[].
+	   If successfull, cued session will appear in all_sessions.
 	   Statefull maintainance function will need to poll input for
 	   responce. */
 	/* ... */
@@ -134,13 +136,13 @@ call_session(char *address)
    is assumed while session_num remains in session_desc data.  If a cued
    session can not be connected return nonzero. */
 int
-accept_called_partial_session(session_t *session_num, char *passwd)
+accept_called_partial_session(session_t *session, char *passwd)
 {
 	session_desc_t *session_desc;
 	int rval = -1;
 
-	if ((session_desc = match_vs_all_sessions(session_num)) !=  NULL)
-		if((rval = complete_negotiation(session_desc)) == SUCCESS);
+	if ((session_desc = match_vs_all_sessions(session)) !=  NULL)
+		if((rval = complete_negotiation(session_desc)) == 0);
 			return rval;
 
 	return rval;
@@ -156,23 +158,22 @@ accept_caller_partial_session(session_t *session_num)
 	int rval = -1;
 
 	if ((session_desc = match_vs_all_sessions(session_num)) !=  NULL)
-		if((rval = complete_negotiation(session_desc)) == SUCCESS);
+		if((rval = complete_negotiation(session_desc)) == 0);
 			return rval;
 
 	return rval;
 }
 
-/* Return reference to session description matching session_num or null if
-   not found. */
+/* Return reference to session description matching session or NULL if none. */
 session_desc_t *
 match_vs_all_sessions(session_t *session)
 {
-	session_desc_t *p = all_sessions;
+	session_desc_t *session_desc = all_sessions;
 	int i;
 
-	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++, p++)
-		if ((p->session == *session) | (p->session == 0))
-			return p;
+	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++, session_desc++)
+		if ((session_desc->session == *session))
+			return session_desc;
 
 	return NULL;
 }
@@ -222,15 +223,15 @@ read_from_network(void)
 void
 buffer_maps_to_peer_partial(session_t *session, select_t *sel)
 {
-	hmapf_t **p;
+	hmapf_t **map;
 	int i;
 
-	p = (hmapf_t **) (sel->seta);
+	map = sel->seta;
 	__builtin_printf(" session.c: pretending to buffer partial %x "
 		"for transmit to another node,\n  buffering...\n",
-		(int) *session);
-	for (i = 0; i < sel->counta; i++, p++)
-		__builtin_printf("  map %x\n", (int) ((*p)->name));
+		*session);
+	for (i = 0; i < sel->counta; i++, map++)
+		__builtin_printf("  map %x\n", ((*map)->name));
 }
 
 /* For any recieved hmap data unpacked thru hmapunwrapf and connected to
@@ -245,8 +246,8 @@ buffer_maps_to_peer_partial(session_t *session, select_t *sel)
 hmapf_t *
 recieve_maps_from_peer_partial(session_t *session, select_t *sel)
 {
-	hmapf_t *rval = NULL;
-	return rval;
+	hmapf_t *map = NULL;
+	return map;
 }
 
 /* Close session referenced by session_desc.  Return zero on closed. */

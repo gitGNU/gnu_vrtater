@@ -157,9 +157,9 @@ void
 setup_dialog_interface(void)
 {
 	/* pre-alpha dialog version */
-	hmapf_t **p = (hmapf_t **) selectf_a;
-	*p = diagtext0;
 	select_t text = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
+	hmapf_t **map = (&text)->seta;
+	*map = diagtext0;
 	add_dialog(&text, diagtextmsg, strlen(diagtextmsg), diagtext0->dialog_len);
 }
 
@@ -179,7 +179,7 @@ node(int argc, char **argv)
 	setup_glx(argc, argv);
 	generate_node_orgin();
 
-	fov0 = (hmapf_t *) p_hmapf(0); /* for now */
+	fov0 = p_hmapf(0); /* for now */
 	fov0_available = 1; /* will be default in vanilla config file */
 
 	/* For pre-alpha dialog. */
@@ -205,7 +205,7 @@ node(int argc, char **argv)
 	set_vf(&(fov0->vpos), 0, 0, 0, 0); /* oa@fp */
 
 	/* Some hmaps for diagnostic purpose follow. */
-	ryg = (hmapf_t *) p_hmapf(1);
+	ryg = p_hmapf(1);
 	ryg->ang_spd = .25;
 	ryg->ang_dpl = 0;
 	set_vf(&(ryg->vvel), 0, 0, 0, 0);
@@ -213,7 +213,7 @@ node(int argc, char **argv)
 	set_vf(&(ryg->vpos), 0, 495, -10, 0);
 	form_mag_vf(&(ryg->vpos));
 
-	ryg1 = (hmapf_t *) p_hmapf(2);
+	ryg1 = p_hmapf(2);
 	ryg1->ang_spd = .25;
 	ryg1->ang_dpl = 3.141592;
 	set_vf(&(ryg1->vvel), 0, 0, 0, 0);
@@ -221,47 +221,47 @@ node(int argc, char **argv)
 	set_vf(&(ryg1->vpos), 0, 495, 10, 0);
 	form_mag_vf(&(ryg1->vpos));
 
-	diag1 = (hmapf_t *) p_hmapf(3);
+	diag1 = p_hmapf(3);
 	diag1->ang_spd = .000012; 
 	set_vf(&(diag1->vvel), 0, .1, 0, .1);
 	set_vf(&(diag1->vaxi), 0, 0, -1.0, 1);
 	set_vf(&(diag1->vpos), 70.71, 70.71, 70.71, 10);
 
-	diag2 = (hmapf_t *) p_hmapf(4);
+	diag2 = p_hmapf(4);
 	diag2->ang_spd = .000010;
 	set_vf(&(diag2->vvel), 0, .1, 0, .1);
 	set_vf(&(diag2->vaxi), 0, 0, -1.0, 1);
 	set_vf(&(diag2->vpos), 70.71, 70.71, -70.71, 10);
 
-	diag3 = (hmapf_t *) p_hmapf(5);
+	diag3 = p_hmapf(5);
 	diag3->ang_spd = .000015;
 	set_vf(&(diag3->vvel), 0, .1, 0, .1);
 	set_vf(&(diag3->vaxi), 0, 0, -1.0, 1);
 	set_vf(&(diag3->vpos), 70.71, -70.71, 70.71, 10);
 
 	/* diag: std basis */
-	diag4 = (hmapf_t *) p_hmapf(6);
+	diag4 = p_hmapf(6);
 	diag4->ang_spd = 0;
 	set_vf(&(diag4->vvel), 0, 0, 0, 0);
 	set_vf(&(diag4->vaxi), 0, 0, -1.0, 1);
 	set_vf(&(diag4->vpos), 0, 0, 0, 0);
 	cp_vf(&isb, &(diag4->vpos));
 
-	diag5 = (hmapf_t *) p_hmapf(7);
+	diag5 = p_hmapf(7);
 	diag5->ang_spd = 0;
 	set_vf(&(diag5->vvel), 0, 0, 0, 0);
 	set_vf(&(diag5->vaxi), 0, 0, -1.0, 1);
 	set_vf(&(diag5->vpos), 0, 0, 0, 0);
 	cp_vf(&jsb, &(diag5->vpos));
 
-	diag6 = (hmapf_t *) p_hmapf(8);
+	diag6 = p_hmapf(8);
 	diag6->ang_spd = 0;
 	set_vf(&(diag6->vvel), 0, 0, 0, 0);
 	set_vf(&(diag6->vaxi), 0, 0, -1.0, 1);
 	set_vf(&(diag6->vpos), 0, 0, 0, 0);
 	cp_vf(&ksb, &(diag6->vpos));
 
-	diag8 = (hmapf_t *) p_hmapf(19);
+	diag8 = p_hmapf(19);
 	diag8->ang_spd = 0;
 	diag8->ang_dpl = M_PI_2;
 	set_vf(&(diag8->vvel), 0, 0, 0, 0);
@@ -684,10 +684,10 @@ node(int argc, char **argv)
 			(&ifdpy0)->keytilt, (&ifdpy0)->keyvfwd,
 			(&ifdpy0)->keyvvrt, (&ifdpy0)->keyvside);
 
-		hmapf_t **p = (hmapf_t **) selectf_a;
-		*p = diagtext0;
-		select_t kbd = { 0, 1, (hmapf_t **) p, 0, NULL };
-		node_orgin_dialog(&kbd);
+		select_t textbuf = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
+		hmapf_t **map = (&textbuf)->seta;
+		*map = diagtext0;
+		node_orgin_dialog(&textbuf);
 #endif
 
 #ifdef DIAG_TIME
@@ -797,9 +797,9 @@ diag_char(char c)
 {
 	int sc[2] = { '\0', '\0' };
 
-	hmapf_t **p = (hmapf_t **) selectf_a;
-	*p = diagtext0;
 	select_t dialog_sela = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
+	hmapf_t **map = (&dialog_sela)->seta;
+	*map = diagtext0;
 	*sc = (int) c;
 	add_dialog(&dialog_sela, (char *) sc, 1, diagtext0->dialog_len);
 }
@@ -833,6 +833,6 @@ diag_message(void)
 		"vrtater GNU free software.\n"
 		"Please send patches, or become a maintainer, "
 		"see README.\n"
-		"Outreach drive (eta. mid Aug) coming, for "
+		"Outreach drive almost ready for "
 		"session.c, renderer, more...\n");
 }

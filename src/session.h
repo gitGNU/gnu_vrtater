@@ -43,17 +43,17 @@ enum { /* session_desc_t level */
 #define VRT_MASK_SESSION_INBOUND (1 << VRT_ORDINAL_SESSION_INBOUND)
 };
 
-struct prev_caller_sessions {
+struct caller_sessions_s {
 	session_t session;
 };
-typedef struct prev_caller_sessions prev_caller_sessions_t;
+typedef struct caller_sessions_s caller_sessions_t;
 
 void init_sessions(void);
-int set_node_orgin(session_t *);
-int set_node_partial(session_t *);
+int set_node_orgin(session_t *, char *seedfiles);
+int set_node_partial(session_t *, char *seedfiles);
 void list_nodes(char *);
 session_desc_t *session_descriptions(void);
-prev_caller_sessions_t *previous_caller_sessions(void);
+caller_sessions_t *previous_caller_sessions(void);
 int call_session(char *);
 int accept_called_partial_session(session_t *, char *passwd);
 int accept_caller_partial_session(session_t *);

@@ -24,41 +24,41 @@
 #define CUBE_C_BOUND0 QDR_SZ
 
 /* Enscribe an icosahedron_c VRT_DRAWGEOM_TRIANGLES hmap attached to session,
-   with a radius of r.  Return null pointer if vohspace full. */
+   with a radius of r.  Return NULL if vohspace full. */
 hmapf_t *
 hmapf_icosahedron_c(session_t *session, float r)
 {
 	int i, j;
 	vf_t av[3], *tri, *vmap, *pd, **ppd = &pd;
-	hmapf_t *hmap;
+	hmapf_t *map;
 
 	int icosahedron_c_idx[VRT_ICOSAHEDRON_C_FCOUNT][3] = {{0, 1, 3}, {0, 3, 5}, {0, 5, 4}, {0, 4, 2}, {0, 2, 1}, {1, 7, 3}, {3, 7, 9}, {3, 9, 5}, {5, 9, 10}, {4, 5, 10}, {4, 10, 8}, {2, 4, 8}, {2, 8, 6}, {1, 2, 6}, {1, 6, 7}, {6, 11, 7}, {7, 11, 9}, {9, 11, 10}, {8, 10, 11}, {6, 8, 11}};
 
 	float a_icosahedron_c[12][3] = {{0, ISL2+ENDH, 0}, {0, ISL2, ATIP}, {-LNK, ISL2, WKY}, {LNK, ISL2, WKY}, {-ETIP, ISL2, -AEDG}, {ETIP, ISL2, -AEDG}, {-ETIP, -ISL2, AEDG}, {ETIP, -ISL2, AEDG}, {-LNK, -ISL2, -WKY}, {LNK, -ISL2, -WKY}, {0, -ISL2, -ATIP}, {0, -ISL2-ENDH, 0}};
 
 	/* Attach an hmap. */
-	if (!(hmap = hmapf(session)))
+	if (!(map = hmapf(session)))
 		return NULL;
 
 	/* hmap attribs. */
-	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
-	hmap->envelope.geom = VRT_BOUND_SPHERE;
-	hmap->envelope.vsz.x = ICOSAHEDRON_C_BOUND0 * r;
-	form_mag_vf(&(hmap->envelope.vsz));
-	hmap->attribs.kg = 4.18879020479 * r * r * r;
+	map->draw.geom = VRT_DRAWGEOM_TRIANGLES;
+	map->envelope.geom = VRT_BOUND_SPHERE;
+	map->envelope.vsz.x = ICOSAHEDRON_C_BOUND0 * r;
+	form_mag_vf(&(map->envelope.vsz));
+	map->attribs.kg = 4.18879020479 * r * r * r;
 
 	/* Allocate for hmap data. */
-	hmap->vmap_total = VRT_ICOSAHEDRON_C_FCOUNT * 3;
-	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	map->vmap_total = VRT_ICOSAHEDRON_C_FCOUNT * 3;
+	if ((vmap = (vf_t *) malloc(map->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
-			__FILE__, __LINE__, hmap->index);
+			__FILE__, __LINE__, map->index);
 		abort();
 	}
-	hmap->vmap = vmap; /* maintain vmap in hmap */
+	map->vmap = vmap; /* maintain vmap in hmap */
 
 	/* Fill in hmap data. */
-	*ppd = hmap->vmap;
+	*ppd = map->vmap;
 	for (i = 0; i < VRT_ICOSAHEDRON_C_FCOUNT; i++) {
 		for (j=0, tri=av; j<3; j++, tri++) {
 			tri->x = a_icosahedron_c[icosahedron_c_idx[i][j]][0] * r;
@@ -69,43 +69,43 @@ hmapf_icosahedron_c(session_t *session, float r)
 		add_tri_to_hmapf(av, ppd);
 	}
 
-	return hmap;
+	return map;
 }
 
 /* Enscribe a cube_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
-   length l, width w, and height h.  Return null pointer if vohspace full. */
+   length l, width w, and height h.  Return NULL if vohspace full. */
 hmapf_t *
 hmapf_cube_c(session_t *session, float l, float w, float h)
 {
 	int i, j;
 	vf_t av[3], *tri, *vmap, *pd, **ppd = &pd;
-	hmapf_t *hmap;
+	hmapf_t *map;
 
 	int cube_c_idx[VRT_CUBE_C_FCOUNT][3] = {{2, 3, 1}, {1, 0, 2}, {6, 7, 3}, {3, 2, 6}, {7, 5, 1}, {1, 3, 7}, {5, 4, 0}, {0, 1, 5}, {4, 6, 2}, {2, 0, 4}, {4, 5, 7}, {7, 6, 4}};
 
 	float a_cube_c[8][3] = {{-QDR_SZ, QDR_SZ, -QDR_SZ}, {QDR_SZ, QDR_SZ, -QDR_SZ}, {-QDR_SZ, QDR_SZ, QDR_SZ}, {QDR_SZ, QDR_SZ, QDR_SZ}, {-QDR_SZ, -QDR_SZ, -QDR_SZ}, {QDR_SZ, -QDR_SZ, -QDR_SZ}, {-QDR_SZ, -QDR_SZ, QDR_SZ}, {QDR_SZ, -QDR_SZ, QDR_SZ}};
 
-	if (!(hmap = hmapf(session)))
+	if (!(map = hmapf(session)))
 		return NULL;
 
-	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
-	hmap->envelope.geom = VRT_BOUND_RCUBOID;
-	hmap->envelope.vsz.x = CUBE_C_BOUND0 * w / 2;
-	hmap->envelope.vsz.y = CUBE_C_BOUND0 * h / 2;
-	hmap->envelope.vsz.z = CUBE_C_BOUND0 * l / 2;
-	form_mag_vf(&(hmap->envelope.vsz));
-	hmap->attribs.kg = l * w * h;
+	map->draw.geom = VRT_DRAWGEOM_TRIANGLES;
+	map->envelope.geom = VRT_BOUND_RCUBOID;
+	map->envelope.vsz.x = CUBE_C_BOUND0 * w / 2;
+	map->envelope.vsz.y = CUBE_C_BOUND0 * h / 2;
+	map->envelope.vsz.z = CUBE_C_BOUND0 * l / 2;
+	form_mag_vf(&(map->envelope.vsz));
+	map->attribs.kg = l * w * h;
 
-	hmap->vmap_total = VRT_CUBE_C_FCOUNT * 3;
-	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	map->vmap_total = VRT_CUBE_C_FCOUNT * 3;
+	if ((vmap = (vf_t *) malloc(map->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
-			__FILE__, __LINE__, hmap->index);
+			__FILE__, __LINE__, map->index);
 		abort();
 	}
-	hmap->vmap = vmap; /* maintain vmap in hmap */
+	map->vmap = vmap; /* maintain vmap in hmap */
 
-	*ppd = hmap->vmap;
+	*ppd = map->vmap;
 	for (i = 0; i < VRT_CUBE_C_FCOUNT; i++) {
 		for (j=0, tri=av; j<3; j++, tri++) {
 			tri->x = a_cube_c[cube_c_idx[i][j]][0] * l;
@@ -116,20 +116,20 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 		add_tri_to_hmapf(av, ppd);
 	}
 
-	return hmap;
+	return map;
 }
 
 /* Enscribe a cylinder_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
    radius r, capedges e, length l, and threads t per that length.  t may be 0.
    The first and last threads have end taper's adding an extra thread length.
    n length/(threads + 1) sized lengths are created, the threads and the taper
-   set contained therein them.  Return null pointer if vohspace full. */
+   set contained therein them.  Return NULL if vohspace full. */
 hmapf_t *
 hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 {
 	int i, j;
 	vf_t a, b, c, *tri, *itr, *vmap;
-	hmapf_t *hmap;
+	hmapf_t *map;
 	float yoffset = l / 2; /* scaling vs. y axis of hmap */
 	float halfa = 2 * M_PI / e; /* half corner angle */
 	float lpthread = l / (t + 1); /* cylinder length per thread */
@@ -148,24 +148,24 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	float tproffs = tprend / e; /* taper offset */
 #endif
 
-	if (!(hmap = hmapf(session)))
+	if (!(map = hmapf(session)))
 		return NULL;
 
-	hmap->draw.geom = VRT_DRAWGEOM_TRIANGLES;
-	hmap->envelope.geom = VRT_BOUND_CYLINDER;
-	hmap->envelope.vsz.x = r;
-	hmap->envelope.vsz.y = l / 2;
-	hmap->envelope.vsz.z = 0;
-	form_mag_vf(&(hmap->envelope.vsz));
+	map->draw.geom = VRT_DRAWGEOM_TRIANGLES;
+	map->envelope.geom = VRT_BOUND_CYLINDER;
+	map->envelope.vsz.x = r;
+	map->envelope.vsz.y = l / 2;
+	map->envelope.vsz.z = 0;
+	form_mag_vf(&(map->envelope.vsz));
 
-	hmap->vmap_total = 3 * ((e * 2 * (3 + t)) - 2);
-	if ((vmap = (vf_t *) malloc(hmap->vmap_total * sizeof(vf_t))) == NULL) {
+	map->vmap_total = 3 * ((e * 2 * (3 + t)) - 2);
+	if ((vmap = (vf_t *) malloc(map->vmap_total * sizeof(vf_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for hmap %i\n",
-			__FILE__, __LINE__, hmap->index);
+			__FILE__, __LINE__, map->index);
 		abort();
 	}
-	hmap->vmap = vmap; /* maintain vmap in hmap */
+	map->vmap = vmap; /* maintain vmap in hmap */
 
 	/* Cylinder top. */
 	itr = tri = (vf_t *) vmap;
@@ -304,9 +304,9 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	}
 
 	/* Volume for caller to set mass. */
-	hmap->attribs.kg = M_PI * r * r * l;
+	map->attribs.kg = M_PI * r * r * l;
 
-	return hmap;
+	return map;
 }
 
 /* Add triangle referenced by av to hmap data referenced through *p. */

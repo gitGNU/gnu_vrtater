@@ -49,7 +49,7 @@ void flow_over(btoggles_t *balance_criteria);
 float estimate_radiusf(hmapf_t *);
 void wanderf(hmapf_t *hmap, float e, float m, float r);
 
-/* Set up hmap and lod envelope allocations, nullify their attribs. */
+/* Set up hmap and lod envelope allocations.  Set map attribs for unattached. */
 void
 init_vohspace(void)
 {
@@ -116,10 +116,10 @@ init_vohspace(void)
 	for (i = 0; i < vrt_hmaps_max; i++, ++lr_n, near++)
 		*near = p++;
 
-	/* Set hmaps to null default. */
+	/* Set all maps to unattached default. */
 	p = vohspace;
 	for (i = 0; i < vrt_hmaps_max; i++, p++) {
-		p->name = (session_t) 0;
+		p->name = 0;
 		p->vpos.x = 0;
 		p->vpos.y = 0;
 		p->vpos.z = 0;
@@ -192,14 +192,14 @@ hmapf_t *
 attach_hmapf(void)
 {
 	int i;
-	hmapf_t *p = vohspace;
+	hmapf_t *map = vohspace;
 
-	for (i = 0; i < vrt_hmaps_max; i++, p++) {
-		if (!(p->attribs.mode &= VRT_MASK_ATTACHED)) {
-			p->index = i; /* node-orgin unique index */
-			p->attribs.mode |= VRT_MASK_ATTACHED;
+	for (i = 0; i < vrt_hmaps_max; i++, map++) {
+		if (!(map->attribs.mode &= VRT_MASK_ATTACHED)) {
+			map->index = i; /* node-orgin unique index */
+			map->attribs.mode |= VRT_MASK_ATTACHED;
 			attached_hmaps++;
-			return p;
+			return map;
 		}
 	}
 	return NULL;
@@ -213,7 +213,7 @@ detach_hmapf(hmapf_t *p)
 	hmapf_t *eb = &vohspace[vrt_hmaps_max];
 
 	if ((p >= sb) && (p <= eb)) {
-		p->name = (session_t)0;
+		p->name = 0;
 		p->vpos.x = 0;
 		p->vpos.y = 0;
 		p->vpos.z = 0;
@@ -497,11 +497,11 @@ sort_proc_hmaps(vf_t *vpt)
 	}
 }
 
-/* Per hmap referenced by m, per frame(in frequency(per likely future support),
-   process humdrum attribs factored by sort_ratio.  Foreward given lod envelope
-   to renderer. */
+/* Per hmap reference map process humdrum attribs factored by sort_ratio.
+   If map has vertices, foreward reference to map and given lod envelope to
+   renderer. */
 void
-proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
+proc_hmapf(hmapf_t *map, int lod, int sort_ratio)
 {
 
 	vf_t d; /* delta */
@@ -513,17 +513,17 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	   intersection on the first alternate.  It arrives immediately before
 	   sort_proc_hmaps per frame, then again in sort. */
 	if (lod & VRT_MASK_LOD_INF) {
-		fov0_name = m->name;
-		*sela = m; /* for intersection */
+		fov0_name = map->name;
+		*sela = map; /* for intersection */
 	} else { /* skip hmap holding fov0 unless it has VRT_MASK_LOD_INF */
-		if (m->name == fov0_name)
+		if (map->name == fov0_name)
 			return;
 	}
 
 	/* Tend to attribs bits. */
-	if (m->attribs.sign & VRT_MASK_DETACH) {
-		__builtin_printf("detaching hmap %x (", (int) m->name);
-		detach_hmapf(m);
+	if (map->attribs.sign & VRT_MASK_DETACH) {
+		__builtin_printf("detaching hmap %x (", map->name);
+		detach_hmapf(map);
 		__builtin_printf("free maps %u/%u)\n",
 			vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);
 	}
@@ -531,24 +531,24 @@ proc_hmapf(hmapf_t *m, int lod, int sort_ratio)
 	/* Sum intersection effects for hmap with fov0 vs. next argued hmap.
 	   note: hmaps do not intersect with themselv's, so this will work
 	   for now. */
-	*selb = m;
+	*selb = map;
 	intersection(&sel);
 
 	/* Sum velocity into position for this frame. */
-	cp_vf(&(m->vvel), &d); /* take a copy of direction/velocity */
+	cp_vf(&(map->vvel), &d); /* take a copy of direction/velocity */
 	factor_vf(&d, &d, vrt_render_cyc * sort_ratio); /* delta given freq */
-	sum_vf(&(m->vpos), &d, &(m->vpos)); /* new pos = delta vector + pos */
+	sum_vf(&(map->vpos), &d, &(map->vpos)); /* pos' = delta vector + pos */
 
 	/* Set vob angular displacement.  note: v_ang_vel will be pseudovector
 	   where on the fly calculation will be moreso optimal. */
-	m->ang_dpl += m->ang_spd * vrt_render_cyc * sort_ratio;
+	map->ang_dpl += map->ang_spd * vrt_render_cyc * sort_ratio;
 
 	/* Overflow for 2 * M_PI, without this a glitch occurs on wrap. */
-	if (fabs(m->ang_dpl) >= 2 * M_PI)
-		m->ang_dpl = fmodf(m->ang_dpl, 2 * M_PI);
+	if (fabs(map->ang_dpl) >= 2 * M_PI)
+		map->ang_dpl = fmodf(map->ang_dpl, 2 * M_PI);
 
-	if (m->vmap)
-		render_hmapf(m, lod);
+	if (map->vmap)
+		render_hmapf(map, lod);
 }
 
 /* Given any overloading, release hmaps with balance_filter over
@@ -557,24 +557,24 @@ void
 flow_over(btoggles_t *balance_criteria)
 {
 	int i;
-	hmapf_t *p = &vohspace[0];
+	hmapf_t *map = &vohspace[0];
 
-	for (i = 0; i < vrt_hmaps_max; i++, p++) {
-		if ((p->attribs.mode & VRT_MASK_FLOW_OVER) &
-			(p->attribs.balance_filter &= *balance_criteria))
-		p->attribs.sign |= VRT_MASK_RECYCLE;
+	for (i = 0; i < vrt_hmaps_max; i++, map++) {
+		if ((map->attribs.mode & VRT_MASK_FLOW_OVER) &
+			(map->attribs.balance_filter &= *balance_criteria))
+		map->attribs.sign |= VRT_MASK_RECYCLE;
 	}
 	/* Then in positional round these are recycled. */
 }
 
 
-/* If seekpos(p, loc) is successful, arrival(p, loc) becomes successful. */
+/* If seekpos(map, loc) is successful, arrival(map, loc) becomes successful. */
 void
-nportf(hmapf_t *p, vf_t *loc)
+nportf(hmapf_t *map, vf_t *loc)
 {
-	float r;
+	float r, e;
 
-	if (!p) {
+	if (!map) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Attempted nport of NULL vob\n"
 			"Nport destination was %f %f %f\n",
@@ -586,48 +586,47 @@ nportf(hmapf_t *p, vf_t *loc)
 	/* ... */
 
 	/* nport */
-	cp_vf(loc, &(p->vpos));
-	form_mag_vf(&(p->vpos));
+	cp_vf(loc, &(map->vpos));
+	form_mag_vf(&(map->vpos));
 
 	/* arrival(), for now */
-	r = estimate_radiusf(p);
-	double e;
-	e = (double) rand() * TINYRANDOM;
-	wanderf(p, (float) e, p->attribs.kg, r);
+	r = estimate_radiusf(map);
+	e = rand() * TINYRANDOM;
+	wanderf(map, e, map->attribs.kg, r);
 }
 
-/* Aproximate and return, for hmap p, a fair proportion vs. where it were the
+/* Aproximate and return, for hmap map, a fair proportion vs. where it were the
    same ideal volume and reshaped as a sphere.  Cheating a bit for now. */
 float
-estimate_radiusf(hmapf_t *p)
+estimate_radiusf(hmapf_t *map)
 {
 	float r;
-	switch (p->envelope.geom) {
+	switch (map->envelope.geom) {
 		case VRT_BOUND_NONE:
 		r = 0;
 		break;
 
 		case VRT_BOUND_SPHERE:
-		r = p->envelope.vsz.x;
+		r = map->envelope.vsz.x;
 		break;
 
 		case VRT_BOUND_CYLINDER:
-		r = p->envelope.vsz.x * p->envelope.vsz.y;
+		r = map->envelope.vsz.x * map->envelope.vsz.y;
 		break;
 
 		case VRT_BOUND_RCUBOID:
-		r = M_SQRT1_2 * sqrt(p->envelope.vsz.x * p->envelope.vsz.x + p->envelope.vsz.y * p->envelope.vsz.y + p->envelope.vsz.z * p->envelope.vsz.z);
+		r = M_SQRT1_2 * sqrt(map->envelope.vsz.x * map->envelope.vsz.x + map->envelope.vsz.y * map->envelope.vsz.y + map->envelope.vsz.z * map->envelope.vsz.z);
 		break;
 
 		case VRT_BOUND_CUBE:
-		r = M_SQRT1_2 * sqrt(p->envelope.vsz.x * p->envelope.vsz.x * 3);
+		r = M_SQRT1_2 * sqrt(map->envelope.vsz.x * map->envelope.vsz.x * 3);
 		break;
 	}
 	return r;
 }
 
 /* Set hmap referenced by p to arbitrary but energy factored initial conditions
-   vs. given energy e.  vvel, vaxi, vpre, ang_spd, and ang_dpl, are set vs.
+   vs. e joule units.  vvel, vaxi, vpre, ang_spd, and ang_dpl, are set vs.
    given determinate or estimated radius r and given mass m.  note: Now that e,
    r, and m are easily derived from an hmap, this will be moved to transform and
    revised some as well. */
@@ -641,11 +640,6 @@ wanderf(hmapf_t *p, float e, float m, float r)
 	float avg_tangentv_ke;
 	double rnd, rnd1, rnd2, rnd3;
 	static float sign = 1.0;
-
-	/* note: vobspace is represented as 1 default renderer unit per m.
-	   e, will be represented in joule units, 1 ampere/s, or 1 neuton/m.
-	   this function will be moved to transform.  e can be there derived
-	   and redistributed as can r. */
 
 	/* Pseudo random reciprocal part factors. */
 	rnd1 = (double) rand(); rnd2 = (double) rand(); rnd3 = rnd1 + rnd2;
