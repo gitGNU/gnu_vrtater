@@ -49,11 +49,13 @@ node_partial_dialog(select_t *sel, session_t *partial)
 int *
 node_orgin_dialog(select_t *sel)
 {
+	/* For now function as a pre-alpha version diagnostic and simply write
+	   first element of selectf_a to stdout. */
 	select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
 	diag_read_dialog_set((&totty)->seta, (&totty)->counta);
 
 	; /* features */
-		
+
 	return 0;
 }
 
@@ -75,7 +77,7 @@ set_groups()
 	;
 }
 
-/* Diagnostic to read and present mapcount hmap dialog data in set to stdout. */
+/* Diagnostic to send mapcount hmap dialog entries thru set to stdout. */
 void
 diag_read_dialog_set(hmapf_t **set, int mapcount)
 {

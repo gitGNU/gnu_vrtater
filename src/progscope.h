@@ -18,8 +18,8 @@
 #define DIAG_TIME_OFF
 #define DIAG_INTERSECTION_OFF
 #define DIAG_EFFECT
-#define DIAG_STF
-#define DIAG_CTF_OFF
+#define DIAG_STF_OFF
+#define DIAG_CTF
 #define DIAG_STB_OFF
 #define DIAG_CTB_OFF
 #define DIAG_FF_OFF

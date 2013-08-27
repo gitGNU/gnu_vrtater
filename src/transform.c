@@ -292,17 +292,22 @@ surface_inv_hmapf(select_t *sel)
 
 /* hmap transformative functions affecting ip network or filesystem. */
 
-/* Format and write hmaps in selectf_a vs. sel, in format specified by options,
-   named name(if applicable) or available referenced by output.  filename and
-   output are exclusive, therefore filename must be NULL where reference output
-   is to be used.  If filename is omitted, caller is expected to free data
-   referenced by output after use.  Any file written will recieve .vrtater
-   extension and be readable by hmapunwrapf now and in future versions.
-   If VRT_MASK_OPT_COMPOUNDED is set there may be multiple maps. */
+/* Format and write hmaps referenced in selectf_a vs. sel, in format specified
+   by options, named name(if applicable) or available referenced by output.
+   filename and output are exclusive, therefore filename must be NULL where
+   reference output is to be used.  If filename is omitted, caller is expected
+   to free data referenced by output after use.  If VRT_MASK_OPT_COMPOUNDED is
+   set, multiple maps may be provided in selection.  notes: Once stablized, any
+   file written will recieve .vrtater extension and be readable by current and
+   future hmapunwrapf versions.  Mask options VRT_MASK_OPT_NULL_SESSION_NAME,
+   VRT_MASK_OPT_MINIMAL, VRT_MASK_OPT_UPDATE, VRT_MASK_OPT_COMPRESSED and
+   VRT_MASK_OPT_ENCRYPTED are not working fully or at all yet, however testing
+   of session.c code may still proceed without these.  */
 int
 hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 {
-	int fd, *pb, *pi, *outbuf, *dlg, *nxtmapsz, i, j, bufsz = 0;
+	int fd, i, j, bufsz = 0;
+	int *pb, *pi, *dlg, *nxtmapsz, *outbuf = NULL;
 	float *pf;
 	hmapf_t **maps;
 	vf_t *v;
@@ -310,8 +315,11 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 
 	/* Allocate outbuf of bufsz bytes for file write or ip network send. */
 	maps = sel->seta;
+	bufsz += 2 * sizeof(int); /* total and options */
+	if (options & VRT_MASK_OPT_COMPOUNDED)
+		bufsz += sel->counta * sizeof(int); /* nxtmapsz's */
 	for (i = 0; i < sel->counta; i++, maps++)
-		bufsz += sizeof(hmapf_t) + ((*maps)->vmap_total * sizeof(vf_t)) + (((*maps)->dialog_len + 1) * sizeof(int));
+		bufsz += (sizeof(hmapf_t) - (sizeof(int) * 2)) + ((*maps)->vmap_total * sizeof(vf_t)) + ((*maps)->dialog_len * sizeof(int));
 	if ((outbuf = (int *) malloc(bufsz)) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for outbuf\n",
@@ -323,35 +331,33 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 	if (output)
 		*output = outbuf;
 
-	__builtin_printf("Bufsz is %i bytes\n", bufsz);
+	__builtin_printf("Bufsz is %i:%i\n", bufsz, bufsz / sizeof(int));
 
 	maps = sel->seta;
 	pb = outbuf; /* pb is start of file. */
-	pi = pb + 1; /* a space for .vrtater size vs. int */
+	pi = pb + 1; /* start with space for .vrtater size */
 	*pi++ = (int) options;
 
 	__builtin_printf("total_hmaps is %i\n", sel->counta);
 
 	for (i = 0; i < sel->counta; i++, maps++) {
 
-		if (options & VRT_MASK_OPT_COMPOUNDED) {
-			nxtmapsz = pi++; /* a space per map size vs. int */
-
-			__builtin_printf("hmap is compounded\n");
-
-		}
+		if (options & VRT_MASK_OPT_COMPOUNDED)
+			nxtmapsz = pi++; /* space for map size */
 
 		if (!(options & VRT_MASK_OPT_NULL_SESSION_NAME)) {
-			*pi++ = (int) ((*maps)->name >> 16);
-			*pi++ = (int) ((*maps)->name & 0xffff);
-			__builtin_printf("Wrapping map %x\n", (int) (*maps)->name);
+			*pi++ = (int) (*maps)->name;
+			__builtin_printf("Wrapping map %x\n",
+				(int) (*maps)->name);
 		} else {
+
 			__builtin_printf("hmap file recieves no session name\n");
+
 		}
 
-		if (!(options & VRT_MASK_OPT_MINIMAL)) {
+		if (!(options & VRT_MASK_OPT_MINIMAL))
 			*pi++ = (*maps)->index;
-		} else {
+		else {
 
 			__builtin_printf("hmap file is written minimally\n");
 
@@ -450,16 +456,15 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 		__builtin_printf("dialog_len %i\n", (*maps)->dialog_len);
 
 		if (options & VRT_MASK_OPT_COMPOUNDED) {
-			/* Write next maps size at beginning of map. */
-			*nxtmapsz = abs((int) pi - (int) nxtmapsz) / sizeof(int);
+			/* Include size preceeding each map's data. */
+			*nxtmapsz = (int) (pi - nxtmapsz);
 
 			__builtin_printf("hmapf size: %i\n", *nxtmapsz);
 
-		}
+		} else
+			__builtin_printf("hmapf size: %i\n",
+				(int) (pi - (pb + 2)));
 	}
-	*pb = abs((int) pi - (int) pb) / sizeof(int); /* write length at pb */
-
-	__builtin_printf("total count is %i\n", *pb);
 
 	if (options & VRT_MASK_OPT_ENCRYPTED) {
 		__builtin_printf("hmap file is encrypted\n");
@@ -469,6 +474,9 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 		__builtin_printf("hmap file is compressed\n");
 	}
 
+	*pb = (int) (pi - pb); /* write length at pb */
+	__builtin_printf("total count including size and options %i\n", *pb);
+
 	if (filename) {
 
 		if ((fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0644)) == -1) {
@@ -477,12 +485,16 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 			return(-1);
 		}
 
-		if((*pb * 4) == bufsz) { /* for now */
+		if((*pb * sizeof(int)) == bufsz) { /* for now */
 			nwritten = write(fd, (char *) outbuf, bufsz);
 			__builtin_printf("%s: %i bytes written\n",
 				filename, (int) nwritten);
-		} else
+		} else {
+			__builtin_fprintf(stderr, "Error: %s 0 bytes written\n",
+				filename);
+			close(fd);
 			return -1;
+		}
 	}
 
 	close(fd);
@@ -515,7 +527,8 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 	if (filename) {
 		/* Read from filename. */
 		if ((fd = open(filename, O_RDONLY)) == -1) {
-			__builtin_printf("hmapunwrap: Couldn't open %s\n", filename);
+			__builtin_printf("hmapunwrap: Couldn't open %s\n",
+				filename);
 			return -1;
 		}
 		filesz = lseek(fd, (off_t) 0, SEEK_END);
@@ -534,31 +547,26 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 
 		pi = (int *) filebuf;
 
-	} else {
-		__builtin_printf("hmapunwrapf: Reading from session buffer\n");
+	} else
 		pi = input;
-	}
 
 	size = *pi;
-	__builtin_printf("Unwrapping %i sizeof(int) sized elements\n", (int) *pi++);
+	__builtin_printf("Unwrapping %i int size elements\n", (int) *pi++);
 
 	options = *pi++;
 	print_toggles("options ", (btoggles_t *) &options);
 
 	map = sel->setb;
 
-	/* Place all maps in the .vrtater file into vohspace. */
-	for (tl = 0, sum = 0; size > sum; map++, tl++) {
-
+	/* Place all maps in the .vrtater file into vohspace.  sum begins at
+	   2 representing .vrtater size and options */
+	for (tl = 0, sum = 2; sum < size; map++, tl++) {
 		/* Determine size for this map. */
 		if (options & VRT_MASK_OPT_COMPOUNDED) {
-			__builtin_printf("hmapf size: %i\n", (int) *pi + 1);
-			sum += (*pi++ + 1);
+			__builtin_printf("hmapf size: %i\n", (int) *pi);
+			sum += *pi++;
 		} else
 			sum = size;
-
-__builtin_printf("Byte total this pass %i\n", sum);
-
 
 		/* If data sessionless, hmapf requires session or break. If not,
 		   use session if provided else data provided session for hmapf.
@@ -570,7 +578,8 @@ __builtin_printf("Byte total this pass %i\n", sum);
 				if (!(*map = hmapf(&current)))
 					break;
 					sel->countb += 1;
-				__builtin_printf("Argued session %x\n", (int) current);
+				__builtin_printf("Argued session %x\n",
+					(int) current);
 			} else
 				break;
 		} else {
@@ -578,12 +587,12 @@ __builtin_printf("Byte total this pass %i\n", sum);
 			if (session) {
 				current = *session;
 				pi++;
-				pi++;
-				__builtin_printf("Using argued session %x\n", (int) current);
+				__builtin_printf("Using argued session %x\n",
+					(int) current);
 			} else {
-				current = (session_t) (*pi++ << 16);
-				current |= (session_t) *pi++;
-				__builtin_printf("Last valid session %x\n", (int) current);
+				current = (session_t) *pi++;
+				__builtin_printf("Last valid session %x\n",
+					(int) current);
 			}
 			if ((*map = mapref(&current)) != NULL) {
 
@@ -599,7 +608,7 @@ __builtin_printf("Byte total this pass %i\n", sum);
 				sel->countb += 1;
 			}
 		}
-		__builtin_printf("Added/updated map %x index %i\n",
+		__builtin_printf("Added/updating map %x index %i\n",
 			(int) (*map)->name, (*map)->index);
 
 		if (!(options & VRT_MASK_OPT_MINIMAL))
@@ -740,7 +749,8 @@ __builtin_printf("Byte total this pass %i\n", sum);
 
 			rebuild = (*map)->vmap;
 			for (i = 0; i < (*map)->vmap_total; i++, rebuild++) {
-				__builtin_printf("vf %i: %f", i + 1, (float) *pf);
+				__builtin_printf("vf %i: %f",
+					i + 1, (float) *pf);
 				rebuild->x = (float) *pf++;
 				__builtin_printf(" %f", (float) *pf);
 				rebuild->y = (float) *pf++;
@@ -803,8 +813,10 @@ __builtin_printf("Byte total this pass %i\n", sum);
 					i += 2;
 				}
 			}
-			__builtin_printf("dialog gscn: %i %i %i %i\n", graph, space, ctrl, null);
+			__builtin_printf("dialog gscn: %i %i %i %i\n",
+				graph, space, ctrl, null);
 		}
+		__builtin_printf("Byte total %i\n", sum);
 	}
 
 	if (filename)
@@ -819,93 +831,99 @@ __builtin_printf("Byte total this pass %i\n", sum);
 
 /* hmap transformative functions affecting allocation. */
 
-/* hmap dialog referenced  selectf_a recieves allocation of len + 1 int's. */
+/* hmap dialog referenced recieves allocation of len + 1 int's.  This maintains
+   the NULL char at the end of any sum of strlen chars.  Where dialog has been
+   allocated it will always contain at least the NULL string untill free'd. */
 int
-alloc_dialog(select_t *sel, int len)
+alloc_dialog(hmapf_t *map, int len)
 {
-	(*sel->seta)->dialog = NULL;
-	if (((*sel->seta)->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
+	map->dialog = NULL;
+	if ((map->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for given dialog\n",
 			__FILE__, __LINE__);
 		abort();
 	}
-	(*sel->seta)->dialog_len = 0;
-	*(*sel->seta)->dialog = '\0';
+	map->dialog_len = 0;
+	*(map->dialog) = '\0';
 	return 0;
 }
 
-/* Write or append s to dialog(for now at end of current dialog) for any given
-   hmap thru sel->seta.  When supported will also insert or delete count at
-   offset to s, where sign of count will determine insert or delete and sense
-   of count will be after offset. */
+/* Write or append string s if given to string referenced by int pointer dialog
+   in hmap referenced by map.  When supported, insert or delete count at offset
+   into hmap dialog while where s is not NULL count is ignored, and where s is
+   NULL, count chars are deleted.  Where s is given, count is ignored and
+   assumed to be sizeof(s).  offset decodes to strlen(s) as an ordinal index
+   into s where offset is then part of the selection within string to be deleted
+   or the start of chars to be shifted right in the string.  notes: For now
+   append s to end of hmap dialog. */
 int
-add_dialog(select_t *sel, char *s, int count, int offset)
+add_dialog(hmapf_t *map, char *s, int offset, int count)
 {
-	int i, addlen, orglen, newlen, *pti, *pti2, *swap = NULL;
-	char *ptc;
+	int i, addlen, orglen, newlen, *dlg, *cpy, *swap = NULL;
+	char *c;
 
-	if ((*sel->seta)->dialog) {
+	if (map->dialog) {
 		/* Allocate swap memory to hold previous dialog. */
-		if ((swap = (int *) malloc((*sel->seta)->dialog_len * sizeof(int))) == NULL) {
+		if ((swap = (int *) malloc(map->dialog_len * sizeof(int))) == NULL) {
 			__builtin_fprintf(stderr,  "vrtater:%s:%d: "
 				"Error: Could not malloc for add_dialog()\n",
 				__FILE__, __LINE__);
 			abort();
 		}
 
-		orglen = (*sel->seta)->dialog_len; /* calc before freeing */
+		orglen = map->dialog_len; /* needed after alloc_dialog */
 		addlen = strlen(s);
 		newlen = orglen + addlen;
 
 		/* Put original hmap dialog in swap. */
-		pti = (*sel->seta)->dialog;
-		pti2 = swap;
+		dlg = map->dialog;
+		cpy = swap;
 		for (i = 0; i < orglen; i++)
-			*pti2++ = *pti++;
+			*cpy++ = *dlg++;
 
 		/* (re-)allocate memory for dialog with append. */
-		free((*sel->seta)->dialog);
-		alloc_dialog(sel, newlen);
+		free(map->dialog);
+		alloc_dialog(map, newlen);
 
 		/* Write original string from swap. */
-		pti = (*sel->seta)->dialog;
-		pti2 = swap;
+		dlg = map->dialog;
+		cpy = swap;
 		for (i = 0; i < orglen; i++)
-			*pti++ = *pti2++;
+			*dlg++ = *cpy++;
 		free(swap);
 	} else {
 		newlen = addlen = strlen(s);
-		alloc_dialog(sel, addlen);
-		pti = (*sel->seta)->dialog;
+		alloc_dialog(map, addlen);
+		dlg = map->dialog;
 	}
 
 	/* Write new string. */
-	ptc = s;
+	c = s;
 	for (i = 0; i < addlen; i++)
-		*pti++ = *ptc++;
-	*pti = '\0';
+		*dlg++ = *c++;
+	*dlg = '\0';
 
 	/* Tend nicely. */
-	(*sel->seta)->dialog_len = newlen;
+	map->dialog_len = newlen;
 
 	return 0;
 }
 
-/* hmap dialog referenced thru sel->seta becomes string s. */
+/* hmap dialog referenced by map becomes string s. */
 int
-write_dialog(select_t *sel, char *s)
+write_dialog(hmapf_t *map, char *s)
 {
 	int i, len, *d;
 	char *p;
 
 	/* Free previous. */
-	free((*sel->seta)->dialog);
-	(*sel->seta)->dialog = NULL;
+	free(map->dialog);
+	map->dialog = NULL;
 
 	/* Allocate. */
 	len = strlen(s);
-	if (((*sel->seta)->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
+	if ((map->dialog = (int *) malloc((len + 1) * sizeof(int))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for given dialog\n",
 			__FILE__, __LINE__);
@@ -914,12 +932,12 @@ write_dialog(select_t *sel, char *s)
 
 	/* Write. */
 	p = s;
-	d = (*sel->seta)->dialog;
+	d = map->dialog;
 	for (i = 0; i < len; i++)
 		*d++ = *p++;
 	*d = '\0';
 
-	(*sel->seta)->dialog_len = len;
+	map->dialog_len = len;
 
 	return 0;
 }

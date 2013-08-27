@@ -42,8 +42,8 @@ int cp_hmapf(select_t *);
 int surface_inv_hmapf(select_t *);
 int hmapwrapf(select_t *, btoggles_t options, char *filename, int **output);
 int hmapunwrapf(select_t *, session_t *, char *filename, int *input);
-int alloc_dialog(select_t *, int len);
-int add_dialog(select_t *, char *s, int count, int offset);
-int write_dialog(select_t *, char *s);
+int alloc_dialog(hmapf_t *, int len);
+int add_dialog(hmapf_t *, char *s, int offset, int count);
+int write_dialog(hmapf_t *, char *s);
 
 #endif /* VRT_TRANSFORM_H */

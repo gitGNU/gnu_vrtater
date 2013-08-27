@@ -56,7 +56,7 @@ vf_t ksb = { 0, 0, 5, 5 };
 vf_t vrloc8 = { 0, 0, -80, 80 };
 
 /* Pre-alpha dialog. */
-hmapf_t *diagtext0; /* hmap to recieve text entry */
+hmapf_t *diagtext0; /* reference hmap to recieve text entry */
 int dialogrecurrant = 0;
 char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
 
@@ -157,10 +157,7 @@ void
 setup_dialog_interface(void)
 {
 	/* pre-alpha dialog version */
-	select_t text = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
-	hmapf_t **map = (&text)->seta;
-	*map = diagtext0;
-	add_dialog(&text, diagtextmsg, strlen(diagtextmsg), diagtext0->dialog_len);
+	add_dialog(diagtext0, diagtextmsg, diagtext0->dialog_len, 0);
 }
 
 /* Shutdown for given dialog interface. */
@@ -183,7 +180,6 @@ node(int argc, char **argv)
 	fov0_available = 1; /* will be default in vanilla config file */
 
 	/* For pre-alpha dialog. */
-	hmapf_t **seltext = (hmapf_t **) selectf_a;
 	diagtext0 = fov0; /* default */
 
 	init_tug_io(); /* if any tug tend to it /w start_tug(init_tug_io()) */
@@ -571,9 +567,7 @@ node(int argc, char **argv)
 
 					case VRT_KEY_del:
 					if (diagtext) {
-						*seltext = diagtext0;
-						select_t del = { 0, 1, (hmapf_t **)selectf_a, 0, NULL };
-						write_dialog(&del, "");
+						write_dialog(diagtext0, "");
 					}
 					break;
 				}
@@ -797,11 +791,8 @@ diag_char(char c)
 {
 	int sc[2] = { '\0', '\0' };
 
-	select_t dialog_sela = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
-	hmapf_t **map = (&dialog_sela)->seta;
-	*map = diagtext0;
 	*sc = (int) c;
-	add_dialog(&dialog_sela, (char *) sc, 1, diagtext0->dialog_len);
+	add_dialog(diagtext0, (char *) sc, diagtext0->dialog_len, 0);
 }
 
 /* Temporary diagnostic to run test on keypress f. */

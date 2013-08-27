@@ -169,6 +169,8 @@ generate_vohspace(void)
 void
 regenerate_scene(vf_t *vpt)
 {
+	hmapf_t **map;
+
 	/* Sort hmaps and cue them for drawing. */
 	sort_proc_hmaps(vpt);
 
@@ -187,15 +189,15 @@ regenerate_scene(vf_t *vpt)
 	/* For now, apply a test simulating dialog introduced through modeling
 	   by transforming some node-orgin dialog to hmap 15 then calling
 	   node_orgin_dialog. */
-	hmapf_t **map = (hmapf_t **) selectf_a;
 	static int recurrant = 0;
 	if (!recurrant++) {
+		map = (hmapf_t **) selectf_a;
 		*map = p_hmapf(15);
-		select_t sel = { 0, 1, (hmapf_t **) map, 0, NULL };
-		char a_char[] = "dialog: pass here and "
+		char chars[] = "dialog: pass here and "
 			"everything is published unless encrypted\n";
-		add_dialog(&sel, a_char, strlen(a_char), 0);
+		add_dialog(*map, chars, 0, 0);
 		(*map)->attribs.sign |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
+		select_t sel = { 0, 1, map, 0, NULL };
 		node_orgin_dialog(&sel);
 	}
 
@@ -596,7 +598,7 @@ diag_hmaps_in_partial(session_t *session)
 	return -1;
 }
 
-/* Temporary diagnostic to run test on keypress f. (!when diag-text input on).*/
+/* Temporary diagnostic to run test on keypress f. (!if diag-text input on).*/
 void
 diag_generator_key_f(void)
 {
@@ -609,7 +611,10 @@ diag_generator_key_f(void)
 void
 diag_generator_key_g(void)
 {
-	test_hmapwrap_unwrap(p_hmapf(15));
+	hmapf_t *diagtext1 = p_hmapf(15); /* hmap to recieve text entry */
+	char diagtextmsg[] = "Dialog test.\n";
+	add_dialog(diagtext1, diagtextmsg, diagtext1->dialog_len, 0);
+	test_hmapwrap_unwrap(diagtext1);
 }
 
 /* Temporary diagnostic to run test on keypress h. */
@@ -737,13 +742,13 @@ test_hmapwrap_unwrap(hmapf_t *map)
 	/* Single to buffer.  This would be used by code in session.c */
 	__builtin_printf("Single to buffer\n");
 	(&s)->counta = 1;
-	hmapwrapf(&s, VRT_MASK_OPT_INTERNET, NULL, (int **) &buffer);
+	hmapwrapf(&s, 0, NULL, (int **) &buffer);
 #endif
 #ifdef DIAG_CTB
 	/* Compounded to buffer.  This would be used by code in session.c */
 	__builtin_printf("Compounded to buffer\n");
 	(&s)->counta = 2;
-	hmapwrapf(&s, VRT_MASK_OPT_INTERNET | VRT_MASK_OPT_COMPOUNDED, NULL, (int **) &buffer);
+	hmapwrapf(&s, VRT_MASK_OPT_COMPOUNDED, NULL, (int **) &buffer);
 #endif
 
 	__builtin_printf("\nhmapunwrapf test\n");
