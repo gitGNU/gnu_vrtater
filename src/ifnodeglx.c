@@ -731,6 +731,7 @@ node(int argc, char **argv)
 
 	/* Shutdown node-orgin. */
 	close_vobspace(0); /* now, for now */
+	close_sessions();
 	close_node_orgin(); /* note: move to callback_close_vobspace() */
 	shutdown_glx();
 }

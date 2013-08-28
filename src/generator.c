@@ -52,14 +52,14 @@ init_selection_buffers(void)
 {
 	selectf_a = NULL;
 	if ((selectf_a = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for selectf_a\n",
 			__FILE__, __LINE__);
 		abort();
 	}
 	selectf_b = NULL;
 	if ((selectf_b = (hmapf_t *) malloc(vrt_hmaps_max * sizeof(hmapf_t *))) == NULL) {
-		__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for selectf_b\n",
 			__FILE__, __LINE__);
 		abort();

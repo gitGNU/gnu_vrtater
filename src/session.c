@@ -4,12 +4,13 @@
 */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include "session.h"
 #include "progscope.h"
 
-/* For now.  These will soon be allocated when running. */
-session_desc_t all_sessions[VRT_MAX_CUED_SESSIONS];
-caller_sessions_t caller_sessions[VRT_MAX_PREV_CALLER_SESSIONS];
+int vrt_max_cued_sessions;
+int vrt_max_called_sessions;
+int vrt_max_caller_sessions;
 
 int generate_session_name_from_files_in_dir(session_t *, char *seedfiles);
 int get_session_name_from_file_in_dir(session_t *, char *seedfiles);
@@ -22,9 +23,36 @@ void
 init_sessions(void)
 {
 	int i;
-	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++)
+
+	/* For now allocate for connection specific session data as fixed
+	   parcels.  Linked list mechanism to store these already written may
+	   be found in commit c489481 files partial.c/partial.h and modified
+	   for this purpose if desired.  After this function is run,
+	   all_sessions and caller_sessions must be present until close_sessions
+	   is run. */
+
+	vrt_max_cued_sessions = 10;
+	vrt_max_called_sessions = 20;
+	vrt_max_caller_sessions = 100; /* record of current/previous calls */
+
+	if ((all_sessions = (session_desc_t *) malloc(vrt_max_cued_sessions * sizeof(session_desc_t))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Could not malloc for all_sessions\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+
+	if ((caller_sessions = (caller_sessions_t *) malloc(vrt_max_caller_sessions * sizeof(caller_sessions_t))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Could not malloc for caller_sessions\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+
+	for (i = 0; i < vrt_max_cued_sessions; i++)
 		(&all_sessions[i])->session = 0;
-	for (i = 0; i < VRT_MAX_PREV_CALLER_SESSIONS; i++)
+
+	for (i = 0; i < vrt_max_caller_sessions; i++)
 		(&caller_sessions[i])->session = 0;
 }
 
@@ -102,21 +130,6 @@ list_nodes(char *desc)
 	;
 }
 
-/* Return reference to all currently called, cued, and running sessions. */
-session_desc_t *
-session_descriptions(void)
-{
-	return all_sessions;
-}
-
-/* Return reference to any previous caller sessions given in configured backup
-   of node-partial.  Return NULL if none. */
-caller_sessions_t *
-previous_caller_sessions(void)
-{
-	return caller_sessions;
-}
-
 /* This may cue a session for given or list_nodes remote node ip address.
    Return zero on success.*/
 int
@@ -124,40 +137,40 @@ call_session(char *address)
 {
 	/* Try to cue on remote with previous and current session numbers.
 	   If successfull, cued session will appear in all_sessions.
-	   Statefull maintainance function will need to poll input for
-	   responce. */
+	   Statefull maintainance function sync_session, will need to poll
+	   net input for responce. */
 	/* ... */
 
 	return 0;
 }
 
 /* Finish log in (an optional password may be implemented) and then add
-   session_num to the running set.  Return zero on success.  Connection
-   is assumed while session_num remains in session_desc data.  If a cued
-   session can not be connected return nonzero. */
+   cued_session, to the running set.  Return zero on success.  Connection is
+   then assumed while session cued_session remains in all_sessions data.  If
+   cued_session can not be connected return nonzero. */
 int
-accept_called_partial_session(session_t *session, char *passwd)
+accept_called_partial_session(session_t *cued_session, char *passwd)
 {
 	session_desc_t *session_desc;
 	int rval = -1;
 
-	if ((session_desc = match_vs_all_sessions(session)) !=  NULL)
+	if ((session_desc = match_vs_all_sessions(cued_session)) !=  NULL)
 		if((rval = complete_negotiation(session_desc)) == 0);
 			return rval;
 
 	return rval;
 }
 
-/* Add session session_num to the running set.  Return zero on success.
-   Connection is assumed while session_num remains in session_desc data.
-   If a cued session can not be connected return nonzero. */
+/* Add cued_session to the running set.  Return zero on success.  Connection is
+   then assumed while session cued_session remains in all_sessions data.  If
+   cued_session can not be connected return nonzero. */
 int
-accept_caller_partial_session(session_t *session_num)
+accept_caller_partial_session(session_t *cued_session)
 {
 	session_desc_t *session_desc;
 	int rval = -1;
 
-	if ((session_desc = match_vs_all_sessions(session_num)) !=  NULL)
+	if ((session_desc = match_vs_all_sessions(cued_session)) !=  NULL)
 		if((rval = complete_negotiation(session_desc)) == 0);
 			return rval;
 
@@ -171,7 +184,7 @@ match_vs_all_sessions(session_t *session)
 	session_desc_t *session_desc = all_sessions;
 	int i;
 
-	for (i = 0; i < VRT_MAX_CUED_SESSIONS; i++, session_desc++)
+	for (i = 0; i < vrt_max_cued_sessions; i++, session_desc++)
 		if ((session_desc->session == *session))
 			return session_desc;
 
@@ -194,9 +207,9 @@ complete_negotiation(session_desc_t *session_desc)
 /* Send and recieve hmaps, and otherwise tend to any remote node sessions.
    notes: Peers in a partial need to apply the correct options to the wrap
    functions per incoming hmap.  This is achieved and used by the wrap functions
-   with an options field after the header(count of bytes) in an hmap file.
-   Wrap functions provide an hmap file as a list of integers and should receive
-   input identical to what they would produce. */
+   with an options field in the header, after the count of bytes in a .vrtater
+   file.  Wrap functions provide and recieve .vrtater file's as a list of
+   int data. */
 void
 sync_sessions(void)
 {
@@ -210,17 +223,14 @@ read_from_network(void)
 	;
 }
 
-/* Send to each node connected to session, hmaps referenced in sel selectf_a
-   given sel counta.  notes: Outbound hmaps are referenced per call per given
-   session in the running set, and include only non-node-orgin hmaps with
-   relevant changes.  These may be sent in reduced form and restored apon
-   reception through a set of functions (transform.c) affecting network
-   transfer and file formatting of hmap data.  Functions hmapwrapf and
-   hmapunwrapf are currently scheduled to be extended for this purpose.  Each
-   set would then be transformed by hmapwrapf into a format suitable for writing
-   to a buffer through int pointer passed.  These then become delivered for each
-   ip address implied. */
-void
+/* Send to each node connected to session, counta hmaps in seta both referenced
+   thru sel.  notes: Outbound hmaps are referenced per call for given session
+   assumed to be set running in all_sessions data.  These happen to include only
+   non-node-orgin hmaps with relevant changes.  These then become delivered for
+   each ip address implied.  Values perhaps determined in sync_sessions could
+   be returned here and parsed by caller for reflecting latency or disconnect
+   for given remote session allowing caller to conditionally close session. */
+int
 buffer_maps_to_peer_partial(session_t *session, select_t *sel)
 {
 	hmapf_t **map;
@@ -228,21 +238,20 @@ buffer_maps_to_peer_partial(session_t *session, select_t *sel)
 
 	map = sel->seta;
 	__builtin_printf(" session.c: pretending to buffer partial %x "
-		"for transmit to another node,\n  buffering...\n",
-		*session);
+		"for transmit to another node,\n  buffering...\n", *session);
 	for (i = 0; i < sel->counta; i++, map++)
 		__builtin_printf("  map %x\n", ((*map)->name));
+
+	return 0;
 }
 
-/* For any recieved hmap data unpacked thru hmapunwrapf and connected to
-   session, write reference(s) in sel selectf_b setting sel countb.  Return
-   reference to selectf_b or NULL if none.  The data begins with it's size in
-   bytes, followed by options and then session name.  notes:  As caller will be
-   calling for each session seperately, int list input from session associated
-   nodes could be kept in a form conducive to this instead of everything in one
-   buffer.  It could thus follow that the hmaps would be best allocated and
-   unwrapped as their data arrives, then keeping a linked list of references to
-   those stacked in vohspace. */
+/* Per each singular .vrtater data parcel recieved and connected to a called
+   or calling session thus represented by a node partial, hmapunwrapf
+   parcel, returning 0 when there are zero available for session, otherwise
+   returning 1.  notes: As caller will be calling for each session seperately,
+   int list parcel input from session associated nodes could be kept in a form
+   conducive to this instead of say everything in one buffer.  Possibly commit
+   c489481 files partial.c/partial.h could also be used here as well. */
 hmapf_t *
 recieve_maps_from_peer_partial(session_t *session, select_t *sel)
 {
@@ -254,5 +263,16 @@ recieve_maps_from_peer_partial(session_t *session, select_t *sel)
 int
 close_session(session_desc_t *session_desc)
 {
+	return 0;
+}
+
+/* Called when program exits. */
+int
+close_sessions(void)
+{
+	/* For now. */
+	free(all_sessions);
+	free(caller_sessions);
+
 	return 0;
 }
