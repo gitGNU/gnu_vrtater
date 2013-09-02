@@ -1,4 +1,4 @@
-/* attribs.c: Store and maintain hmaps vs. node feedback creating vobspace.
+/* attribs.c: Hold and maintain hmaps vs. node feedback representing vohspace.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */

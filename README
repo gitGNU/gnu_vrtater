@@ -3,54 +3,25 @@ Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
 license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 
 Status
-pre-alpha
+pre-alpha.  Seeking co-maintainers, patches.
+
+Introduction
+Many of the features missing from the present source and thus in need of
+development have been outlined in the source.  If you can compile glx programs
+with gcc already, there is a good chance vrtater will compile using make with
+the j target.  You should see a demo of vobspace when vrtater is run and some
+term output.  Enabling DIAG_INTERFACE in progscope.h should produce some ugly
+term output(for now) for movement/position feedback.(j to exit).
 
 Info
-please send email to: green8@sdf-eu.org with vrtater in the subject line. 
-to generate current manual one may use: makeinfo --html --no-split vrtater.texi
-this file, which explains best what is going on with development.
+Please send email to: green8@sdf-eu.org with vrtater in the subject line. 
+vrtater manual.  One may use: makeinfo --html --no-split doc/vrtater.texi
 http://savannah.gnu.org/gitweb/?p=vrtater.git;a=summary  repository host.
 http://savannah.nongnu.org/projects/vrtater/  project host.
 
-Official GNU software status
-
-for offering vrtater to GNU as potential Official GNU software, and then
-transfer of copyright to the FSF, code still needs to fulfill some requirements.
-this is underway.  application will be submitted apon an alpha test version.  
-
-Introduction
-
-many of the features missing from the present source and thus in need of
-development have been outlined in the source.  a quick read should give an idea
-of the scope possible with vrtater, however features described below also
-accomplish this.  if you can compile glx programs with gcc already, there is
-a good chance vrtater will compile using make with the j target.  you should
-see a demo when vrtater is run and some term output(Esc to exit).
+Status
+Currently offering vrtater to the GNU Project.  This pre-empts earlier plans to
+wait for an alpha test version.
 
 Features(various stages of development)
-
-hmap_t is the basic unit of data transfer.  these hold data representing a type
-of 'virtual' 'object'(vob).  render*.c will contextually render these using
-attached data, while also providing the capability to render other, locally
-available non-hmap vobs, animations, etc, inside and outside of hmap bounds.  
-the most significant difference between rendering apon an hmap vs. anywhere else
-is the haptic quality hmaps will provide as wrappers that are tended to based on
-their intersection.  hmaps will move around in vobspace, and the renderer may
-use this motion to stoke animation.  the setup of vobspace will be done thru the
-ui, so the renderer will want to provide a robust configuration interface.
-
-transform.c and renderer are driven from dialog.c(ui) and the humdrum result of
-initial conditions and input.  hmap groups fed into and output from transforms
-are always used to apply changes to hmaps where possible.  hmaps and their
-supported geometry options are founded in and honored respectively in stock.c.
-these become generic so that they may be supported by transforms and rendering.
-ui dialog is passed from node to node through hmaps either in their update cycle
-or when they first enter partial(shared vobspace).
-
-session.c will retreive and maintain connections between nodes per ui request,
-and provide authenticity and encryption if desired.
-
-vectors.c and rotation.c provide basic spacial calculation.
-ifnode**.c receives system input while incrementing state, writing frames, and
-tending to presentation of display buffer.
-tug.c maintains miscelanious system bus io devices.
+See doc/vrtater.texi

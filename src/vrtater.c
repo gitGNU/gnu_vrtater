@@ -1,4 +1,4 @@
-/* vrtater.c: peer to peers 'virtual' 'reality' software.  in pre-alpha.
+/* vrtater.c: Peer to peers 'virtual' 'reality' software.  In pre-alpha.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
 
    This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,6 @@
 
 extern unsigned int vrt_hmaps_max;
 static int verbose_flag;
-static int readable_flag;
 
 void version(void);
 void usage(void);
@@ -48,16 +47,16 @@ void
 usage(void)
 {
 	__builtin_printf("\n"
-		"usage: vrtater [-?h] [-d[level]] [-f partial-node-name] "
-		"[-o[node-orgin-name]]\n\n"
-		"--brief                Run with brief console messages\n"
-		"--diag         -d      Apply tug diagnostic mode with optional level\n"
-		"--find-node    -f      Start with a remote node search\n"
-		"--help         -?      Print this usage message\n"
-		"--node-orgin   -o      Start with default or given node-orgin\n"
-		"--informal     -h      Print output in human readable form\n"
-		"--verbose              Run with verbose console messages\n"
-		"--version              Output disclaimers and versions\n\n"
+		"Usage: vrtater [OPTIONS]...\n\n"
+		"  --brief             Run with brief console messages\n"
+		"  -d, --diag[=LEVEL]  Apply tug diagnostic mode with optional LEVEL\n"
+		"  -f, --find=URL      Start with a remote node search for ADDR\n"
+		"  -?, --help          Print this usage message\n"
+		"  --informal          If possible, abstract output for readability\n"
+		"  -o, --orgin=DIR     Start node-orgin defined in directory DIR\n"
+		"  -p, --partial=DIR   Start node-partial defined in directory DIR\n"
+		"  --verbose           Output console messages in verbose format\n"
+		"  --version           Output disclaimers and versions\n\n"
 		"Report bugs to: green8@sdf-eu.org\n"
 		"pre-alpha development: "
 		"<http://savannah.nongnu.org/projects/vrtater/>\n"
@@ -70,32 +69,39 @@ main(int argc, char **argv)
 {
 
 	/* optional args */
-	int c;
+	int option;
 	while(1) {
 		static struct option long_options[] = {
-			{"verbose", no_argument, &verbose_flag, 1},
 			{"brief", no_argument, &verbose_flag, 0},
-			{"version", no_argument, 0, 0},
-			{"find-node", required_argument, 0, 'f'},
-			{"node-orgin", optional_argument, 0, 'o'},
 			{"diag", optional_argument, 0, 'd'},
-			{"informal", no_argument, 0, 'h'},
+			{"find", required_argument, 0, 'f'},
 			{"help", no_argument, 0, '?'},
+			{"informal", no_argument, &verbose_flag, 1},
+			{"orgin", required_argument, 0, 'o'},
+			{"partial", required_argument, 0, 'p'},
+			{"verbose", no_argument, &verbose_flag, 2},
+			{"version", no_argument, 0, 0},
 			{0, 0, 0, 0}
 		};
 		int option_index = 0;
-		c = getopt_long(argc, argv, "f:o::d::h?", long_options,
+		option = getopt_long(argc, argv, "d::f:?o:p:", long_options,
 			 &option_index);
-		if(c == -1)
+		if(option == -1)
 			break;
-		switch(c) {
+		switch(option) {
 
 			case 0:
 			if(long_options[option_index].flag != 0) {
-				if(verbose_flag) {
-					__builtin_printf("setting --%s\n",
-						long_options[option_index].name);
-					break;
+				if (verbose_flag) {
+					if (--verbose_flag) {
+						__builtin_printf("setting --%s\n",
+							long_options[option_index].name);
+							break;
+					} else {
+						__builtin_printf("setting --%s\n",
+							long_options[option_index].name);
+							break;
+					}
 				} else {
 					__builtin_printf("setting --%s\n",
 						long_options[option_index].name);
@@ -104,41 +110,46 @@ main(int argc, char **argv)
 			}
 			version();
 			exit(0);
-			break;
-
-			case 'f':
-			if(optarg)
-				__builtin_printf("Searching for node %s\n",
-					optarg);
-			else {
-				__builtin_fprintf(stderr, "vrtater: Error: "
-					"syntax -f, --find-node, requires "
-					" a node search string\n");
-				abort();
-			}
-			break;
-
-			case 'o':
-			if(optarg)
-				__builtin_printf("Setting node-orgin to %s "
-					"configuration\n", optarg);
-			else
-				__builtin_printf("Setting node-orgin to default "
-					"configuration\n");
-			break;
 
 			case 'd':
-			if(optarg)
+			if (optarg)
 				__builtin_printf("Setting diagnostic mode %s\n",
 					optarg);
 			else
 				__builtin_printf("Setting diagnostic mode\n");
 			break;
 
-			case 'h':
-			readable_flag = 1;
-			__builtin_printf("setting --%s mode(readable_flag)\n",
-				long_options[option_index].name);
+			case 'f':
+			if (optarg)
+				__builtin_printf("Searching for node %s\n",
+					optarg);
+			else {
+				__builtin_fprintf(stderr, "vrtater: Error: "
+					"syntax -f, --find, requires "
+					" a node search string\n");
+				abort();
+			}
+			break;
+
+			case 'o':
+			if (optarg)
+				__builtin_printf("Setting node-orgin to %s "
+					"configuration\n", optarg);
+			else
+				__builtin_printf("Setting node-orgin to "
+					"default configuration\n");
+			break;
+
+			case 'p':
+			if (optarg)
+				__builtin_printf("Adding called node-partial "
+					"%s to node-orgin\n", optarg);
+			else {
+				__builtin_fprintf(stderr, "vrtater: Error: "
+					"Syntax -p, --partial, requires a "
+					"called node-partial specifier\n");
+				abort();
+			}
 			break;
 
 			case '?':
@@ -148,6 +159,7 @@ main(int argc, char **argv)
 			default:
 			abort();
 		}
+		exit(0);
 	}
 
 	/* Read defaults. */

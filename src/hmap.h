@@ -11,6 +11,13 @@
 
 typedef int session_t; /* for now */
 
+struct complextimate {
+	int hmap_count;
+	int tl_vdata;
+	int tl_dialog;
+};
+typedef struct complextimate complextimate_t;
+
 struct attributes {
 	btoggles_t sign;
 	btoggles_t mode;

@@ -27,6 +27,7 @@ struct partial_space {
 	list_t *list; /* session name and list of all hmaps in this partial */
 	char *desc; /* set when calling mk_partial */
 	hmapf_t *nodemap; /* hmap describing the volume of given partial */
+	complextimate_t complexity;
 	int running; /* is in session code's running set */
 };
 typedef struct partial_space partial_t;

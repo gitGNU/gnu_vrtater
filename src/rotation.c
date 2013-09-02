@@ -1,4 +1,4 @@
-/* rotation.c: rotation of vectors.
+/* rotation.c: Rotation of vectors.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */

@@ -50,7 +50,7 @@ void diag_generator_key_f(void);
 void diag_generator_key_g(void);
 void diag_generator_key_h(void);
 /* Supported calls for bus input. */
-void generator_hapticNormill(void);
+void generator_join_hmaps(void);
 void generator_intersection(void);
 
 #endif /* VRT_GENERATOR_H */

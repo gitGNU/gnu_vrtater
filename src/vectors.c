@@ -1,4 +1,4 @@
-/* vectors.c: a vector library for vrtater. full testing not completed.
+/* vectors.c: A vector library for vrtater. Full testing not completed.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -64,7 +64,7 @@ tele_magz_vf(vf_t *a, vf_t *b, float n)
 		b->z = (a->z / a->m) * n;
 		b->m = n < .0 ? -n : n;
 	} else {
-		/* Vector a has zero magnitude; try to produce magnitude. */
+		/* Vector a has 0 magnitude; try to produce magnitude. */
 		if((b->m = sqrtf(a->x * a->x + a->y * a->y + a->z * a->z))) {
 			b->x = (a->x / a->m) * n;
 			b->y = (a->y / a->m) * n;

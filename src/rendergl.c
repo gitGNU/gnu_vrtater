@@ -1,4 +1,4 @@
-/* rendergl.c: render vobs through gl calls.
+/* rendergl.c: A vob renderer.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -50,7 +50,12 @@ init_next_buffer(void)
 	glColor3f(.1,.5,0);
 }
 
-/* Called per hmap per frame, draw hmap vs. lod given VRT_DRAWGEOM_* support. */
+/* Called per hmap per frame, draw hmap vs. lod given VRT_DRAWGEOM_* support.
+   notes: These may needs not necessairilly be drawn here.  In some cases they
+   may be moved to a display list in whole or in part, and may be drawn in
+   whole or in part in render_vobspace.  Details on this will be determined
+   when intersection code is upgraded and modeling transforms are added these
+   schedule'd for transform.c. */
 void
 render_hmapf(hmapf_t *map, int lod)
 {

@@ -1,1 +1,28 @@
-Jimmy Green <green8@sdf-eu.org>
+Authors.
+
+If vrtater GNU free software is accepted to be part of the GNU Project, it will
+become GNU vrtater.  Please be advised then that in this contingency, all
+copyright for vrtater will be transfered to the FSF.
+
+For now, add a copyright line of same form used currently to the file you are
+editing where more than 15 lines or so are added, and your name plus the relevent
+files added to in this file.  If you become the maintainer responsible for
+session.c or dialog.c, thus providing the essential functionality for those parts
+of the program, please place your copyright notice first in the list for given
+file.  This may also be advised for other files if you become the main contributor
+to given file.  If desired you may opt not to place a copyright notice, and then
+by default be under one of the other copyright holders for files added to through
+the references in this file.
+
+If as a maintainer you add new files, please copyright them and add appropriate
+further disclaimers as per <http://www.gnu.org/prep/maintain/maintain.html> or the
+same as files already maintained.  New files should also be recorded in this file.
+Maintainers may need to check through maintain.html, standards.html, and the other
+doc's at <http://www.gnu.org/prep/>, to insure that vrtater supports GNU standards.
+
+
+Portions records for copyright purposes:
+
+Jimmy Green   <green8@sdf-eu.org>
+              First version of all files.  session.c and dialog.c are in
+              template form and have no significant functionality.

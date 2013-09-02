@@ -1,4 +1,4 @@
-/* session.c: connect sessions for vrtater. no basic functionality yet.
+/* session.c: Connect sessions for vrtater.  No basic functionality yet.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -130,8 +130,8 @@ list_nodes(char *desc)
 	;
 }
 
-/* This may cue a session for given or list_nodes remote node ip address.
-   Return zero on success.*/
+/* This may cue a session for given or list_nodes remote node ip address
+   address.  Return 0 on success. */
 int
 call_session(char *address)
 {
@@ -145,7 +145,7 @@ call_session(char *address)
 }
 
 /* Finish log in (an optional password may be implemented) and then add
-   cued_session, to the running set.  Return zero on success.  Connection is
+   cued_session, to the running set.  Return 0 on success.  Connection is
    then assumed while session cued_session remains in all_sessions data.  If
    cued_session can not be connected return nonzero. */
 int
@@ -161,7 +161,7 @@ accept_called_partial_session(session_t *cued_session, char *passwd)
 	return rval;
 }
 
-/* Add cued_session to the running set.  Return zero on success.  Connection is
+/* Add cued_session to the running set.  Return 0 on success.  Connection is
    then assumed while session cued_session remains in all_sessions data.  If
    cued_session can not be connected return nonzero. */
 int
@@ -191,7 +191,7 @@ match_vs_all_sessions(session_t *session)
 	return NULL;
 }
 
-/* Connect session described in session_desc.  Return zero on success.
+/* Connect session described in session_desc.  Return 0 on success.
    notes: Consideration for the eventuality that remote nodes may share the same
    ip address assumes that all associated nodes may be allowed to be included in
    the running set if session_desc is accepted by the person running node-orgin.
@@ -259,7 +259,7 @@ recieve_maps_from_peer_partial(session_t *session, select_t *sel)
 	return map;
 }
 
-/* Close session referenced by session_desc.  Return zero on closed. */
+/* Close session referenced by session_desc.  Return 0 on closed. */
 int
 close_session(session_desc_t *session_desc)
 {

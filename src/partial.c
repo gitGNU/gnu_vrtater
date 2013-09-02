@@ -1,4 +1,4 @@
-/* partial.c: linked list mechanism to group partials.
+/* partial.c: Calls returning partial set for hmaps.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */

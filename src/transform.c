@@ -856,7 +856,8 @@ alloc_dialog(hmapf_t *map, int len)
    assumed to be sizeof(s).  offset decodes to strlen(s) as an ordinal index
    into s where offset is then part of the selection within string to be deleted
    or the start of chars to be shifted right in the string.  notes: For now
-   append s to end of hmap dialog. */
+   append s to end of hmap dialog.  Insert feature is scheduled to be ready for
+   dialog.c call for authors. */
 int
 add_dialog(hmapf_t *map, char *s, int offset, int count)
 {

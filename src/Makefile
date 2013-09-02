@@ -1,10 +1,14 @@
-# Makefile: initial, extra vanilla, for vrtater
+# Makefile: Initial, extra vanilla, for vrtater.
 # Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
 # license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 
-CC = gcc
-COPTS = -Wall -pedantic -std=gnu99 -fno-builtin
+# For now, build directory and source directory are the same, ie: src/.
+SHELL = /bin/sh
+.SUFFIXES:
+.SUFFIXES: .c
 
+CC = gcc
+CFLAGS = -Wall -pedantic -std=gnu99 -fno-builtin
 LIBS = -lGL -lGLU -lXi -lXmu -lXext -lX11 -lm
 INCLUDE =
 
@@ -23,4 +27,4 @@ run : $(BIN)
 	./$(BIN)
 
 $(BIN) : $(MAIN).c
-	$(CC) $(SRCS) $(INCLUDE) -o $@ $(COPTS) $< $(LIBS)
+	$(CC) $(SRCS) $(INCLUDE) -o $@ $(CFLAGS) $< $(LIBS)

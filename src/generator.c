@@ -1,4 +1,4 @@
-/* generator.c: Create initial conditions.  Tend to vobspace feedback.
+/* generator.c: Create/restore initial conditions.  Tend to vobspace feedback.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -74,14 +74,15 @@ generate_node_orgin(void)
 {
 	init_selection_buffers();
 	init_vohspace();
+	__builtin_printf("Reading vohspace from\n"); /* for now */
 	set_node_orgin(&node_orgin, ""); /* for now */
+	__builtin_printf("node-orgin set to %x\n", node_orgin);
 	partial_generator_list = NULL;
 	partials_count = 0;
 	generate_vohspace();
 	init_renderer();
 	init_sessions();
 
-	__builtin_printf("generated node-orgin %x\n", node_orgin);
 	return 0;
 }
 
@@ -111,7 +112,7 @@ generate_vohspace(void)
 		if ((map = hmapf_cube_c(&node_orgin, 100, 100, 100)) != NULL)
 			nportf(map, sum_vf(&d, &portal, &portal));
 	for (i = 0; i < 1; i++)
-		if ((map = hmapf_cylinder_c(&node_orgin, 10, 25, 13.5, 0)) != NULL)
+		if ((map = hmapf_cylinder_c(&node_orgin, 8, 25, 12, 0)) != NULL)
 			nportf(map, sum_vf(&d, &portal, &portal));
 
 #ifdef DIAG_PARTIAL
@@ -218,7 +219,6 @@ mk_partial(char *desc, hmapf_t *nodemap)
 	int i, lval;
 	partial_t *partial, **incpartial = (partial_t **) partial_generator_list;
 	partial_t *swap, **incswap;
-	select_t sel = { 0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
 	if ((partial = (partial_t *) malloc(sizeof(partial_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
@@ -275,13 +275,14 @@ mk_partial(char *desc, hmapf_t *nodemap)
 	/* Form partial. */
 	(*incpartial)->desc = desc;
 	(*incpartial)->nodemap = nodemap;
+	(*incpartial)->complexity.hmap_count = 1;
+	(*incpartial)->complexity.tl_vdata = nodemap->vmap_total * sizeof(vf_t);
+	(*incpartial)->complexity.tl_dialog = nodemap->dialog_len * sizeof(int);
 	(*incpartial)->list = mk_partial_maps_list(&(partial->session), desc);
 	add_to_partial_maps_list((*incpartial)->list, (*incpartial)->nodemap);
 	(*incpartial)->nodemap->name = (*incpartial)->session | (*incpartial)->nodemap->index;
 	(*incpartial)->nodemap->attribs.sign |= (VRT_MASK_PARTIAL | VRT_MASK_PARTIAL_MODS);
 
-	(&sel)->counta = select_partial_set((*incpartial)->list, (&sel)->seta);
-	diag_selection(&sel);
 	__builtin_printf("  description:\n%s\n  nodemap: %x\n",
 		(*incpartial)->desc, ((*incpartial)->nodemap)->name);
 
@@ -340,7 +341,6 @@ rm_partial(partial_t *partial)
 	recycle(&sel);
 
 	/* Free partial and write reduced partial_generator_list from swap. */
-	__builtin_printf(" freeing %x\n", partial->session);
 	free(partial);
 	partials_count--;
 	free(partial_generator_list);
@@ -373,7 +373,6 @@ mk_partial_maps_list(session_t *session, char *desc)
 	list->session = session;
 	list->last = NULL; /* first in list will have a NULL precursor */
 	list->count = 0;
-	__builtin_printf(" new partial maps list: %x\n", *session);
 	return list;
 }
 
@@ -382,11 +381,8 @@ mk_partial_maps_list(session_t *session, char *desc)
 void
 rm_partial_maps_list(list_t *list)
 {
-	__builtin_printf(" dissolving list...\n");
-	while (list->last != NULL) {
+	while (list->last != NULL)
 		subtract_from_partial_maps_list(list, list->last->map);
-	}
-	__builtin_printf(" freeing allocation for list\n");
 	free(list);
 }
 
@@ -409,14 +405,6 @@ add_to_partial_maps_list(list_t *list, hmapf_t *map)
 	list->last = listed;
 	list->count++;
 
-	if (listed->precursor) {
-		__builtin_printf(" add_to_partial_maps_list: %i precursor %i\n",
-		list->last->map->index, listed->precursor->map->index);
-	} else {
-		__builtin_printf(" add_to_partial_maps_list: %i %x precursor\n",
-		list->last->map->index, (int) listed->precursor);
-	}
-
 	return listed;
 }
 
@@ -433,11 +421,6 @@ subtract_from_partial_maps_list(list_t *list, hmapf_t *map)
 	current = list->last; /* start at end */
 	passed = list->last; /* keep a back reference */
 
-	__builtin_printf(" subtract_from_partial_maps_list: map %i, "
-		"current %i, passed %i, last %i\n",
-		map->index, current->map->index,
-		passed->map->index, list->last->map->index);
-
 	while (1) {
 		if (current != NULL) {
 			if (current->map->name == map->name) {
@@ -446,13 +429,6 @@ subtract_from_partial_maps_list(list_t *list, hmapf_t *map)
 			/* Increment. */
 			passed = current;
 			current = current->precursor;
-
-			if (current) {
-				__builtin_printf(" adjusted: current %i, " 
-					"passed %i, last %i\n",
-					current->map->index, passed->map->index,
-					list->last->map->index);
-			}
 		} else
 			return -1;
 	}
@@ -466,35 +442,17 @@ subtract_from_partial_maps_list(list_t *list, hmapf_t *map)
 			/* One element list. */
 			list->last = NULL;
 
-			__builtin_printf("  subtracting element from "
-				"end of list: list now empty\n");
-
 		} else {
 
 			/* Last element where more than one. */
-			__builtin_printf("  subtracting element from "
-				"end of list: was %i, ",
-				list->last->map->index);
-
 			list->last = current->precursor; /* reset */
-
-			__builtin_printf("end ref now %x\n",
-				(int) list->last);
 		}
 	} else {
 
 		/* Not last.  No need to reset last, needs relink. */
-		__builtin_printf("  subtracting list element:"
-			"\tpassed precursor ref %x (self)\n",
-			(int) passed->precursor);
-
 		passed->precursor = current->precursor; /* relink */
-
-		__builtin_printf("\tpassing precursor ref %x to (previous)\n",
-			(int) passed->precursor);
 	}
 
-	__builtin_printf(" freeing allocation for listed\n");
 	free(current);
 	list->count--;
 
@@ -602,9 +560,7 @@ diag_hmaps_in_partial(session_t *session)
 void
 diag_generator_key_f(void)
 {
-	diag_ls_partials(1);
 	test_send_partial_changes();
-	diag_ls_partials(1);
 }
 
 /* Temporary diagnostic to run test on keypress g. */
@@ -667,6 +623,12 @@ test_send_partial_changes(void)
 	map->name = (*partial)->session | map->index;
 	add_to_partial_maps_list((*partial)->list, map);
 	map->attribs.sign |= (VRT_MASK_PARTIAL_MODS | VRT_MASK_PARTIAL);
+	(*partial)->complexity.hmap_count += 1;
+	(*partial)->complexity.tl_vdata += map->vmap_total * sizeof(vf_t);
+	(*partial)->complexity.tl_dialog += map->dialog_len * sizeof(int);
+
+	__builtin_printf("added hmap %x to node-partial %x\n",
+		map->name, (*partial)->session);
 
 	/* Send all partials. */
 	partial = (partial_t **) partial_generator_list;
@@ -793,7 +755,7 @@ test_hmapwrap_unwrap(hmapf_t *map)
 
 /* Tug support: The following are a list of transform wrappers vs. bus input. */
 void
-generator_hapticNormill(void)
+generator_join_hmaps(void)
 {
 	;
 }

@@ -8,18 +8,11 @@
 
 #include "hmap.h"
 
-struct complextimate { /* these stats kept by code in generator.c */
-	int hmap_count;
-	int avg_vertices;
-	int avg_map_sz;
-};
-typedef struct complextimate complextimate_t;
-
 struct session_desc {
 	session_t session;
 	btoggles_t level;
 	char adesc[81]; /* if called, cued */
-	complextimate_t partial_vobspace;
+	complextimate_t complexity;
 };
 typedef struct session_desc session_desc_t;
 

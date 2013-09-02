@@ -1,4 +1,4 @@
-/* ifnodeglx.c: node interface for vrtater.
+/* ifnodeglx.c: A node interface.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -759,6 +759,8 @@ tendto_curr_sessions(void)
 int
 connect_called_partialspace(session_t *session)
 {
+	/* Get the session_desc parts maintained in node-partial */
+	/* ... */
 	char passwd[] = "";
 	return accept_called_partial_session(session, passwd);
 }
@@ -771,6 +773,8 @@ connect_called_partialspace(session_t *session)
 int
 connect_caller_partialspace(session_t *session)
 {
+	/* Get the session_desc parts maintained in node-partial */
+	/* ... */
 	return accept_caller_partial_session(session);
 }
 
@@ -823,8 +827,8 @@ diag_message(void)
 {
 	__builtin_printf("For now, please use j to exit "
 		"vrtater GNU free software.\n"
-		"Please send patches, or become a maintainer, "
-		"see README.\n"
-		"Outreach drive almost ready for "
-		"session.c, renderer, more...\n");
+		"Please send patches, or become a maintainer.\n "
+		"See: README, doc/vrtater.texi\n"
+		"Outreach drive for session.c now underway.\n"
+		"Similar to follow for render**.c, dialog*.c ...\n");
 }

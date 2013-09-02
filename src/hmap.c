@@ -1,4 +1,4 @@
-/* hmap.c: calls to retreive and help build hmaps(vob attribute data struct).
+/* hmap.c: Calls associated with retreival of hmaps and their data in vohspace.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -10,7 +10,7 @@
 /* External. */
 unsigned int vrt_hmaps_max;
 
-/* Attach an empty hmap to given session.  Applied index reflects hmaps ordinal
+/* Attach empty hmap to given session.  Applied index reflects hmaps ordinal
    position in vohspace for node-orgin maps. */
 hmapf_t *
 hmapf(session_t *session)

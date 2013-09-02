@@ -1,4 +1,4 @@
-/* dialogX11.c: Represent dialog for one who runs vrtater.  Still a template.
+/* dialogX11.c: A dialog representer for one who runs vrtater.  Still template.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
