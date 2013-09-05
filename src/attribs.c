@@ -568,7 +568,9 @@ flow_over(btoggles_t *balance_criteria)
 }
 
 
-/* If seekpos(map, loc) is successful, arrival(map, loc) becomes successful. */
+/* Conditionally place map at loc.  note: Still in progress.  Conditions are
+   determinate where if seekpos calculation is successful, arrival becomes
+   successful. */
 void
 nportf(hmapf_t *map, vf_t *loc)
 {
@@ -582,15 +584,13 @@ nportf(hmapf_t *map, vf_t *loc)
 		return;
 	}
 
-	/* seekpos() calculation. */
+	/* seekpos calculation. */
+	r = estimate_radiusf(map);
 	/* ... */
 
-	/* nport */
+	/* arrival, for now */
 	cp_vf(loc, &(map->vpos));
 	form_mag_vf(&(map->vpos));
-
-	/* arrival(), for now */
-	r = estimate_radiusf(map);
 	e = rand() * TINYRANDOM;
 	wanderf(map, e, map->attribs.kg, r);
 }
