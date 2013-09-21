@@ -6,6 +6,6 @@
 #ifndef VRT_ROTATION_H
 #define VRT_ROTATION_H
 
-vf_t *rotate_vf(vf_t *v, vf_t *axi, float ang_dpl);
+vf_t *rotate_vf(vf_t *a, vf_t *axi, float ang_dpl, vf_t *b);
 
 #endif /* VRT_ROTATION_H */

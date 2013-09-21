@@ -42,6 +42,7 @@ hmapf_icosahedron_c(session_t *session, float r)
 
 	/* hmap attribs. */
 	map->draw.geom = VRT_DRAWGEOM_TRIANGLES;
+	map->attribs.mode |= VRT_MASK_SYNC_VERTICES;
 	map->envelope.geom = VRT_BOUND_SPHERE;
 	map->envelope.vsz.x = ICOSAHEDRON_C_BOUND0 * r;
 	form_mag_vf(&(map->envelope.vsz));
@@ -89,6 +90,7 @@ hmapf_cube_c(session_t *session, float l, float w, float h)
 		return NULL;
 
 	map->draw.geom = VRT_DRAWGEOM_TRIANGLES;
+	map->attribs.mode |= VRT_MASK_SYNC_VERTICES;
 	map->envelope.geom = VRT_BOUND_RCUBOID;
 	map->envelope.vsz.x = CUBE_C_BOUND0 * w / 2;
 	map->envelope.vsz.y = CUBE_C_BOUND0 * h / 2;
@@ -152,6 +154,7 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 		return NULL;
 
 	map->draw.geom = VRT_DRAWGEOM_TRIANGLES;
+	map->attribs.mode |= VRT_MASK_SYNC_VERTICES;
 	map->envelope.geom = VRT_BOUND_CYLINDER;
 	map->envelope.vsz.x = r;
 	map->envelope.vsz.y = l / 2;

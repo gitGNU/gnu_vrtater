@@ -96,7 +96,7 @@ render_hmapf(hmapf_t *map, int lod)
 			for (j = 0; j < 3; j++, vmap++) {
 
 				cp_vf(vmap, &v);
-				rotate_vf(&v, &(map->vaxi), map->ang_dpl);
+				rotate_vf(&v, &(map->vaxi), map->ang_dpl, &v);
 
 				/* Format vertices for rendering. */
 				glv[j][0] = (GLfloat) (&v)->x + map->vpos.x;

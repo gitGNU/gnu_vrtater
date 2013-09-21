@@ -41,7 +41,7 @@ form_mag_vf(vf_t *a)
    result b with desired m and proportionally scaled direction.  If given a->m
    is 0, b directional terms will reflect divide by zero return values. */
 vf_t *
-tele_mag_vf(vf_t *a, vf_t *b, float m)
+tele_mag_vf(vf_t *a, float m, vf_t *b)
 {
 	b->x = (a->x / a->m) * m;
 	b->y = (a->y / a->m) * m;
@@ -56,7 +56,7 @@ tele_mag_vf(vf_t *a, vf_t *b, float m)
    a->m.  Where a->m is 0, the value of b->m will be determined from vector a
    direction components, returning the null vector if null. */
 vf_t *
-tele_magz_vf(vf_t *a, vf_t *b, float n)
+tele_magz_vf(vf_t *a, float n, vf_t *b)
 {
 	if (a->m) {
 		b->x = (a->x / a->m) * n;
@@ -79,7 +79,7 @@ tele_magz_vf(vf_t *a, vf_t *b, float n)
 /* Calculate vector a, where scaled by given factor f.  Set and return reference
    to vector result b. */
 vf_t *
-factor_vf(vf_t *a, vf_t *b, float f)
+factor_vf(vf_t *a, float f, vf_t *b)
 {
 	b->x = a->x * f;
 	b->y = a->y * f;

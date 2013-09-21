@@ -81,8 +81,10 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_EXTEND_SEAMLESS (1 << VRT_ORDINAL_EXTEND_SEAMLESS)
 	VRT_ORDINAL_WALL_TYPEA,
 #define VRT_MASK_WALL_TYPEA (1 << VRT_ORDINAL_WALL_TYPEA)
-	VRT_ORDINAL_NODEMAP /* for renderer */
+	VRT_ORDINAL_NODEMAP, /* for renderer */
 #define VRT_MASK_NODEMAP (1 << VRT_ORDINAL_NODEMAP)
+	VRT_ORDINAL_SYNC_VERTICES /* keep identical vertices together */
+#define VRT_MASK_SYNC_VERTICES (1 << VRT_ORDINAL_SYNC_VERTICES)
 };
 
 struct bounds {

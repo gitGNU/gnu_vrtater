@@ -13,6 +13,7 @@
 #include "vectors.h"
 #include "stock.h"
 #include "progscope.h"
+#include "rotation.h"
 
 float vrt_render_cyc; /* external */
 
@@ -35,57 +36,164 @@ join_hmaps(select_t *sel)
 }
 
 /* Given reference to 2 hmaps in sel a and b respectively, transform path
-   attributes of these apon hmap intersection.  For now, simply uses spherical
-   bounding volumes of radius envelope.vsz and mass of attribs.kg per any hmaps.
-   note: Representation of mass is proportional to volume. */
+   attributes of these apon hmap intersection.  Apply deformation to hmaps
+   where intersection occurs.  notes: Still in progress.  For now, simply uses
+   spherical bounding volumes of radius envelope.vsz and mass of attribs.kg per
+   any hmaps.  Representation of mass is proportional to volume.  scheduled:
+   Support for type cylinder and cube bounding volumes.  Calculating for
+   triangles directly once within bounds.  Inside intersection and deformation. */
 int
 intersection(select_t *sel)
 {
-	/* scrawl:
-	   still in progress
-	   toggles_t toggles;
-	   toggles = sel->specbits;
-	   - determine bound geom
-	*/
-
 	hmapf_t *mapa, *mapb;
 	vf_t *vvela, *vvelb;
 	vf_t vacca = {0, 0, 0, 0};
 	vf_t vaccb = {0, 0, 0, 0};
 	vf_t vdist = {0, 0, 0, 0};
-	float touch, inter, ma, mb, scale;
+	float centerdist, isectn, ma, mb, scale;
 	float mva, mvb; /* for now */
+	int i, j;
+	vf_t *idxtri_a, *idxtri_b, *nearesta, *nearestb, centroida, centroidb, contact;
+	vf_t *vmap, disp_a, disp_b, disp_c, tmp, keya, keyb, keyc, alt_a, alt_b, alt_c, dif;
+	float tdist = 0x7f7fffff;
+	float plasmaconst = .15;
+	float threshold = .0005; /* generated hmaps need slack */
+
 
 	mapa = *(sel->seta);
 	mapb = *(sel->setb);
 
-	scale = .00005;
+	if (mapa->name == mapb->name)
+		return 0;
+
+	scale = .0008;
 
 	dif_vf(&(mapa->vpos), &(mapb->vpos), &vdist);
-	touch = mapa->envelope.vsz.x + mapb->envelope.vsz.x;
+	form_mag_vf(&vdist);
+	centerdist = mapa->envelope.vsz.x + mapb->envelope.vsz.x;
 
-	if (mapb->attribs.kg && (&vdist)->m < touch) {
+	/* Apon bound intersection, determine closest triangles vs. centroid
+	   of each in both hmaps.  For now, using spherical bounds checking
+	   for all hmaps.  Functionality needs be further considered for mixed
+	   bound types. */
+	if (mapb->attribs.kg && (&vdist)->m < centerdist) {
 
+		/* Determine 2 closest triangles.
+		   For now, assuming triangles, reduce those in mapa/mapb to
+		   match on nearest with an exaustive search.  Leave match
+		   references in nearesta/nearestb. */
+		for (i = 0, idxtri_a = mapa->vmap; i < mapa->vmap_total; i += 3) {
+
+			/* Find centroid a. */
+			(&centroida)->x = ((idxtri_a)->x + (idxtri_a + 1)->x + (idxtri_a + 2)->x) / 3;
+			(&centroida)->y = ((idxtri_a)->y + (idxtri_a + 1)->y + (idxtri_a + 2)->y) / 3;
+			(&centroida)->z = ((idxtri_a)->z + (idxtri_a + 1)->z + (idxtri_a + 2)->z) / 3;
+
+			/* Position centroid a absolutely. */
+			sum_vf(&(mapa->vpos), rotate_vf(form_mag_vf(&centroida), &(mapa->vaxi), mapa->ang_dpl, &centroida), &centroida);
+
+			for (j = 0, idxtri_b = mapb->vmap; j < mapb->vmap_total; j += 3) {
+
+				/* Find centroid b. */
+				(&centroidb)->x = ((idxtri_b)->x + (idxtri_b + 1)->x + (idxtri_b + 2)->x) / 3;
+				(&centroidb)->y = ((idxtri_b)->y + (idxtri_b + 1)->y + (idxtri_b + 2)->y) / 3;
+				(&centroidb)->z = ((idxtri_b)->z + (idxtri_b + 1)->z + (idxtri_b + 2)->z) / 3;
+
+				/* Position centroid b absolutely. */
+				sum_vf(&(mapb->vpos), rotate_vf(form_mag_vf(&centroidb), &(mapb->vaxi), mapb->ang_dpl, &centroidb), &centroidb);
+
+				/* Produce difference between absolute centroids a and b. */
+				dif_vf(&centroida, &centroidb, &dif);
+
+				/* Index closest triangles so far and approximate absolute contact point for a. */
+				if ((&dif)->m < tdist) {
+					tdist = (&dif)->m;
+					nearesta = idxtri_a;
+					nearestb = idxtri_b;
+					cp_vf(&centroida, &contact);
+				}
+				idxtri_b += 3;
+			}
+			idxtri_a += 3;
+		}
+
+		/* Retreive absolute altitudes for nearest triangle in b. */
+		sum_vf(&(mapb->vpos), rotate_vf(nearestb, &(mapb->vaxi), mapb->ang_dpl, &alt_a), &alt_a);
+		sum_vf(&(mapb->vpos), rotate_vf(nearestb + 1, &(mapb->vaxi), mapb->ang_dpl, &alt_b), &alt_b);
+		sum_vf(&(mapb->vpos), rotate_vf(nearestb + 2, &(mapb->vaxi), mapb->ang_dpl, &alt_c), &alt_c);
+
+		/* Find in triangle b, absolute altitude displacements vs. triangle a absolute contact point. */
+		dif_vf(&alt_a, &contact, &disp_a);
+		dif_vf(&alt_b, &contact, &disp_b);
+		dif_vf(&alt_c, &contact, &disp_c);
+
+		/* Deformation.  If vertices are to remain syncronized,
+		   exaustively scan for those, for now.  Adjust altitudes in
+		   relative triangle b vs. given displacements along vvel, while
+		   optionally syncronizing vertices. */
+		if (!(mapb->attribs.mode & VRT_MASK_FIXED_FORM)) {
+			if (mapb->attribs.mode & VRT_MASK_SYNC_VERTICES) {
+
+				/* Take a copy of the key triangle vertices. */
+				cp_vf(nearestb, &keya);
+				cp_vf(nearestb + 1, &keyb);
+				cp_vf(nearestb + 2, &keyc);
+
+				/* Move the key triangle into new position. */
+				tele_magz_vf(&(mapa->vvel), (&disp_a)->m * plasmaconst, &tmp);
+				sum_vf(nearestb, rotate_vf(&tmp, &(mapb->vaxi),-mapb->ang_dpl, &tmp), nearestb);
+				tele_magz_vf(&(mapa->vvel), (&disp_b)->m * plasmaconst, &tmp);
+				sum_vf(nearestb + 1, rotate_vf(&tmp, &(mapb->vaxi),-mapb->ang_dpl, &tmp), nearestb + 1);
+				tele_magz_vf(&(mapa->vvel), (&disp_c)->m * plasmaconst, &tmp);
+				sum_vf(nearestb + 2, rotate_vf(&tmp, &(mapb->vaxi),-mapb->ang_dpl, &tmp), nearestb + 2);
+
+				/* Adjust any vertices previously attached to the key triangle. */
+				for (i = 0, vmap = mapb->vmap; i < mapb->vmap_total; i++, vmap++) {
+					if ((vmap->x + threshold > (&keya)->x) && (vmap->x - threshold < (&keya)->x))
+						if ((vmap->y + threshold > (&keya)->y) && (vmap->y - threshold < (&keya)->y))
+							if ((vmap->z + threshold > (&keya)->z) && (vmap->z - threshold < (&keya)->z))
+								cp_vf(nearestb, vmap);
+					if ((vmap->x + threshold > (&keyb)->x) && (vmap->x - threshold < (&keyb)->x))
+						if ((vmap->y + threshold > (&keyb)->y) && (vmap->y - threshold < (&keyb)->y))
+							if ((vmap->z + threshold > (&keyb)->z) && (vmap->z - threshold < (&keyb)->z))
+								cp_vf(nearestb + 1, vmap);
+					if ((vmap->x + threshold > (&keyc)->x) && (vmap->x - threshold < (&keyc)->x))
+						if ((vmap->y + threshold > (&keyc)->y) && (vmap->y - threshold < (&keyc)->y))
+							if ((vmap->z + threshold > (&keyc)->z) && (vmap->z - threshold < (&keyc)->z))
+								cp_vf(nearestb + 2, vmap);
+				}
+			} else {
+				/* Move the key triangle into new position. */
+				tele_magz_vf(&(mapa->vvel), (&disp_a)->m * plasmaconst, &tmp);
+				sum_vf(nearestb, rotate_vf(&tmp, &(mapb->vaxi),-mapb->ang_dpl, &tmp), nearestb);
+				tele_magz_vf(&(mapa->vvel), (&disp_b)->m * plasmaconst, &tmp);
+				sum_vf(nearestb + 1, rotate_vf(&tmp, &(mapb->vaxi),-mapb->ang_dpl, &tmp), nearestb + 1);
+				tele_magz_vf(&(mapa->vvel), (&disp_c)->m * plasmaconst, &tmp);
+				sum_vf(nearestb + 2, rotate_vf(&tmp, &(mapb->vaxi),-mapb->ang_dpl, &tmp), nearestb + 2);
+			}
+		}
+
+		/* Calculate reflection. */
 		ma = mapa->attribs.kg;
 		mb = mapb->attribs.kg;
-		inter = touch - (&vdist)->m; /* -intersection */
+		isectn = centerdist - (&vdist)->m; /* -intersection */
 
-		/* Tend to hmap a. */
+		/* Angle of reflection. */
+		/* ... */
+
+		/* Acceleration for mapa. */
 		vvela = &(mapa->vvel);
 		/* m*v for now */
 		mva = ma * vvela->m;
-		/* Here calculate angle of reflection. */
-
-		/* Calculate and set acc for a. */
 		if (mva)
-			tele_magz_vf(&vdist, &vacca, scale * inter * mb / mva);
+			tele_magz_vf(&vdist, scale * isectn * mb * (2 * (1 / mb)) / mva, &vacca);
 		sum_vf(&vacca, vvela, vvela);
 
-		/* Tend to hmap b. */
+		/* Tend to mapb. */
 		vvelb = &(mapb->vvel);
 		mvb = mb * vvelb->m;
 		if (mvb)
-			tele_magz_vf(&vdist, &vaccb, scale * inter * ma / mvb);
+			tele_magz_vf(&vdist, scale * isectn * ma / mvb, &vaccb);
 		sum_vf(&vaccb, vvelb, vvelb);
 	}
 
@@ -110,8 +218,8 @@ intersection(select_t *sel)
 		//__builtin_printf("   kg a: %f\n", ma);
 		__builtin_printf("    sza: %f\n", mapa->envelope.vsz.x);
 		__builtin_printf("    mva: %f\n\n", mva);
-		__builtin_printf("  inter: %f\n", inter);
-		__builtin_printf("  touch: %f\n", touch);
+		__builtin_printf("  isectn: %f\n", isectn);
+		__builtin_printf("  centerdist: %f\n", centerdist);
 		__builtin_printf("  scale: %f\n\n", scale);
 		/* hmap other */
 		__builtin_printf("index b: %i\n", mapb->index);

@@ -195,7 +195,7 @@ attach_hmapf(void)
 	hmapf_t *map = vohspace;
 
 	for (i = 0; i < vrt_hmaps_max; i++, map++) {
-		if (!(map->attribs.mode &= VRT_MASK_ATTACHED)) {
+		if (!(map->attribs.mode & VRT_MASK_ATTACHED)) {
 			map->index = i; /* node-orgin unique index */
 			map->attribs.mode |= VRT_MASK_ATTACHED;
 			attached_hmaps++;
@@ -536,7 +536,7 @@ proc_hmapf(hmapf_t *map, int lod, int sort_ratio)
 
 	/* Sum velocity into position for this frame. */
 	cp_vf(&(map->vvel), &d); /* take a copy of direction/velocity */
-	factor_vf(&d, &d, vrt_render_cyc * sort_ratio); /* delta given freq */
+	factor_vf(&d, vrt_render_cyc * sort_ratio, &d); /* delta given freq */
 	sum_vf(&(map->vpos), &d, &(map->vpos)); /* pos' = delta vector + pos */
 
 	/* Set vob angular displacement.  note: v_ang_vel will be pseudovector
@@ -665,7 +665,7 @@ wanderf(hmapf_t *p, float e, float m, float r)
 	normz_vf(&(p->vvel), &(p->vvel));
 
 	/* Velocity thereapon. */
-	tele_magz_vf(&(p->vvel), &(p->vvel), avg_orginv_ke); /* m/s */
+	tele_magz_vf(&(p->vvel), avg_orginv_ke, &(p->vvel)); /* m/s */
 
 	/* Arbitrary vpre vector axis of mass distribution. */
 	p->vpre.x = (float) (rnd = ((rnd + (double) rand()) * SMALLRANDOM));

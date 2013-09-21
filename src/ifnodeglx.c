@@ -586,19 +586,17 @@ node(int argc, char **argv)
 		}
 
 		/* Sum in curvilinear fore/backwards acceleration feedback. */
-		tele_magz_vf(&(fov0->vvel), &(fov0->vvel),
-			(fov0->vvel.m * fov0->vvel.m) /
-			(fov0->vvel.m + (fov0->vvel.m * (&ifdpy0)->accel_crv)));
+		tele_magz_vf(&(fov0->vvel), (fov0->vvel.m * fov0->vvel.m) / (fov0->vvel.m + (fov0->vvel.m * (&ifdpy0)->accel_crv)), &(fov0->vvel));
 
 		/* Accelerate, summing d/t/t with d/t for (+/-)fwd, side. */
 		vf_t dpl, dpl2, dpl3;
-		tele_magz_vf(&(fov0->vaxi), &dpl, (&ifdpy0)->keyvfwd);
+		tele_magz_vf(&(fov0->vaxi), (&ifdpy0)->keyvfwd, &dpl);
 		sum_vf(&dpl, &(fov0->vvel), &(fov0->vvel));
 
 		cprod_vf(&(fov0->vaxi), &(fov0->vrel), &dpl2);
-		tele_magz_vf(&dpl2, &dpl2, (&ifdpy0)->keyvside);
+		tele_magz_vf(&dpl2, (&ifdpy0)->keyvside, &dpl2);
 		sum_vf(&(fov0->vvel), &dpl2, &(fov0->vvel));
-		tele_magz_vf(&(fov0->vrel), &dpl3, (&ifdpy0)->keyvvrt);
+		tele_magz_vf(&(fov0->vrel), (&ifdpy0)->keyvvrt, &dpl3);
 		sum_vf(&(fov0->vvel), &dpl3, &(fov0->vvel));
 
 		/* Further adjust interfaced hmaps while representing node
@@ -617,16 +615,16 @@ node(int argc, char **argv)
 		normz_vf(&side, &side);
 
 		/* Roll rel and side around axial. */
-		rotate_vf(&(fov0->vrel), &(fov0->vaxi), (&ifdpy0)->keyroll);
-		rotate_vf(&side, &(fov0->vaxi), (&ifdpy0)->keyroll);
+		rotate_vf(&(fov0->vrel), &(fov0->vaxi), (&ifdpy0)->keyroll, &(fov0->vrel));
+		rotate_vf(&side, &(fov0->vaxi), (&ifdpy0)->keyroll, &side);
 
 		/* Pan side and axial around rel. */
-		rotate_vf(&side, &(fov0->vrel), -(&ifdpy0)->keypan);
-		rotate_vf(&(fov0->vaxi), &(fov0->vrel), -(&ifdpy0)->keypan);
+		rotate_vf(&side, &(fov0->vrel), -(&ifdpy0)->keypan, &side);
+		rotate_vf(&(fov0->vaxi), &(fov0->vrel), -(&ifdpy0)->keypan, &(fov0->vaxi));
 
 		/* Tilt axial and rel around side. */
-		rotate_vf(&(fov0->vaxi), &side, -(&ifdpy0)->keytilt);
-		rotate_vf(&(fov0->vrel), &side, -(&ifdpy0)->keytilt);
+		rotate_vf(&(fov0->vaxi), &side, -(&ifdpy0)->keytilt, &(fov0->vaxi));
+		rotate_vf(&(fov0->vrel), &side, -(&ifdpy0)->keytilt, &(fov0->vrel));
 
 		/* Base's are maintained in their normalized form. */
 		normz_vf(&(fov0->vaxi), &(fov0->vaxi));

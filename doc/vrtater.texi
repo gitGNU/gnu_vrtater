@@ -2,7 +2,7 @@
 @c %**start of header
 @setfilename vrtater.info
 @c automake vars: these will later be in version.texi and maintained by automake
-@set VERSION 0.3.62 pre-alpha
+@set VERSION 0.3.64 pre-alpha
 @set UPDATED September 2013
 @c other vars
 @set DEVELOP @uref{http://savannah.nongnu.org/projects/vrtater/}
@@ -271,13 +271,13 @@ At the moment vrtater is in phase pre-alpha, and has no installation features. Y
 @tab @code{length = (&a)->m;}
 @tab 'length' (given direction and m)
 @item magnifydir
-@tab @code{tele_mag_vf(&a, &b, m');}
+@tab @code{tele_mag_vf(&a, m', &b);}
 @tab scales well formed(correct m) in b
 @item
 @tab
 @tab vector(x, y, z, m) to (x', y', z', m')
 @item magnifydirz
-@tab @code{tele_magz_vf(&a, &b, n');}
+@tab @code{tele_magz_vf(&a, n', &b);}
 @tab b becomes a scaled by [+/-] n
 @item
 @tab
@@ -286,8 +286,8 @@ At the moment vrtater is in phase pre-alpha, and has no installation features. Y
 @tab
 @tab if a is the null vector so is b
 @item factor
-@tab @code{factor_vf(&a, &b, factor);}
-@tab b becomes scaled(as lens)
+@tab @code{factor_vf(&a, factor, &b);}
+@tab b becomes a scaled by factor
 @item invert
 @tab @code{inv_vf(&a, &b);}
 @tab b becomes inverted a

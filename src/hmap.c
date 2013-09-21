@@ -157,6 +157,8 @@ diag_selection(select_t *sel)
 			__builtin_printf("wtypea ");
 		if ((*map)->attribs.mode & VRT_MASK_NODEMAP)
 			__builtin_printf("nodemap ");
+		if ((*map)->attribs.mode & VRT_MASK_SYNC_VERTICES)
+			__builtin_printf("vxsync ");
 		__builtin_printf("\n");
 	}
 }
