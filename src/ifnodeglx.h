@@ -6,7 +6,7 @@
 #ifndef VRT_IFNODEGLX_H
 #define VRT_IFNODEGLX_H
 
-#include "progscope.h"
+#include "global.h"
 
 struct interface_display {
 	int indexfov; /* hmap dpy_ is attached to. */

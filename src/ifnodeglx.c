@@ -826,7 +826,6 @@ diag_message(void)
 	__builtin_printf("For now, please use j to exit "
 		"vrtater GNU free software.\n"
 		"Please send patches, or become a maintainer.\n "
-		"See: README, doc/vrtater.texi\n"
 		"Outreach drive for session.c now underway.\n"
 		"Similar to follow for render**.c, dialog*.c ...\n");
 }

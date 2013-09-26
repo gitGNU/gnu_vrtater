@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include "progscope.h"
+#include "global.h"
 
 #if defined(VRT_X_SUPPORT) && defined(VRT_RENDERER_GL)
 #include "ifnodeglx.h"

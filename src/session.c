@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "session.h"
-#include "progscope.h"
+#include "global.h"
 
 int vrt_max_cued_sessions;
 int vrt_max_called_sessions;

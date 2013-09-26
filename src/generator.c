@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "generator.h"
-#include "progscope.h"
+#include "global.h"
 #include "transform.h"
 #include "attribs.h"
 #include "session.h"

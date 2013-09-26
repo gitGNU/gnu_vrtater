@@ -12,7 +12,7 @@
 #include "transform.h"
 #include "vectors.h"
 #include "stock.h"
-#include "progscope.h"
+#include "global.h"
 #include "rotation.h"
 
 float vrt_render_cyc; /* external */

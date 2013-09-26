@@ -3,25 +3,19 @@ Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
 license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 
 Status
-pre-alpha.  Seeking co-maintainers, patches.
-
-Introduction
-Many of the features missing from the present source and thus in need of
-development have been outlined in the source.  If you can compile glx programs
-with gcc already, there is a good chance vrtater will compile using make with
-the j target.  You should see a demo of vobspace when vrtater is run and some
-term output.  Enabling DIAG_INTERFACE in progscope.h should produce some ugly
-term output(for now) for movement/position feedback.(j to exit).
-
-Info
-Please send email to: green8@sdf-eu.org with vrtater in the subject line. 
-vrtater manual.  One may use: makeinfo --html --no-split doc/vrtater.texi
-http://savannah.gnu.org/gitweb/?p=vrtater.git;a=summary  repository host.
-http://savannah.nongnu.org/projects/vrtater/  project host.
-
-Status
+Pre-alpha.  Seeking co-maintainers, patches, ip network code and hashing.
 Currently offering vrtater to the GNU Project.  This pre-empts earlier plans to
 wait for an alpha test version.
 
-Features(various stages of development)
-See doc/vrtater.texi
+Introduction
+Many of the features missing from the present source and thus in need of
+development have been outlined in the source.  To set up, see INSTALL.
+When installing you may also build the vrtater manual for more perspective.
+You should see a demo of vobspace when vrtater is run and some term output.
+For the interim, enabling DIAG_INTERFACE in progscope.h should produce some
+ugly printf usage for movement/position feedback.(j to exit).
+
+Info
+Please send email to: green8@sdf-eu.org with vrtater in the subject line. 
+http://savannah.gnu.org/gitweb/?p=vrtater.git;a=summary  repository host.
+http://savannah.nongnu.org/projects/vrtater/  project host.

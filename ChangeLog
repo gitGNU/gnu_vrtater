@@ -1,0 +1,31 @@
+ChangeLog
+
+2013-12-05  Jimmy Green  <green8@sdf-eu.org>
+
+	vrtater pre-alpha began development on Savannah using git.
+	A mechanism to sync git's branch master with this ChangeLog is
+	sought.  Until a resolution for this arrives running git log will
+	return the complete record of changes.  If any entries exist above
+	this one it may mean there is a way to safely add entries here
+	where these then remain sync'd with their respective commits vs.
+	branch master in the git repo.
+
+	* source since 2012-07-05
+
+
+	-----
+
+	Copyright (C) 2012 J. A. Green <green8@sdf-eu.org>
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+ 
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+ 
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.

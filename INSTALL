@@ -1,0 +1,30 @@
+INSTALL file for vrtater.
+Copyright (C) 2013 J. A. Green <green8@sdf-eu.org>
+license: GNU GPL v3, see COPYING, otherwise see vrtater.c
+
+Basic installation from source tarball or snapshot.
+
+If you can already compile glx programs installation should be pretty easy.
+
+example: (replacing the 1.0 with the version or snapshot id you have)
+~% tar zxf vrtater-1.0.tar.gz
+~% cd vrtater-1.0
+~/vrtater-1.0% autoreconf --install
+~/vrtater-1.0% ./configure
+~/vrtater-1.0% make
+~/vrtater-1.0% su
+Password:
+/home/me/vrtater-1.0# make install-html
+
+This should install the given version of the source in /usr/local/bin/ and also
+the vrtater manual in /usr/local/share/doc/ as html.
+
+If not you may need to install the sources that support GL/gl.h and GL/glx.h
+and make sure your kernel is built using the same version of these if you want
+hardware acceleration to apply once vrtater is built.  You may also need to
+install the sources supporting X11/X.h.
+
+Aa well, latest versions of GNU Autoconf, GNU automake, and GNU gettext-runtime
+may be required, although as of this writing they have not changed since 2006,
+2008, and 2007 respectively.  This way only the hand edited files needed by
+autoconf and automake needs be in the source repository.

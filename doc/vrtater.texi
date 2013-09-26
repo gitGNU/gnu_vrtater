@@ -1,9 +1,7 @@
 \input texinfo	@c -*-texinfo
 @c %**start of header
 @setfilename vrtater.info
-@c automake vars: these will later be in version.texi and maintained by automake
-@set VERSION 0.3.64 pre-alpha
-@set UPDATED September 2013
+@include version.texi
 @c other vars
 @set DEVELOP @uref{http://savannah.nongnu.org/projects/vrtater/}
 @c end vars
@@ -28,15 +26,16 @@ entitled ``GNU Free Documentation License''.
 @direntry
 * vrtater: (vrtater)Invoking vrtater.
 * vrtater: (vrtater)Installing vrtater.
+* vrtater: (vrtater)Adding to vrtater.
 * vrtater: (vrtater)Vector calls.
-* vrtater: (vrtater)Hmap Selection Buffer.
-* vrtater: (vrtater)Hmap Transforms.
+* vrtater: (vrtater)Selection buffers.
+* vrtater: (vrtater)Transforms.
 @end direntry
 
 @titlepage
 @title vrtater, GNU GPL Peer to Peers VR Manual
 @subtitle for version @value{VERSION}, @value{UPDATED}
-@author Jimmy Green (@email{green8@sdf-eu.org})
+@author Jimmy Green @email{green8@@sdf-eu.org}
 @page
 @vskip 0pt plus lfilll
 @insertcopying
@@ -48,9 +47,9 @@ entitled ``GNU Free Documentation License''.
 @node Top
 @top vrtater Peer to Peers VR
 
-here is the software i couldent find,,, the software u might be looking for...
+the software i couldent find,,, the software u might be looking for...
 
-vrtater
+@center vrtater
 
 vrtater is GNU free software, and as such, the freedom to share fully in it's
 current and future benefits is preserved for anyone who uses or adds to it.
@@ -68,31 +67,31 @@ the rendering of vobs supported by @file{gl.h} and @file{glx.h} (see:
 
 Written in C, and still in pre-alpha state, vrtater already produces much of the
 required mechanism for interacting, through 'virtual objects'(vobs) /w
-haptic/other qualities.  Connecting vobspace nodes over the internet is currently
-the first priority.
+haptic/other qualities.  Connecting vobspace nodes over the internet is
+currently the first priority.
 
 hmaps, the basic units of data for vrtater, are simplified vobs, writable as a
 .vrtater file containing one or a set of vobs based on defined type hmapf_t.
 hmaps and their founded geometry options are initially written as stock like
 basic forms, to then be transformed by modeling functions and drawn by rendering
-code.  Their generic nature is supported in all three phases.  hmaps are designed
-to provide haptic feedback, vob intersection feedback, and other qualities for
-vobs.
+code.  Their generic nature is supported in all three phases.  hmaps are
+designed to provide haptic feedback, vob intersection feedback, and other
+qualities for vobs.
 
-Rendering code strives to enhance hmaps, while adding non hmap rendering as well.
-Hardware may factor in to technique used.  hmaps will move around in vobspace based
-on initial conditions and input, and the renderer may use these hmaps to stoke
-non-hmap based drawing and animation. 
+Rendering code strives to enhance hmaps, while adding non hmap rendering as
+well.  Hardware may factor in to technique used.  hmaps will move around in
+vobspace based on initial conditions and input, and the renderer may use these
+hmaps to stoke non-hmap based drawing and animation. 
 
 vobs may be shared by logging into other nodes with them.  Each hmap authored by
-the person running vrtater will have name with high uniqueness that identifies it.
-These names will be generated using unique data that is only available to the
-author.  This data combined with the appearance of an hmap of name on peer nodes
-given cronology, provides a workable authorship mechanism for the 3d works that
-hmaps represent.  These hmaps once shared may be copied, however their unique
-patterns will have appeared first on the network of vrtater nodes with the name
-given, and thus given author will have workable claim of authorship for bragging
-rights purposes.
+the person running vrtater will have name with high uniqueness that identifies
+it.  These names will be generated using unique data that is only available to
+the author.  This data combined with the appearance of an hmap of name on peer
+nodes given cronology, provides a workable authorship mechanism for the 3d works
+that hmaps represent.  These hmaps once shared may be copied, however their
+unique patterns will have appeared first on the network of vrtater nodes with
+the name given, and thus given author will have workable claim of authorship for
+bragging rights purposes.
 
 When re-connecting to any node, it may be possible to resume a previous session
 there, provided that the called node still has the previous session on hold.
@@ -100,18 +99,20 @@ In this way a reputation may be cultivated continuously.
 
 Multiple nodes may connect simultaneously to a given node.  The place where the
 interaction occurs is called a node-partial.  One may host multiple
-node-partials that are called, or connect to node-partials as a caller.  The
+node-partials that are called, and or connect to node-partials as a caller.  The
 node hosting a node-partial provides an hmap that defines the virtual spacial
 bound(nodemap) and optionally any hmaps therein.  When connecting to a
-node-partial, the person running vrtater may take hmaps they have along with
-them into that partial, those then appearing/shared therein if enough empty
-vobspace exists where those would normally appear.
+node-partial, the person running vrtater may take hmaps they have with them into
+that partial, those then appearing/shared therein if enough empty vobspace
+exists at the destination.
 
-Alternately, a node-orgin, the place where one begins when running vrtater, is
-also present once the program is run.  It is similar to a node-partial except
+Alternately, the node-orgin, the place where one begins when running vrtater, is
+always present once the program is run.  It is similar to a node-partial except
 that you are the only one in there, and hmaps therein never appear on other
 nodes.  One may create or reuse as many hmaps therein as will fit in memory, and
-then optionally take those to node-partials as desired.
+then optionally take those to node-partials as desired.  All calling and
+called node-partials appear somewhere in your node-orgin at your discretion.
+These appear as nodemaps.  Within these exists partial vobspace if connected.
 
 The capability for interaction of vobs in a node partial will be as fully as
 possible based on dialog and configuration maintained in the node that they
@@ -125,16 +126,16 @@ between people running vrtater and interacting in node-partial.  Other
 information affecting only hmaps may also be carried therein, for example,
 description of how the hmap would like to appear.  A dialog interface, combined
 with a node interface will provide access to all selected transforms for hmaps
-available, movement stimulus for hmaps, renderer configuration, and more...
+available, movement stimulus for hmaps, renderer configuration, interfacing of
+nodes(calling and answering), and more...
 
 Interfacing to system bus IO devices, is soon to commence.  The ip network code,
 hashing of session names, rendering features and dialog interface, are all now
 calling out for any who would add those, before someone else does less so
 excellently.  Maintainer expertise is also in short supply.
 
-For more information on development of vrtater see: @value{DEVELOP}, the
-README, provided with the source and listing all references for what is going
-on, and the source itself.
+For more information on development of vrtater see: @value{DEVELOP}. The
+README, provided with the source, list's other references for what is going on.
 @sp 1
 @insertcopying
 @end ifnottex
@@ -142,9 +143,10 @@ on, and the source itself.
 @menu
 * Invoking vrtater::
 * Installing vrtater:: 
-* Calls to vectors.c::
-* Hmap Selection Buffer::
-* Hmap Transforms::
+* Adding to vrtater::
+* Vector functions::
+* Selection buffers::
+* Transforms::
 * GNU Free Documentation License::
 * Index::
 @end menu
@@ -233,13 +235,27 @@ Output vrtater disclaimers and versions.
 @pindex vrtater
 @cindex Information on installing vrtater
 
-At the moment vrtater is in phase pre-alpha, and has no installation features. You can however download and compile it.  You should have no problems doing that with @command{gcc} if you can already compile programs that include @file{glx.h}.  see: (@value{DEVELOP}) for more info.
+See INSTALL.  A copy should be included with the distributed files.
 
-@node Calls to vectors.c
-@chapter Calls to vectors.c
+@node Adding to vrtater
+@chapter Adding to vrtater
 
 @pindex vrtater
-@cindex Vector calls HOWTO, Reference for calling vectors.c
+@cindex Compiling the vrtater source
+
+A snapshot of the latest milestone can be downloaded from:
+@uref{http://git.savannah.gnu.org/gitweb/?p=vrtater.git}
+Milestones are indicated in the commit message, and should compile an run.
+See INSTALL for source distribution install and compile details.  
+Email patches or maintainer status requests to: @email{green8@@sdf-eu.org}.
+Maintainer status on Savannah is required to push to the repository.  Current
+maintainers will evaluate any patches or requests to add to vrtater directly.
+
+@node Vector functions
+@chapter Vector functions
+
+@pindex vrtater
+@cindex Reference for calling vector functions
 
 @multitable @columnfractions .25 .35 .4
 @headitem What @tab Code @tab Description
@@ -376,21 +392,43 @@ always providing only positive scale arguments to tele_mag_vf, factor_vf, and
 set_vf.  tele_magz_vf, the only other function here that takes a scale argument
 accepts both signed or unsigned.
 
-@node Hmap Selection Buffer
-@chapter Hmap Selection Buffer
+@node Selection buffers
+@chapter Selection buffers
 
 @pindex vrtater
-@cindex Reference for using Hmap Selection Buffer
+@cindex Reference for using selection buffers
 
-Reference for using Hmap Selection Buffer
+Reference for using selection buffers
 
-@node Hmap Transforms
-@chapter Hmap Transforms
+When hmaps are to be treated as a group, usually when changing them in some way
+with a transform, references to these are placed in one or both of the a and b
+selection buffers.  Where values are known in advance, it is best to reference
+the specific selection buffers, the hmaps, and the specific count of hmaps for
+each selection before compiling.
+
+For now see examples in the source that call any function in transform.c.
+
+@node Transforms
+@chapter Transforms
 
 @pindex vrtater
-@cindex Documentation of Available Hmap Transforms
+@cindex Documentation of Available Transforms
 
-Documentation of Available Hmap Transforms
+Documentation of Available Transforms
+
+When hmaps are changed in any way, functions in transform.c are used where
+possible.  References to the hmaps are first placed in the selection buffers.
+These transform functions vary on the basis of what is and should be selected.
+
+note: Re-entrant transforms that modify hmaps may be called from functions in
+generator.c that create new hmaps or read predesigned ones.
+
+Type c hmaps are fairly stable, and have their verticies sequenced for drawing
+from top to bottom or the inverse.  Drawing inversely also inverts all surface
+normals automatically.  These are postfixed with _c in their function name.
+See stock.c for examples.
+
+For now see transform.c for more.
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License

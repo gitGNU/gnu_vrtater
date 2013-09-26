@@ -6,9 +6,9 @@
 #include <GL/gl.h>
 #include <stdio.h>
 #include "rendergl.h"
+#include "global.h"
 #include "vectors.h"
 #include "rotation.h"
-#include "progscope.h"
 
 hmapf_t *fov0;
 vf_t oa_fp, *vpt = &oa_fp;
