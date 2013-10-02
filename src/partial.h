@@ -21,8 +21,7 @@ struct list_s {
 };
 typedef struct list_s list_t;
 
-/* partial */
-struct partial_space {
+struct partial_s {
 	session_t session; /* maps from node-orgin are masked into session */
 	list_t *list; /* session name and list of all hmaps in this partial */
 	char *desc; /* set when calling mk_partial */
@@ -30,7 +29,7 @@ struct partial_space {
 	complextimate_t complexity;
 	int running; /* is in session code's running set */
 };
-typedef struct partial_space partial_t;
+typedef struct partial_s partial_t;
 
 partial_t *partial_generator_list;
 int partials_count;

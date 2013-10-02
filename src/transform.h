@@ -34,9 +34,13 @@ enum {
 };
 
 int join_hmaps(select_t *);
-int intersection(select_t *);
-int group_hmaps(select_t *);
+int unjoin_hmaps(select_t *);
 int extend_hmaps(select_t *);
+int join_group(select_t *);
+int swap_hmaps(select_t *);
+int scale_hmap_c(select_t *);
+int bifold_hmap_c(select_t *);
+int intersection(select_t *);
 int recycle(select_t *);
 int cp_hmapf(select_t *);
 int surface_inv_hmapf(select_t *);

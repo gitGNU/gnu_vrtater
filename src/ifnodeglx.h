@@ -1,4 +1,4 @@
-/* ifnodeglx.h 
+/* ifnodeglx.h
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -8,7 +8,7 @@
 
 #include "global.h"
 
-struct interface_display {
+struct ifdpy_s {
 	int indexfov; /* hmap dpy_ is attached to. */
 	float accel_adv; /* acceleration multiplier */
 	float accel_crv; /* reciprocal curvalinear acceleration multiplier */
@@ -32,13 +32,13 @@ struct interface_display {
 	float accvvrt;
 	float dclvvrt;
 };
-typedef struct interface_display ifdpy_t;
+typedef struct ifdpy_s ifdpy_t;
 
 /* Incrementally form a keyboard remapping. */
 #ifdef VRT_US101KBD_X11_DIAG
 enum {
 #define VRT_KEY_tab XK_Tab
-	VRT_KEYCODE_tab = 9,  /* ^[tab]===comma,seperated,list.* delimiter */
+	VRT_KEYCODE_tab = 9,  /* [tab]===comma,seperated,list\n delimiter */
 #define VRT_KEY_linefeed XK_Return
 	VRT_KEYCODE_linefeed = 10,
 #define VRT_KEY_esc XK_Escape
@@ -69,7 +69,7 @@ enum {
 	VRT_KEYCODE_9 = 57,
 #define VRT_KEY_semicolon XK_semicolon /* -keyroll */
 	VRT_KEYCODE_semicolon = 59,
-#define VRT_KEY_equal XK_equal /* ^[tab]===comma,seperated,list.* delimiter */
+#define VRT_KEY_equal XK_equal /* [tab]===comma,seperated,list\n delimiter */
 	VRT_KEYCODE_equal = 61,
 #define VRT_KEY_backslash XK_backslash /* +keypan */
 	VRT_KEYCODE_backslash = 92,

@@ -23,14 +23,92 @@ float vrt_render_cyc; /* external */
    with given transform function that operate's independantly or as a dependant
    set, in some way altering at least one hmap. */
 
-/* Join two hmaps in selectf_a and selectf_b respectively, with one representing
-   a fulcrum and one a lever.  This will require implementation of
-   session_filter prehand.  note: This function was to be called hapticNormill,
-   as vrtater has much of it's inspiration in a haptic feedback project that
-   took place to a significant extent at a certain most cozy mill, that project
-   inspired by another moreso well known haptic feedback project related. */
+/* Enable hmaps referenced in selectf_b, thereafter having VRT_MASK_TRUNKMAP to
+   be affected by certain contextual transforms with hmap referenced in
+   selectf_a, thereafter having VRT_MASK_BRANCHMAP.  This then providing for
+   example, case where trunkmap might represent a fulcrum, and 2 branchmaps,
+   ends of a lever.  Leverage across this fulcrum could then be optionally
+   tested vs. intersection through attribs bits where the two ends were attached
+   as fixed vs. hinged.  branchmaps are parsed by proc_hmapf at same time as
+   their trunkmap.  They are thus not sent to, or ignored by proc_hmapf.
+   Whenever a trunkmap is read leading a compound .vrtater file or transfer, any
+   branchmap following therein is joined to it.  Calls to this function cause a
+   resend of the effecting set to connected nodes.  unjoin_hmaps compliment
+   function reverses this process.  note: This function was to be called
+   hapticNormill, as vrtater has much of it's inspiration in a haptic feedback
+   project that took place to a significant extent at a certain most cozy mill,
+   that project inspired by another moreso well known haptic feedback project
+   related. */
 int
 join_hmaps(select_t *sel)
+{
+	return 0;
+}
+
+/* Reverse the process of join_hmaps for trunkmap in selectf_a vs. all
+   branchmaps in selectf_b.  Calls to this function cause a resend of the
+   effecting set to connected nodes. */
+int
+unjoin_hmap(select_t *sel)
+{
+	return 0;
+}
+
+/* Merge hmaps in selectf_a together forming new hmap refrenced in selectf_b. */
+int
+extend_hmaps(select_t *sel)
+{
+	return 0;
+}
+
+/* Given trunkmap refrenced in selectf_b or NULL there if it is a new group, add
+   member trunkmaps refrenced in selectf_a.  Store the data in working copy of
+   the node-partial.groups file that is saved alongside given partial files for
+   partials in this node-orgin.  Allocate for the data and add it to linked list
+   refrenced by group_info that is initialized when the program is run.  If this
+   is a new group then while doing this generate a trunkmap representing this
+   group.  This then appearing where fov0 is directed.  New members will select
+   this hmap to join.  This trunkmap will default to VRT_MASK_HOLD set high.
+   All held group_info must be updated for each login to a partial.  When a
+   trunkmap is held, any group formed vs. trunkmap are thus held.  These are
+   always maintained with the most recent trunkmap names for members of groups.
+   trunkmap names originating out of given node are always backed up on that
+   node vs. any called node url apon presence in session.c code's running set.
+   The stack of such names is 2 deep including most recent.  This allows
+   reversion to a known match if the names ever become out of sync.  Because
+   trunkmap names might be intercepted, passwords should be implemented in
+   dialog.c.  These should be used where group info is important.  Each new
+   trunkmap generated in any node always recieves a null group, representing
+   unique avatar thereafter while reputation exists through VRT_MASK_HOLD.
+   This group is then used by a node-partial for maintaining visitor efforts. */
+int
+join_group(select_t *sel)
+{
+	return 0;
+}
+
+/* Given trunkmap refrenced in selectf_b remove member trunkmaps refrenced in
+   selectf_a. */
+int
+leave_group(select_t *sel)
+{
+	return 0;
+}
+
+int
+swap_hmaps(select_t *sel)
+{
+	return 0;
+}
+
+int
+scale_hmap_c(select_t *sel)
+{
+	return 0;
+}
+
+int
+bifold_hmap_c(select_t *sel)
 {
 	return 0;
 }
@@ -244,23 +322,6 @@ intersection(select_t *sel)
 	return 0;
 }
 
-/* Enable hmaps referenced in selectf_a to be affected by certain contextual
-   transforms with hmap referenced in selectf_b.  This will require
-   implementation of session_filter prehand.  Other transforms to follow would
-   be leave_group, and group_groups. */
-int
-group_hmaps(select_t *sel)
-{
-	return 0;
-}
-
-/* Extend given hmaps by merging them together. */
-int
-extend_hmaps(select_t *sel)
-{
-	return 0;
-}
-
 /* Recycle counta hmaps referenced in selectf_a.  For now just detach these. */
 int
 recycle(select_t *sel)
@@ -427,7 +488,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 	if (options & VRT_MASK_OPT_COMPOUNDED)
 		bufsz += sel->counta * sizeof(int); /* nxtmapsz's */
 	for (i = 0; i < sel->counta; i++, maps++)
-		bufsz += (sizeof(hmapf_t) - (sizeof(int) * 2)) + ((*maps)->vmap_total * sizeof(vf_t)) + ((*maps)->dialog_len * sizeof(int));
+		bufsz += (sizeof(hmapf_t) - (sizeof(int) * 2) - sizeof(hmapf_t *) - sizeof(group_t *)) + ((*maps)->vmap_total * sizeof(vf_t)) + ((*maps)->dialog_len * sizeof(int));
 	if ((outbuf = (int *) malloc(bufsz)) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for outbuf\n",
@@ -519,7 +580,6 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 		pi = (int *) pf;
 		*pi++ = (*maps)->attribs.sign;
 		*pi++ = (*maps)->attribs.mode;
-		*pi++ = (*maps)->attribs.session_filter;
 		*pi++ = (*maps)->attribs.balance_filter;
 		pf = (float *) pi;
 		*pf++ = (*maps)->attribs.kg;
@@ -614,7 +674,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
    based on options within data.  Set VRT_OPT_MASK_BUFFER for each hmap implied.
    If filename is not given input references data.  When input is not NULL,
    caller is expected to free input after use.  If VRT_MASK_OPT_COMPOUNDED is
-   set there may be multiple maps.  If session is given an index unique for
+   set there may be multiple maps.  If session is given, an index unique for
    node-orgin and node-orgin originating maps is applied and map(s) implied
    are then part of session.  notes: Once resizing of vohspace is fully
    supported, a check for enough space would be done in advance of each new map
@@ -803,8 +863,6 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 		(*map)->attribs.sign = *pi++ | VRT_MASK_BUFFER;
 		__builtin_printf("attribs mode: 0x%x\n", (int) *pi);
 		(*map)->attribs.mode = *pi++;
-		__builtin_printf("session filter: 0x%x\n", (int) *pi);
-		(*map)->attribs.session_filter = *pi++;
 		__builtin_printf("balance filter: 0x%x\n", (int) *pi);
 		(*map)->attribs.balance_filter = *pi++;
 
@@ -935,9 +993,6 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 	__builtin_printf("Total maps %i\n", sel->countb);
 	return 0;
 }
-
-
-/* hmap transformative functions affecting allocation. */
 
 /* hmap dialog referenced recieves allocation of len + 1 int's.  This maintains
    the NULL char at the end of any sum of strlen chars.  Where dialog has been

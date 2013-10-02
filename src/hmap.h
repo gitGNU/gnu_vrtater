@@ -11,26 +11,34 @@
 
 typedef int session_t; /* for now */
 
-struct complextimate {
+struct complextimate_s {
 	int hmap_count;
 	int tl_vdata;
 	int tl_dialog;
 };
-typedef struct complextimate complextimate_t;
+typedef struct complextimate_s complextimate_t;
 
-struct attributes {
+struct group_s {
+	session_t keymap[2]; /* 2nd element is backup name or grp_cfg.vrtater */
+	int total_members;
+	session_t *members; /* current name list of members */
+	char *passwd; /* if non NULL password is implemented */
+};
+typedef struct group_s group_t;
+
+struct attribs_s {
 	btoggles_t sign;
 	btoggles_t mode;
-	btoggles_t session_filter; /* vs. the max current sessions def */
+	group_t *group_info; /* local hmap grouping mechanism */
 	btoggles_t balance_filter; /* vob dur-ability vs. balance_criteria */
 	float kg; /* mass representation vs. SI units */
 	int kfactorm; /* 1 or 1000^exponent vs. mass */
 	int kfactord; /* 1 or 1000^exponent vs. distance */
 };
-typedef struct attributes attribs_t;
+typedef struct attribs_s attribs_t;
 
 enum { /* attribs_t sign, tested at least once every state increment */
-	VRT_ORDINAL_HOLD, /* hold vob for given time, hold() */
+	VRT_ORDINAL_HOLD, /* hold vob for given time */
 #define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
 	VRT_ORDINAL_RECYCLE, /* send to recycler */
 #define VRT_MASK_RECYCLE (1 << VRT_ORDINAL_RECYCLE)
@@ -50,8 +58,14 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_PARTIAL_MODS (1 << VRT_ORDINAL_PARTIAL_MODS)
 	VRT_ORDINAL_RENDER_DIALOG, /* if set and implemented, render dialog */
 #define VRT_MASK_RENDER_DIALOG (1 << VRT_ORDINAL_RENDER_DIALOG)
-	VRT_ORDINAL_PLAYFAIR /* option for node attribs symmetry checking */
+	VRT_ORDINAL_PLAYFAIR, /* option for node attribs symmetry checking */
 #define VRT_MASK_PLAYFAIR (1 << VRT_ORDINAL_PLAYFAIR)
+	VRT_ORDINAL_RESEND, /* resend this and all branches if trunk */
+#define VRT_MASK_RESEND (1 << VRT_ORDINAL_RESEND)
+	VRT_ORDINAL_TRUNKMAP, /* branchmaps may be joined */
+#define VRT_MASK_TRUNKMAP (1 << VRT_ORDINAL_TRUNKMAP)
+	VRT_ORDINAL_BRANCHMAP /* is joined to a trunkmap */
+#define VRT_MASK_BRANCHMAP (1 << VRT_ORDINAL_BRANCHMAP)
 };
 
 enum { /* attribs_t mode, tested in context based functions */
@@ -73,7 +87,7 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_FLOW_OVER (1 << VRT_ORDINAL_FLOW_OVER)
 	VRT_ORDINAL_FIXED_FORM, /* requests no deformation */
 #define VRT_MASK_FIXED_FORM (1 << VRT_ORDINAL_FIXED_FORM)
-	VRT_ORDINAL_EXTEND_BY_FILTER,
+	VRT_ORDINAL_EXTEND_BY_FILTER, /* this map may only extend to keygroup */
 #define VRT_MASK_EXTEND_BY_FILTER (1 << VRT_ORDINAL_EXTEND_BY_FILTER)
 	VRT_ORDINAL_EXTEND_ANY,
 #define VRT_MASK_EXTEND_ANY (1 << VRT_ORDINAL_EXTEND_ANY)
@@ -87,11 +101,11 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_SYNC_VERTICES (1 << VRT_ORDINAL_SYNC_VERTICES)
 };
 
-struct bounds {
+struct envelope_s {
 	int geom;
 	vf_t vsz;
 };
-typedef struct bounds envelope_t;
+typedef struct envelope_s envelope_t;
 
 enum { /* envelope_t geom */
 	VRT_BOUND_NONE,
@@ -101,11 +115,11 @@ enum { /* envelope_t geom */
 	VRT_BOUND_CUBE
 };
 
-struct draw_format {
+struct draw_s {
 	int geom; /* so-far, VRT_DRAWGEOM_TRIANGLES is supported */
 	/* add options as per stock/renderer support */
 };
-typedef struct draw_format draw_t;
+typedef struct draw_s draw_t;
 
 enum { /* draw_t geom.  note precedence follows n edges */
 	VRT_DRAWGEOM_NONE,
@@ -114,7 +128,7 @@ enum { /* draw_t geom.  note precedence follows n edges */
 	VRT_DRAWGEOM_TRIANGLES
 };
 
-struct hmapf {
+struct hmapf_s {
 	session_t name; /* network id */
 	int index; /* identify's hmap from within it's given node-orgin */
 	vf_t vpos; /* position vector from node-orgin orgin to hmap orgin */
@@ -131,17 +145,18 @@ struct hmapf {
 	vf_t *vmap; /* if vmap->m == 0, has other vobspace data */
 	int dialog_len; /* as per strlen(), does not count trailing '\0' */
 	int *dialog;
+	struct hmapf_s *branch; /* local joined hmaps list */
 };
-typedef struct hmapf hmapf_t;
+typedef struct hmapf_s hmapf_t;
 
-struct select {
+struct select_s {
 	btoggles_t specbits;
 	int counta; /* for 2 or more. counta + countb <= vrt_hmaps_max */
 	hmapf_t **seta; /* hmap set a, for read, transform, or replace */
 	int countb;
 	hmapf_t **setb; /* complimentary set if any */
 };
-typedef struct select select_t;
+typedef struct select_s select_t;
 
 enum { /* select_t specbits */
 	VRT_ORDINAL_ARGSTYPE_FLOAT, /* still considering simutanious types */

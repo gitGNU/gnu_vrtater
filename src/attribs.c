@@ -144,7 +144,7 @@ init_vohspace(void)
 		p->ang_dpl = 0; /* radians */
 		p->attribs.sign = 0;
 		p->attribs.mode = VRT_MASK_FLOW_OVER;
-		p->attribs.session_filter = 0;
+		p->attribs.group_info = NULL;
 		p->attribs.balance_filter = 0;
 		p->attribs.kg = 0;
 		p->attribs.kfactorm = 1;
@@ -159,6 +159,7 @@ init_vohspace(void)
 		p->vmap_total = 0;
 		p->dialog = NULL;
 		p->dialog_len = 0;
+		p->branch = NULL;
 	}
 
 	/* Set lod envelope to defaults. */
@@ -238,7 +239,7 @@ detach_hmapf(hmapf_t *p)
 		p->ang_dpl = 0;
 		p->attribs.sign = 0;
 		p->attribs.mode = VRT_MASK_FLOW_OVER;
-		p->attribs.session_filter = 0;
+		p->attribs.group_info = NULL;
 		p->attribs.balance_filter = 0;
 		p->attribs.kg = 0;
 		p->attribs.kfactorm = 1;
@@ -249,12 +250,13 @@ detach_hmapf(hmapf_t *p)
 		p->envelope.vsz.y = 0;
 		p->envelope.vsz.m = 0;
 		p->draw.geom = VRT_DRAWGEOM_NONE;
-		p->vmap_total = 0;
 		free(p->vmap);
+		p->vmap = NULL;
+		p->vmap_total = 0;
+		free(p->dialog);
 		p->dialog = NULL;
 		p->dialog_len = 0;
-		p->vmap = NULL;
-		free(p->dialog);
+		p->branch = NULL;
 		attached_hmaps--;
 		return;
 	}

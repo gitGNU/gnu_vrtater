@@ -499,7 +499,9 @@ close_node_orgin(void)
 
 /* Resize vohspace memory allowing for size hmaps.  When supported, if
    keep_connected is non-zero, maintain connections while doing so.  When
-   supported also allow for decreasing of hmap memory. */
+   supported also allow for decreasing of hmap memory.  note: A low memory
+   warning vs. complextimate would be usefull, then possibly resorting to
+   balance_filter. */
 int
 resize_node_orgin(int size, int keep_connected)
 {

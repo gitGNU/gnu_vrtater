@@ -50,12 +50,16 @@ init_next_buffer(void)
 	glColor3f(.1,.5,0);
 }
 
-/* Called per hmap per frame, draw hmap vs. lod given VRT_DRAWGEOM_* support.
-   notes: These may needs not necessairilly be drawn here.  In some cases they
-   may be moved to a display list in whole or in part, and may be drawn in
-   whole or in part in render_vobspace.  Details on this will be determined
-   when intersection code is upgraded and modeling transforms are added these
-   schedule'd for transform.c. */
+/* Called per hmap per frame, draw map vs. lod given VRT_DRAWGEOM_* support.
+   notes: These may needs not necessairilly be drawn here, as they could be
+   represented entirely or in part in render_vobspace.  A description
+   representing what an hmap would like to look like may be provided where
+   VRT_MASK_DIALOG_MODS flag is set.  This is then contained in the hmap dialog
+   delimiter [tab]===comma,seperated,list\n.  Various tokens defined herein may
+   be supported with adjoining data of a fixed prescribed length.  For example
+   where a file.ext token is encountered, it will be followed by an alt.ext
+   (available in a planned data distro), followed by relative coordinates, then
+   2 basis vectors for orientation.  This may be resolved to be a texture. */
 void
 render_hmapf(hmapf_t *map, int lod)
 {

@@ -8,13 +8,13 @@
 
 #include "hmap.h"
 
-struct session_desc {
+struct session_desc_s {
 	session_t session;
 	btoggles_t level;
 	char adesc[81]; /* if called, cued */
 	complextimate_t complexity;
 };
-typedef struct session_desc session_desc_t;
+typedef struct session_desc_s session_desc_t;
 
 enum { /* session_desc_t level */
 	VRT_ORDINAL_SESSION_CALLED,

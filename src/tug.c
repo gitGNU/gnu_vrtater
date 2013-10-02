@@ -5,6 +5,12 @@
 
 #include "generator.h"
 
+/* notes: Some bus devices are bi-directional.  These may implement a tiny
+   version of partial thereapon, still recieving nodemap.  These may therefore
+   be designed as autonomous if unplugged, thus safely shutting down.  Given
+   this said devices can always override any instruction from vrtater, only
+   using vrtater input as a recommendation or warning. */
+
 enum {
 	VRT_JOIN_HMAPS,
 	VRT_INTERSECTION

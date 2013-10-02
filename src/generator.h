@@ -15,15 +15,16 @@
    maintained in dialog.c.  balance_criteria is still in the works, and may be
    proposed as some hybrid of bits vs. a quantity once needed.
    vobspace_criteria bit defines are still in the works, are listed below. */
-struct generator_opts {
+struct genopts_s {
 	btoggles_t balance_criteria; /* balance_filter options */
 	btoggles_t vobspace_criteria; /* context options */
 	int why; /* fail, ... */
 	int what; /* shutdown, ... */
 	double when; /* shutdown, ... */
-} genopts;
+};
+typedef struct genopts_s genopts_t;
 
-/* generator_opts_t vobspace_criteria.  Effective while held high, some of these
+/* genopts_t vobspace_criteria.  Effective while held high, some of these
    where noted, will be cleared after use. */
 enum {
 	VRT_ORDINAL_SHUTDOWN,

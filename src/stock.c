@@ -312,6 +312,41 @@ hmapf_cylinder_c(session_t *session, float r, int e, float l, int t)
 	return map;
 }
 
+hmapf_t *
+hmapf_tetraplate_c(session_t *session)
+{
+	hmapf_t *rval = NULL;
+	return rval;
+}
+
+hmapf_t *
+hmapf_cylinder_stack(session_t *session)
+{
+	hmapf_t *rval = NULL;
+	return rval;
+}
+
+hmapf_t *
+hmapf_null(session_t *session)
+{
+	hmapf_t *rval = NULL;
+	return rval;
+}
+
+hmapf_t *
+hmapf_points(session_t *session)
+{
+	hmapf_t *rval = NULL;
+	return rval;
+}
+
+hmapf_t *
+hmapf_lines(session_t *session)
+{
+	hmapf_t *rval = NULL;
+	return rval;
+}
+
 /* Add triangle referenced by av to hmap data referenced through *p. */
 void
 add_tri_to_hmapf(vf_t *av, vf_t **p)

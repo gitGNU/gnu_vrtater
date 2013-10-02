@@ -15,7 +15,6 @@
 
 void cfg_recycler(void);
 void cfg_balance(void);
-void set_groups(void);
 void diag_read_dialog_set(hmapf_t **, int);
 
 
@@ -25,13 +24,34 @@ refresh_dialog_interfaces(void)
 {
 	cfg_recycler();
 	cfg_balance();
-	set_groups();
 }
 
 /* Given selection in selectf_a, present dialog per partial referenced.  Also
-   support node-partial and node-orgin partial dialog/options.  Caller
-   generator.c sends any newly arrived hmaps with dialog, and any ones with
-   locally modified dialog, as a series of sets per partial per call. */
+   support node-partial and node-orgin partial dialog/options, perhaps escaped
+   in the dialog itself.  These should effect only hmaps.  Caller generator.c
+   sends any newly arrived hmaps with dialog, and any ones with locally modified
+   dialog, as a series of sets per partial per call.  hmaps arriving with
+   VRT_MASK_TRUNK set will have dynamic dialog representing chat like or text
+   bubble like input from people running vrtater.  These may contain a
+   [tab]===comma,seperated,list\n delimiter that may contain tokens from code
+   in dialog*.c on other nodes.  As long as these tokens effect only hmaps, and
+   since the dialog is scanned for an allowed (see generator.c) subset of
+   characters, calls to available transforms, for example setting/syncing of
+   dialog based groups (join_group in transform.c), should be quite safe
+   (example: Passwords for groups could be implemented using ascii armor).
+   Same applies vs. this delimiter for dialog without VRT_MASK_TRUNK.  In either
+   case, any hmap with this delimiter should retain VRT_MASK_DIALOG_MODS if
+   there are any unrecognized tokens therein, as code in render*.c uses these to
+   determine how an hmap would like it to look.  Tokens may also be added vs.
+   any supported tokens implemented by the rendering code.  Tokens unsupported
+   by the rendering code set herein are discarded.  Minimal use vs. time for
+   this feature is recommended, like for example occasional atmosphere changes,
+   not rendering itself.  The renderer may already be toggling these occasional
+   changes and may have an override for them specified as a configuration token
+   (see: render*.c for more).  For the rendering code's purpose it would be
+   handy to keep any delimiter strings at the top of dialog, perhaps also
+   concatenating any multiple such strings minus used tokens and their data
+   while dropping dialog on trunk maps. */
 void
 node_partial_dialog(select_t *sel, session_t *partial)
 {
@@ -67,12 +87,6 @@ cfg_recycler(void)
 
 void
 cfg_balance(void)
-{
-	;
-}
-
-void
-set_groups()
 {
 	;
 }

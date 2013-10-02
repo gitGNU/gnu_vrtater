@@ -420,9 +420,6 @@ When hmaps are changed in any way, functions in transform.c are used where
 possible.  References to the hmaps are first placed in the selection buffers.
 These transform functions vary on the basis of what is and should be selected.
 
-note: Re-entrant transforms that modify hmaps may be called from functions in
-generator.c that create new hmaps or read predesigned ones.
-
 Type c hmaps are fairly stable, and have their verticies sequenced for drawing
 from top to bottom or the inverse.  Drawing inversely also inverts all surface
 normals automatically.  These are postfixed with _c in their function name.

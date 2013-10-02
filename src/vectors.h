@@ -6,13 +6,13 @@
 #ifndef VRT_VECTORS_H
 #define VRT_VECTORS_H
 
-struct vf {
+struct vf_s {
 	float x;
 	float y;
 	float z;
 	float m;
 };
-typedef struct vf vf_t;
+typedef struct vf_s vf_t;
 
 vf_t * set_vf(vf_t *, float x, float y, float z, float m);
 vf_t * cp_vf(vf_t *, vf_t *);
