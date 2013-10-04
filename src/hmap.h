@@ -18,18 +18,16 @@ struct complextimate_s {
 };
 typedef struct complextimate_s complextimate_t;
 
-struct group_s {
-	session_t keymap[2]; /* 2nd element is backup name or grp_cfg.vrtater */
-	int total_members;
-	session_t *members; /* current name list of members */
-	char *passwd; /* if non NULL password is implemented */
+struct options_s {
+	int hinged; /* type also therein */
+	int elastic;
+	int hardness;
 };
-typedef struct group_s group_t;
+typedef struct options_s options_t;
 
 struct attribs_s {
 	btoggles_t sign;
 	btoggles_t mode;
-	group_t *group_info; /* local hmap grouping mechanism */
 	btoggles_t balance_filter; /* vob dur-ability vs. balance_criteria */
 	float kg; /* mass representation vs. SI units */
 	int kfactorm; /* 1 or 1000^exponent vs. mass */
@@ -60,12 +58,10 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_RENDER_DIALOG (1 << VRT_ORDINAL_RENDER_DIALOG)
 	VRT_ORDINAL_PLAYFAIR, /* option for node attribs symmetry checking */
 #define VRT_MASK_PLAYFAIR (1 << VRT_ORDINAL_PLAYFAIR)
-	VRT_ORDINAL_RESEND, /* resend this and all branches if trunk */
+	VRT_ORDINAL_RESEND, /* resend this and all linked maps if trunk */
 #define VRT_MASK_RESEND (1 << VRT_ORDINAL_RESEND)
-	VRT_ORDINAL_TRUNKMAP, /* branchmaps may be joined */
+	VRT_ORDINAL_TRUNKMAP /* composite linked maps may be joined */
 #define VRT_MASK_TRUNKMAP (1 << VRT_ORDINAL_TRUNKMAP)
-	VRT_ORDINAL_BRANCHMAP /* is joined to a trunkmap */
-#define VRT_MASK_BRANCHMAP (1 << VRT_ORDINAL_BRANCHMAP)
 };
 
 enum { /* attribs_t mode, tested in context based functions */
@@ -138,14 +134,15 @@ struct hmapf_s {
 	vf_t vpre; /* axis of mass distribution vs. vaxi precession */
 	float ang_spd; /* (r/s), angular speed about rotational axes */
 	float ang_dpl; /* (r), angular displacement about rotational axes */
-	attribs_t attribs; /* attribs, session and balance filters */
+	attribs_t attribs; /* other data hmap carries */
+	options_t *options; /* optional data hmap keeps locally */
 	envelope_t envelope; /* bounding volume */
 	draw_t draw; /* format vs. stock/display support */
 	int vmap_total; /* total hmap vertices of vf_t */
 	vf_t *vmap; /* if vmap->m == 0, has other vobspace data */
 	int dialog_len; /* as per strlen(), does not count trailing '\0' */
 	int *dialog;
-	struct hmapf_s *branch; /* local joined hmaps list */
+	struct hmapf_s *composite; /* link list for local hmap group if any */
 };
 typedef struct hmapf_s hmapf_t;
 

@@ -127,6 +127,7 @@ generate_vohspace(void)
 		set_vf(&(map->vvel), 0, 0, 0, 0);
 		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
 		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
+		map->attribs.mode |= VRT_MASK_FIXED_FORM;
 	}
 
 	/* Inner hmap, to be attached to other nodes. */
@@ -136,6 +137,7 @@ generate_vohspace(void)
 		set_vf(&(map->vvel), 0, 0, 0, 0);
 		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
 		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
+		map->attribs.mode |= VRT_MASK_FIXED_FORM;
 	}
 	*buffer = map;
 	surface_inv_hmapf(&t);
@@ -149,6 +151,7 @@ generate_vohspace(void)
 		set_vf(&(map->vvel), 0, 0, 0, 0);
 		form_mag_vf(set_vf(&(map->vaxi), .5, 1, 0, 0));
 		form_mag_vf(set_vf(&(map->vpos), 200, 500, 0, 0));
+		map->attribs.mode |= VRT_MASK_FIXED_FORM;
 	}
 
 	if ((map = hmapf_cylinder_c(&node_orgin, 80, 25, 111.5, 0)) != NULL) {
@@ -157,6 +160,7 @@ generate_vohspace(void)
 		set_vf(&(map->vvel), 0, 0, 0, 0);
 		form_mag_vf(set_vf(&(map->vaxi), .5, 1, 0, 0));
 		form_mag_vf(set_vf(&(map->vpos), 200, 500, 0, 0));
+		map->attribs.mode |= VRT_MASK_FIXED_FORM;
 	}
 	*buffer = map;
 	surface_inv_hmapf(&t);

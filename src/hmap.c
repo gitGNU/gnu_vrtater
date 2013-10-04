@@ -129,10 +129,10 @@ diag_selection(select_t *sel)
 			__builtin_printf("PTLMODS ");
 		if ((*map)->attribs.sign & VRT_MASK_RENDER_DIALOG)
 			__builtin_printf("RNDRDLG ");
+		if ((*map)->attribs.sign & VRT_MASK_RESEND)
+			__builtin_printf("RESEND ");
 		if ((*map)->attribs.sign & VRT_MASK_TRUNKMAP)
 			__builtin_printf("TRUNK ");
-		if ((*map)->attribs.sign & VRT_MASK_BRANCHMAP)
-			__builtin_printf("BRANCH ");
 		if ((*map)->attribs.mode & VRT_MASK_ATTACHED)
 			__builtin_printf("attachd ");
 		if ((*map)->attribs.mode & VRT_MASK_BALANCE_FILTER)
@@ -150,7 +150,7 @@ diag_selection(select_t *sel)
 		if ((*map)->attribs.mode & VRT_MASK_FLOW_OVER)
 			__builtin_printf("flowovr ");
 		if ((*map)->attribs.mode & VRT_MASK_FIXED_FORM)
-			__builtin_printf("fixd ");
+			__builtin_printf("fxdform ");
 		if ((*map)->attribs.mode & VRT_MASK_EXTEND_BY_FILTER)
 			__builtin_printf("xbfilt ");
 		if ((*map)->attribs.mode & VRT_MASK_EXTEND_ANY)

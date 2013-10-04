@@ -144,11 +144,11 @@ init_vohspace(void)
 		p->ang_dpl = 0; /* radians */
 		p->attribs.sign = 0;
 		p->attribs.mode = VRT_MASK_FLOW_OVER;
-		p->attribs.group_info = NULL;
 		p->attribs.balance_filter = 0;
 		p->attribs.kg = 0;
 		p->attribs.kfactorm = 1;
 		p->attribs.kfactord = 1;
+		p->options = NULL;
 		p->envelope.geom = VRT_BOUND_NONE;
 		p->envelope.vsz.x = 0;
 		p->envelope.vsz.z = 0;
@@ -159,7 +159,7 @@ init_vohspace(void)
 		p->vmap_total = 0;
 		p->dialog = NULL;
 		p->dialog_len = 0;
-		p->branch = NULL;
+		p->composite = NULL;
 	}
 
 	/* Set lod envelope to defaults. */
@@ -239,11 +239,11 @@ detach_hmapf(hmapf_t *p)
 		p->ang_dpl = 0;
 		p->attribs.sign = 0;
 		p->attribs.mode = VRT_MASK_FLOW_OVER;
-		p->attribs.group_info = NULL;
 		p->attribs.balance_filter = 0;
 		p->attribs.kg = 0;
 		p->attribs.kfactorm = 1;
 		p->attribs.kfactord = 1;
+		p->options = NULL;
 		p->envelope.geom = VRT_BOUND_NONE;
 		p->envelope.vsz.x = 0;
 		p->envelope.vsz.z = 0;
@@ -256,7 +256,7 @@ detach_hmapf(hmapf_t *p)
 		free(p->dialog);
 		p->dialog = NULL;
 		p->dialog_len = 0;
-		p->branch = NULL;
+		p->composite = NULL;
 		attached_hmaps--;
 		return;
 	}

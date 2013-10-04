@@ -65,8 +65,8 @@ void shutdown_glx(void);
 void setup_dialog_interface(void);
 void shutdown_dialog_interface(void);
 void tendto_curr_sessions(void);
-int connect_called_partialspace(session_t *);
-int connect_caller_partialspace(session_t *);
+int connect_called_partial(session_t *);
+int connect_caller_partial(session_t *);
 void cfg_session_filter(void);
 
 /* Temporary diagnostics. */
@@ -755,25 +755,31 @@ tendto_curr_sessions(void)
    session_t remains in all_sessions data.  Reads from remote node will succeed
    with no data until session sync or closed. */
 int
-connect_called_partialspace(session_t *session)
+connect_called_partial(session_t *session)
 {
+	int rval = 0;
+
 	/* Get the session_desc parts maintained in node-partial */
 	/* ... */
 	char passwd[] = "";
-	return accept_called_partial_session(session, passwd);
+	rval = accept_called_session(session, (session_t *) fov0->name, passwd);
+	if (!rval)
+		maintain_reputation(session);
+	return rval;
 }
 
 /* As a called node-orgin, connect with cued session session.  notes: session
    represents a node-partial present in called running instance of vrtater with
    a receiving node-partial.  Success is assumed while implied session_t remains
    in all_sessions data.  Reads from remote node will succeed with no data until
-   session sync or closed. */
+   session sync or closed.  Reputation data is syncronized by session.c code
+   acceptance of password for given partial. */
 int
-connect_caller_partialspace(session_t *session)
+connect_caller_partial(session_t *session)
 {
 	/* Get the session_desc parts maintained in node-partial */
 	/* ... */
-	return accept_caller_partial_session(session);
+	return accept_caller_session(session);
 }
 
 /* For any node-partial, hmaps therein originating out of different nodes will

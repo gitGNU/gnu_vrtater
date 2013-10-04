@@ -130,10 +130,10 @@ list_nodes(char *desc)
 	;
 }
 
-/* This may cue a session for given or list_nodes remote node ip address
-   address.  Return 0 on success. */
+/* This may cue a session for given or list_nodes remote node url.
+   Return 0 on success. */
 int
-call_session(char *address)
+call_session(char *url)
 {
 	/* Try to cue on remote with previous and current session numbers.
 	   If successfull, cued session will appear in all_sessions.
@@ -144,35 +144,36 @@ call_session(char *address)
 	return 0;
 }
 
-/* Finish log in (an optional password may be implemented) and then add
-   cued_session, to the running set.  Return 0 on success.  Connection is
-   then assumed while session cued_session remains in all_sessions data.  If
-   cued_session can not be connected return nonzero. */
+/* Finish log in (an optional password may be implemented) and then add session
+   cued_partial, to the running set.  Update outbound keymap reputation locally
+   vs. cued_partial.  Return 0 on success.  Connection is then assumed while
+   session cued_partial remains in all_sessions data.  If cued_partial can not
+   be connected return nonzero. */
 int
-accept_called_partial_session(session_t *cued_session, char *passwd)
+accept_called_session(session_t *cued_partial, session_t *keymap, char *passwd)
 {
 	session_desc_t *session_desc;
+	char url[] = ""; /* for now */
 	int rval = -1;
 
-	if ((session_desc = match_vs_all_sessions(cued_session)) !=  NULL)
+	if ((session_desc = match_vs_all_sessions(cued_partial)) !=  NULL)
 		if((rval = complete_negotiation(session_desc)) == 0);
-			return rval;
+			update_reputation(cued_partial, keymap, url);
 
 	return rval;
 }
 
-/* Add cued_session to the running set.  Return 0 on success.  Connection is
-   then assumed while session cued_session remains in all_sessions data.  If
-   cued_session can not be connected return nonzero. */
+/* Add session cued_partial to the running set.  Return 0 on success.
+   Connection is then assumed while session cued_partial remains in all_sessions
+   data.  If cued_partial can not be connected return nonzero. */
 int
-accept_caller_partial_session(session_t *cued_session)
+accept_caller_session(session_t *cued_partial)
 {
 	session_desc_t *session_desc;
 	int rval = -1;
 
-	if ((session_desc = match_vs_all_sessions(cued_session)) !=  NULL)
+	if ((session_desc = match_vs_all_sessions(cued_partial)) !=  NULL)
 		if((rval = complete_negotiation(session_desc)) == 0);
-			return rval;
 
 	return rval;
 }
@@ -193,8 +194,8 @@ match_vs_all_sessions(session_t *session)
 
 /* Connect session described in session_desc.  Return 0 on success.
    notes: Consideration for the eventuality that remote nodes may share the same
-   ip address assumes that all associated nodes may be allowed to be included in
-   the running set if session_desc is accepted by the person running node-orgin.
+   url assumes that all associated nodes may be allowed to be included in the
+   running set if session_desc is accepted by the person running node-orgin.
    This means that the exchange of a list of composite session_t data with it's
    session_desc_t data should be supported.  These then would all be included in
    the running set associated with ip. */
@@ -227,9 +228,9 @@ read_from_network(void)
    thru sel.  notes: Outbound hmaps are referenced per call for given session
    assumed to be set running in all_sessions data.  These happen to include only
    non-node-orgin hmaps with relevant changes.  These then become delivered for
-   each ip address implied.  Values perhaps determined in sync_sessions could
-   be returned here and parsed by caller for reflecting latency or disconnect
-   for given remote session allowing caller to conditionally close session. */
+   each url implied.  Values perhaps determined in sync_sessions could be
+   returned here and parsed by caller for reflecting latency or disconnect for
+   given remote session allowing caller to conditionally close session. */
 int
 buffer_maps_to_peer_partial(session_t *session, select_t *sel)
 {

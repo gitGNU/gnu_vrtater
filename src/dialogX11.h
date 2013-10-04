@@ -11,5 +11,6 @@
 void refresh_dialog_interfaces(void);
 void node_partial_dialog(select_t *, session_t *partial);
 int *node_orgin_dialog(select_t *);
+int maintain_reputation(session_t *);
 
 #endif /* VRT_DIALOGX11_H */

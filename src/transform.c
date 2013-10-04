@@ -23,16 +23,16 @@ float vrt_render_cyc; /* external */
    with given transform function that operate's independantly or as a dependant
    set, in some way altering at least one hmap. */
 
-/* Enable hmaps referenced in selectf_b, thereafter having VRT_MASK_TRUNKMAP to
-   be affected by certain contextual transforms with hmap referenced in
-   selectf_a, thereafter having VRT_MASK_BRANCHMAP.  This then providing for
-   example, case where trunkmap might represent a fulcrum, and 2 branchmaps,
-   ends of a lever.  Leverage across this fulcrum could then be optionally
-   tested vs. intersection through attribs bits where the two ends were attached
-   as fixed vs. hinged.  branchmaps are parsed by proc_hmapf at same time as
+/* Enable hmap referenced in selectf_a, thereafter having VRT_MASK_TRUNKMAP and
+   composite linked list pointer to hmap(s) referenced in selectf_b those then
+   linked and affected by certain contextual transforms.  This then providing
+   for example, case where trunkmap might represent a fulcrum, and 2 linked
+   maps, ends of a lever.  Leverage across this fulcrum could then be optionally
+   tested vs. intersection through hmap options where the two ends were attached
+   as fixed vs. hinged.  Linked maps are parsed by proc_hmapf at same time as
    their trunkmap.  They are thus not sent to, or ignored by proc_hmapf.
-   Whenever a trunkmap is read leading a compound .vrtater file or transfer, any
-   branchmap following therein is joined to it.  Calls to this function cause a
+   Whenever a trunkmap is read leading a compounded .vrtater file or transfer,
+   any map following therein is joined to it.  Calls to this function cause a
    resend of the effecting set to connected nodes.  unjoin_hmaps compliment
    function reverses this process.  note: This function was to be called
    hapticNormill, as vrtater has much of it's inspiration in a haptic feedback
@@ -45,9 +45,9 @@ join_hmaps(select_t *sel)
 	return 0;
 }
 
-/* Reverse the process of join_hmaps for trunkmap in selectf_a vs. all
-   branchmaps in selectf_b.  Calls to this function cause a resend of the
-   effecting set to connected nodes. */
+/* Reverse the process of join_hmaps for trunkmap in selectf_a vs. all linked
+   maps in selectf_b.  Calls to this function cause a resend of the effecting
+   set to connected nodes. */
 int
 unjoin_hmap(select_t *sel)
 {
@@ -61,26 +61,18 @@ extend_hmaps(select_t *sel)
 	return 0;
 }
 
-/* Given trunkmap refrenced in selectf_b or NULL there if it is a new group, add
-   member trunkmaps refrenced in selectf_a.  Store the data in working copy of
-   the node-partial.groups file that is saved alongside given partial files for
-   partials in this node-orgin.  Allocate for the data and add it to linked list
-   refrenced by group_info that is initialized when the program is run.  If this
-   is a new group then while doing this generate a trunkmap representing this
-   group.  This then appearing where fov0 is directed.  New members will select
-   this hmap to join.  This trunkmap will default to VRT_MASK_HOLD set high.
-   All held group_info must be updated for each login to a partial.  When a
-   trunkmap is held, any group formed vs. trunkmap are thus held.  These are
-   always maintained with the most recent trunkmap names for members of groups.
-   trunkmap names originating out of given node are always backed up on that
-   node vs. any called node url apon presence in session.c code's running set.
-   The stack of such names is 2 deep including most recent.  This allows
-   reversion to a known match if the names ever become out of sync.  Because
-   trunkmap names might be intercepted, passwords should be implemented in
-   dialog.c.  These should be used where group info is important.  Each new
-   trunkmap generated in any node always recieves a null group, representing
-   unique avatar thereafter while reputation exists through VRT_MASK_HOLD.
-   This group is then used by a node-partial for maintaining visitor efforts. */
+/* Given group hmap (trunkmap) refrenced in selectf_b or NULL there if it is a
+   new group, add keymap trunkmaps refrenced in selectf_a to dialog based group
+   referenced through partial_t member dialog_group.  Store the data in working
+   copy of the node-partial.groups file that is saved alongside given partial
+   files for partials in this node-orgin.  Allocate for the data and link it.
+   Linked list refrenced is read in when the program is run.  If this is a new
+   group then while doing this generate a group hmap.  This then appearing where
+   fov0 is directed.  New members will select this hmap to join.  This trunkmap
+   will default to VRT_MASK_HOLD set.  All held group_info must be updated for
+   each login to a partial.  When a trunkmap is held, any group formed vs. trunk
+   map recieves a hold for each member trunkmap.  These are always maintained
+   with the most recent trunkmap names for members of groups. */
 int
 join_group(select_t *sel)
 {
@@ -488,7 +480,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 	if (options & VRT_MASK_OPT_COMPOUNDED)
 		bufsz += sel->counta * sizeof(int); /* nxtmapsz's */
 	for (i = 0; i < sel->counta; i++, maps++)
-		bufsz += (sizeof(hmapf_t) - (sizeof(int) * 2) - sizeof(hmapf_t *) - sizeof(group_t *)) + ((*maps)->vmap_total * sizeof(vf_t)) + ((*maps)->dialog_len * sizeof(int));
+		bufsz += (sizeof(hmapf_t) - sizeof(vf_t *) - sizeof(int *) - sizeof(hmapf_t *) - sizeof(options_t *)) + ((*maps)->vmap_total * sizeof(vf_t)) + ((*maps)->dialog_len * sizeof(int));
 	if ((outbuf = (int *) malloc(bufsz)) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for outbuf\n",

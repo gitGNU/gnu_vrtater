@@ -26,32 +26,32 @@ refresh_dialog_interfaces(void)
 	cfg_balance();
 }
 
-/* Given selection in selectf_a, present dialog per partial referenced.  Also
-   support node-partial and node-orgin partial dialog/options, perhaps escaped
-   in the dialog itself.  These should effect only hmaps.  Caller generator.c
-   sends any newly arrived hmaps with dialog, and any ones with locally modified
-   dialog, as a series of sets per partial per call.  hmaps arriving with
-   VRT_MASK_TRUNK set will have dynamic dialog representing chat like or text
-   bubble like input from people running vrtater.  These may contain a
-   [tab]===comma,seperated,list\n delimiter that may contain tokens from code
-   in dialog*.c on other nodes.  As long as these tokens effect only hmaps, and
-   since the dialog is scanned for an allowed (see generator.c) subset of
-   characters, calls to available transforms, for example setting/syncing of
-   dialog based groups (join_group in transform.c), should be quite safe
-   (example: Passwords for groups could be implemented using ascii armor).
-   Same applies vs. this delimiter for dialog without VRT_MASK_TRUNK.  In either
-   case, any hmap with this delimiter should retain VRT_MASK_DIALOG_MODS if
-   there are any unrecognized tokens therein, as code in render*.c uses these to
-   determine how an hmap would like it to look.  Tokens may also be added vs.
-   any supported tokens implemented by the rendering code.  Tokens unsupported
-   by the rendering code set herein are discarded.  Minimal use vs. time for
-   this feature is recommended, like for example occasional atmosphere changes,
-   not rendering itself.  The renderer may already be toggling these occasional
-   changes and may have an override for them specified as a configuration token
-   (see: render*.c for more).  For the rendering code's purpose it would be
-   handy to keep any delimiter strings at the top of dialog, perhaps also
-   concatenating any multiple such strings minus used tokens and their data
-   while dropping dialog on trunk maps. */
+/* Given selection in selectf_a, present dialog for partial referenced.  Caller
+   generator.c sends any newly arrived hmaps with dialog, and any ones with
+   locally modified dialog, as a series of sets per partial per call.  note:
+   Needs support for any dialog features enabled for the person running vrtater
+   locally, perhaps escaped in the dialog itself.  Also support for delimiter
+   in hmaps arriving with VRT_MASK_TRUNK set.  These will have dynamic dialog
+   representing chat like or text bubble like input from people running vrtater.
+   These may contain a [tab]===comma,seperated,list\n delimiter that may contain
+   tokens added by dialog*.c calls on other nodes.  As long as these tokens
+   effect only hmaps and the token related calls in render*.c, and since the
+   dialog is scanned for an allowed (see generator.c) subset of characters,
+   it may be safe to use some calls listed in transform.c, like setting/syncing
+   of dialog based groups using join_group.  Perhaps dialog specific calls like
+   passwords for groups could be implemented using library /w ascii armor.  This
+   delimiter also applies for dialog without VRT_MASK_TRUNK where the rendering
+   code is concerned.  In either case, any hmap with this delimiter should
+   retain VRT_MASK_DIALOG_MODS if there are any unused but local renderer
+   supported tokens therein.  Code in render*.c uses these for example to
+   determine how an hmap would ideally appear on the local node.  For the
+   rendering code's purpose it would be handy to keep any delimiter strings at
+   the top of dialog, perhaps also concatenating any multiple such strings
+   minus used tokens and their data.  Supported tokens may also be added herein
+   to interface the rendering code.  Minimal use vs. time for this feature is
+   recommended.  The renderer may already be toggling occasional changes like
+   atmosphere, etc, and may have an override for them specified as a
+   configuration token (see: render*.c for more). */
 void
 node_partial_dialog(select_t *sel, session_t *partial)
 {
@@ -60,7 +60,7 @@ node_partial_dialog(select_t *sel, session_t *partial)
 	select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
 	diag_read_dialog_set((&totty)->seta, (&totty)->counta);
 
-	; /* proc remote options eg: VRT_MASK_HOLD */
+	; /* remote features eg: VRT_MASK_HOLD */
 }
 
 /* Given selection in selectf_a, display local dialog for the person running
@@ -74,8 +74,18 @@ node_orgin_dialog(select_t *sel)
 	select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
 	diag_read_dialog_set((&totty)->seta, (&totty)->counta);
 
-	; /* features */
+	; /* local features */
 
+	return 0;
+}
+
+/* Trunkmap names originating out of given node are always backed up on that
+   node apon any called node url's presence in session.c code's running set.
+   The stack of such names is 2 deep including most recent.  This allows
+   reversion to a known match if the names ever become out of sync. */
+int
+maintain_reputation(session_t *session)
+{
 	return 0;
 }
 

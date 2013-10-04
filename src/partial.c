@@ -38,3 +38,10 @@ find_partial(session_t *partial_session)
 	}
 	return NULL;
 }
+
+/* Update keymap reputation list locally for keymap /w session logging url. */
+int
+update_reputation(session_t *session, hmapf_t *keymap, char *url)
+{
+	return 0;;
+}
