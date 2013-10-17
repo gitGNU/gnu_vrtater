@@ -7,6 +7,7 @@
 #define VRT_SESSION_H
 
 #include "hmap.h"
+#include "partial.h"
 
 struct session_desc_s {
 	session_t session;
@@ -41,8 +42,8 @@ int set_node_partial(session_t *, char *seedfiles);
 void list_nodes(char *);
 session_desc_t *session_descriptions(void);
 caller_sessions_t *previous_caller_sessions(void);
-int call_session(char *);
-int accept_called_session(session_t *, session_t *keymap, char *passwd);
+hmapf_t *call_session(char *url, complextimate_t *);
+int accept_called_session(session_t *, session_t *last, session_t *new);
 int accept_caller_session(session_t *);
 void sync_sessions(void);
 int buffer_maps_to_peer_partial(session_t *s, select_t *sel);

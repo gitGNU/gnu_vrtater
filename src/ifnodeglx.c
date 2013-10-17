@@ -67,7 +67,7 @@ void shutdown_dialog_interface(void);
 void tendto_curr_sessions(void);
 int connect_called_partial(session_t *);
 int connect_caller_partial(session_t *);
-void cfg_session_filter(void);
+int maintain_reputation(session_t *);
 
 /* Temporary diagnostics. */
 void diag_char(char c);
@@ -743,7 +743,6 @@ void
 tendto_curr_sessions(void)
 {
 	/* Conditionally connect_vobspace(), etc... */
-	;
 }
 
 /* As a caller node-orgin, connect cued session session.  notes: session
@@ -757,14 +756,18 @@ tendto_curr_sessions(void)
 int
 connect_called_partial(session_t *session)
 {
-	int rval = 0;
+	int rval = -1;
+	session_t *last;
 
 	/* Get the session_desc parts maintained in node-partial */
 	/* ... */
-	char passwd[] = "";
-	rval = accept_called_session(session, (session_t *) fov0->name, passwd);
-	if (!rval)
-		maintain_reputation(session);
+
+	last = (session_t *) fov0->name;
+	/* Enter partial with contingency for backing out. */
+	/* ... */
+
+	rval = accept_called_session(session, last, (session_t *) fov0->name);
+
 	return rval;
 }
 
@@ -782,15 +785,14 @@ connect_caller_partial(session_t *session)
 	return accept_caller_session(session);
 }
 
-/* For any node-partial, hmaps therein originating out of different nodes will
-   all have a unique name in local vobspace.  A session filter(or by other
-   means) when implemented, will indicate that unique sets of hmaps may share
-   configured supported features as a union. */
-void
-cfg_session_filter(void)
+/* keymap names originating out of given node are always backed up on that
+   node apon any called node url's presence in session.c code's running set.
+   The stack of such names is 2 deep including most recent.  This allows
+   reversion to a known match if the names ever become out of sync. */
+int
+maintain_reputation(session_t *session)
 {
-	/* Name a list of lists of sessions. */
-	;
+	return 0;
 }
 
 /* Temporary diagnostic to append c to the hmap dialog of the first element of

@@ -15,7 +15,7 @@ int vrt_max_caller_sessions;
 int generate_session_name_from_files_in_dir(session_t *, char *seedfiles);
 int get_session_name_from_file_in_dir(session_t *, char *seedfiles);
 session_desc_t *match_vs_all_sessions(session_t *);
-int complete_negotiation(session_desc_t *);
+int complete_negotiation(session_desc_t *, session_t *last, session_t *new);
 void read_from_network(void);
 
 /* Called last when generating node-orgin. */
@@ -27,9 +27,9 @@ init_sessions(void)
 	/* For now allocate for connection specific session data as fixed
 	   parcels.  Linked list mechanism to store these already written may
 	   be found in commit c489481 files partial.c/partial.h and modified
-	   for this purpose if desired.  After this function is run,
-	   all_sessions and caller_sessions must be present until close_sessions
-	   is run. */
+	   for this purpose if desired.  Scheduled next.  After this function
+	   is run, all_sessions and caller_sessions must be present until
+	   close_sessions is run. */
 
 	vrt_max_cued_sessions = 10;
 	vrt_max_called_sessions = 20;
@@ -131,49 +131,119 @@ list_nodes(char *desc)
 }
 
 /* This may cue a session for given or list_nodes remote node url.
-   Return 0 on success. */
-int
-call_session(char *url)
+   Return a nodemap on success else NULL. */
+hmapf_t *
+call_session(char *url, complextimate_t *complextimate)
 {
-	/* Try to cue on remote with previous and current session numbers.
-	   If successfull, cued session will appear in all_sessions.
-	   Statefull maintainance function sync_session, will need to poll
-	   net input for responce. */
+	hmapf_t *nodemap;
+
+	nodemap = NULL;
+	/* Try to cue on remote.  If successfull, cued session should then
+	   appear in all_sessions.  Statefull maintainance function
+	   sync_session, will need to poll any ip network input for responce.
+	   A healthy sign will be an inbound nodemap following exchange of
+	   relevant session_desc_s data. */
+	/* ... */
+
+	return nodemap;
+}
+
+/* This may cue a session for calling node. */
+int
+answer_session(complextimate_t *complextimate)
+{
+	hmapf_t *nodemap;
+
+	nodemap = p_hmapf(23); /* nicenode */
+	/* Try to add remote to cue.  If successfull, cued session should then
+	   appear in all_sessions.  Statefull maintainance function
+	   sync_session, has polled ip network input finding call for cue.
+	   Send nodemap following exchange of relevant session_desc_s data. */
 	/* ... */
 
 	return 0;
 }
 
-/* Finish log in (an optional password may be implemented) and then add session
-   cued_partial, to the running set.  Update outbound keymap reputation locally
-   vs. cued_partial.  Return 0 on success.  Connection is then assumed while
-   session cued_partial remains in all_sessions data.  If cued_partial can not
-   be connected return nonzero. */
+/* Try to finish log in (an optional password may be implemented) and then add
+   session cued_partial, to the running set.  Caller has already recieved
+   nodemap deriving cued_partial and implicitly has last.  keymap with keyname
+   last will have entered partial (nodemap) in a pre-emptive way any will back
+   out if login fails, however keyname new will have been produced.  If
+   successfull update outbound keyname reputation locally vs. cued_partial.
+   Return 0 on success.  Connection is then assumed to be in the running set
+   while session cued_partial remains in all_sessions data.  If cued_partial
+   can not be connected return non-zero. */
 int
-accept_called_session(session_t *cued_partial, session_t *keymap, char *passwd)
+accept_called_session(session_t *cued_partial, session_t *last, session_t *new)
 {
-	session_desc_t *session_desc;
-	char url[] = ""; /* for now */
+	session_desc_t *desc; /* for now */
+	char url[] = "protocol://192.168.0.2"; /* aquired by call_session */
+	partial_t *partial;
+	ptlreps_list_t *list;
 	int rval = -1;
 
-	if ((session_desc = match_vs_all_sessions(cued_partial)) !=  NULL)
-		if((rval = complete_negotiation(session_desc)) == 0);
-			update_reputation(cued_partial, keymap, url);
+	/* Some values that would be aquired by call_session.  The person
+	   running vrtater will see these values in all_sessions. */
+	desc->session = *cued_partial;
+	desc->level = VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_CUED;
+
+	partial = find_partial(cued_partial);
+	list = partial->ptlreps;
+
+	if ((desc = match_vs_all_sessions(cued_partial)) !=  NULL) {
+		/* Retrieve password locally, authenticate on remote. */
+		/* ... */
+		if((rval = complete_negotiation(desc, last, new)) == 0) {
+			sync_reputation(list, last, new, url);
+			desc->level |= VRT_MASK_SESSION_PARTIAL;
+		}
+	}
 
 	return rval;
 }
 
-/* Add session cued_partial to the running set.  Return 0 on success.
-   Connection is then assumed while session cued_partial remains in all_sessions
-   data.  If cued_partial can not be connected return nonzero. */
+/* Try to add session cued_partial to the running set.  Return 0 on success.
+   Connection is then assumed while session cued_partial remains in
+   all_sessions data.  If cued_partial can not be connected return non-zero. */
 int
 accept_caller_session(session_t *cued_partial)
 {
-	session_desc_t *session_desc;
+	session_desc_t *desc; /* for now */
+	session_t last, new;
+	partial_t *partial;
+	ptlreps_list_t *list;
 	int rval = -1;
 
-	if ((session_desc = match_vs_all_sessions(cued_partial)) !=  NULL)
-		if((rval = complete_negotiation(session_desc)) == 0);
+	/* Some values that would be aquired by answer_session.  The person
+	   running vrtater will see these values in all_sessions. */
+	desc->session = *cued_partial;
+	desc->level = VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_CUED |
+		VRT_MASK_SESSION_INBOUND;
+
+	partial = find_partial(cued_partial);
+	list = partial->ptlreps;
+
+	if ((desc = match_vs_all_sessions(cued_partial)) !=  NULL) {
+		/* Retrieve password and last and new keyname's from remote.
+		   for example: */
+		last = (rand() << 16) | 8;
+		new = (rand() << 16) | 8;
+		/* Authenticate login with recieved password vs. partial.c
+		   call find_repute. */
+		/* ... */
+		if((rval = complete_negotiation(desc, &last, &new)) == 0) {
+			if(sync_reputation(list, &last, &new, NULL))
+				desc->level |= VRT_MASK_SESSION_PARTIAL;
+			else {
+				/* Disconnect with: Im sorry, your...
+				   because session hash is in use on node
+				   partial->session.  Please regenerate hash
+				   and try again. */
+				/* ... */
+				return -1;
+			}
+		}
+	}
 
 	return rval;
 }
@@ -182,26 +252,28 @@ accept_caller_session(session_t *cued_partial)
 session_desc_t *
 match_vs_all_sessions(session_t *session)
 {
-	session_desc_t *session_desc = all_sessions;
+	session_desc_t *desc = all_sessions;
 	int i;
 
-	for (i = 0; i < vrt_max_cued_sessions; i++, session_desc++)
-		if ((session_desc->session == *session))
-			return session_desc;
+	for (i = 0; i < vrt_max_cued_sessions; i++, desc++)
+		if ((desc->session == *session))
+			return desc;
 
 	return NULL;
 }
 
-/* Connect session described in session_desc.  Return 0 on success.
+/* Connect session described in desc.  Return 0 on success.
    notes: Consideration for the eventuality that remote nodes may share the same
    url assumes that all associated nodes may be allowed to be included in the
-   running set if session_desc is accepted by the person running node-orgin.
+   running set if desc is accepted by the person running node-orgin.
    This means that the exchange of a list of composite session_t data with it's
    session_desc_t data should be supported.  These then would all be included in
    the running set associated with ip. */
 int
-complete_negotiation(session_desc_t *session_desc)
+complete_negotiation(session_desc_t *desc, session_t *last, session_t *new)
 {
+	/* ... */
+
 	return 0;
 }
 
@@ -260,9 +332,9 @@ recieve_maps_from_peer_partial(session_t *session, select_t *sel)
 	return map;
 }
 
-/* Close session referenced by session_desc.  Return 0 on closed. */
+/* Close session referenced by desc.  Return 0 on closed. */
 int
-close_session(session_desc_t *session_desc)
+close_session(session_desc_t *desc)
 {
 	return 0;
 }

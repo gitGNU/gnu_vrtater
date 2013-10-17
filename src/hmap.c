@@ -132,7 +132,11 @@ diag_selection(select_t *sel)
 		if ((*map)->attribs.sign & VRT_MASK_RESEND)
 			__builtin_printf("RESEND ");
 		if ((*map)->attribs.sign & VRT_MASK_TRUNKMAP)
-			__builtin_printf("TRUNK ");
+			__builtin_printf("TRUNKMAP ");
+		if ((*map)->attribs.sign & VRT_MASK_TREEMAP)
+			__builtin_printf("TREEMAP ");
+		if ((*map)->attribs.sign & VRT_MASK_KEYMAP)
+			__builtin_printf("KEYMAP ");
 		if ((*map)->attribs.mode & VRT_MASK_ATTACHED)
 			__builtin_printf("attachd ");
 		if ((*map)->attribs.mode & VRT_MASK_BALANCE_FILTER)

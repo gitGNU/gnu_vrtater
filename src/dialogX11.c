@@ -31,7 +31,7 @@ refresh_dialog_interfaces(void)
    locally modified dialog, as a series of sets per partial per call.  note:
    Needs support for any dialog features enabled for the person running vrtater
    locally, perhaps escaped in the dialog itself.  Also support for delimiter
-   in hmaps arriving with VRT_MASK_TRUNK set.  These will have dynamic dialog
+   in hmaps arriving with VRT_MASK_KEYMAP set.  These will have dynamic dialog
    representing chat like or text bubble like input from people running vrtater.
    These may contain a [tab]===comma,seperated,list\n delimiter that may contain
    tokens added by dialog*.c calls on other nodes.  As long as these tokens
@@ -76,16 +76,6 @@ node_orgin_dialog(select_t *sel)
 
 	; /* local features */
 
-	return 0;
-}
-
-/* Trunkmap names originating out of given node are always backed up on that
-   node apon any called node url's presence in session.c code's running set.
-   The stack of such names is 2 deep including most recent.  This allows
-   reversion to a known match if the names ever become out of sync. */
-int
-maintain_reputation(session_t *session)
-{
 	return 0;
 }
 

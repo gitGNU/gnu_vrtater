@@ -60,8 +60,12 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_PLAYFAIR (1 << VRT_ORDINAL_PLAYFAIR)
 	VRT_ORDINAL_RESEND, /* resend this and all linked maps if trunk */
 #define VRT_MASK_RESEND (1 << VRT_ORDINAL_RESEND)
-	VRT_ORDINAL_TRUNKMAP /* composite linked maps may be joined */
+	VRT_ORDINAL_TRUNKMAP, /* composite linked map, may be joined to tree */
 #define VRT_MASK_TRUNKMAP (1 << VRT_ORDINAL_TRUNKMAP)
+	VRT_ORDINAL_TREEMAP, /* composite linked map, is joined to trunk */
+#define VRT_MASK_TREEMAP (1 << VRT_ORDINAL_TREEMAP)
+	VRT_ORDINAL_KEYMAP, /* set when used as caller map */
+#define VRT_MASK_KEYMAP (1 << VRT_ORDINAL_KEYMAP)
 };
 
 enum { /* attribs_t mode, tested in context based functions */
@@ -124,6 +128,12 @@ enum { /* draw_t geom.  note precedence follows n edges */
 	VRT_DRAWGEOM_TRIANGLES
 };
 
+struct drawlist_s {
+	unsigned int *list;
+	unsigned int count;
+};
+typedef struct drawlist_s drawlist_t;
+
 struct hmapf_s {
 	session_t name; /* network id */
 	int index; /* identify's hmap from within it's given node-orgin */
@@ -139,10 +149,12 @@ struct hmapf_s {
 	envelope_t envelope; /* bounding volume */
 	draw_t draw; /* format vs. stock/display support */
 	int vmap_total; /* total hmap vertices of vf_t */
-	vf_t *vmap; /* if vmap->m == 0, has other vobspace data */
+	vf_t *vmap;
 	int dialog_len; /* as per strlen(), does not count trailing '\0' */
 	int *dialog;
 	struct hmapf_s *composite; /* link list for local hmap group if any */
+	struct hmapf_s *adjoined; /* relative map in local hmap group if any */
+	drawlist_t *drawlist; /* sequence for adjoined maps if trunkmap */
 };
 typedef struct hmapf_s hmapf_t;
 

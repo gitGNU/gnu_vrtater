@@ -13,6 +13,7 @@
 #define ANG_AFS 1.697652 /* angular acc factor for regular solid sphere */
 
 /* Patch diagnostic. */
+#define DIAG_GROUPS
 #define DIAG_PARTIAL
 #define DIAG_INTERFACE_OFF
 #define DIAG_TIME_OFF

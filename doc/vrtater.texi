@@ -30,6 +30,7 @@ entitled ``GNU Free Documentation License''.
 * vrtater: (vrtater)Vector calls.
 * vrtater: (vrtater)Selection buffers.
 * vrtater: (vrtater)Transforms.
+* vrtater: (vrtater)Glossary.
 @end direntry
 
 @titlepage
@@ -147,6 +148,7 @@ README, provided with the source, list's other references for what is going on.
 * Vector functions::
 * Selection buffers::
 * Transforms::
+* Glossary::
 * GNU Free Documentation License::
 * Index::
 @end menu
@@ -426,6 +428,98 @@ normals automatically.  These are postfixed with _c in their function name.
 See stock.c for examples.
 
 For now see transform.c for more.
+
+@node Glossary
+@chapter Glossary
+
+@pindex vrtater
+@cindex Glossary of proposed vrtater source naming conventions
+
+@multitable @columnfractions 1 2 7
+@item
+@tab session number
+@tab Hashed number representing unique local or remote data.
+@item
+@tab hmap
+@tab File/data defining haptic/other VR representation
+@item
+@tab
+@tab qualities (also map(in context), haptic map, hapmap).
+@item
+@tab map[ ]name
+@tab hmap session number.
+@item
+@tab vohspace
+@tab hmap arrays active in running program.
+@item
+@tab vob[space]
+@tab Rendered VR representation.  vob (unitary thereto).
+@item
+@tab fov
+@tab Feild of view (fov0 (hmap holding the primary display)).
+@item
+@tab oa_fp
+@tab Vector endpoint on optical axis at focal plane.
+@item
+@tab vpt
+@tab Pointer to oa_fp(view point).
+@item
+@tab composite map
+@tab hmap file/data containing multiple hmaps (also
+@item
+@tab
+@tab composite hmap).
+@item
+@tab trunk[ ]map
+@tab First map in composite hmap set with tree maps therein.
+@item
+@tab tree[ ]map
+@tab Other maps in composite hmap set following trunk map.
+@item
+@tab key[ ]map
+@tab First map in trunk/[tree] set for avatar.
+@item
+@tab key[ ]name
+@tab Session number of a keymap (used vs. reputation).
+@item
+@tab sign-in name
+@tab Session number per group member matching keyname.
+@item
+@tab group[ ]map
+@tab Group hmap artifact.  First in groupset.  Non trunkmap.
+@item
+@tab group[ ]set
+@tab Set of trunkmaps.  groupmap [+ trunkmap set compounded].
+@item
+@tab node-orgin
+@tab Insulated vobspace.  Encompasses all partial nodes.
+@item
+@tab zero session
+@tab node-orgin session number.
+@item
+@tab partial
+@tab Peer to peers shared vobspace (also partial space,
+@item
+@tab
+@tab partial nodes, node-partial, node(s)).
+@item
+@tab partial session
+@tab partial session number (also partial_session, session).
+@item
+@tab node[ ]map
+@tab hmap sent by called node defining partial space volume.
+@end multitable
+To simplify, when speaking of node-orgin or a node-partial, a session
+number (a hash assigned by code in session.c plus an appended index),
+is refered to as a session, while when speaking of one or more hmaps,
+a session number is refered to as a name.  This distinguishes for
+example a group's session (the session number of the partial the group
+resides in) from a group's groupmap name (the groupmap hmap itself
+or the session number of the groupmap).  Any node itself uses an index
+of 0 after the session number hash part, while an hmap uses a positive
+whole number after the session number hash part of the node it is
+located in.
+
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License

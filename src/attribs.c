@@ -160,6 +160,8 @@ init_vohspace(void)
 		p->dialog = NULL;
 		p->dialog_len = 0;
 		p->composite = NULL;
+		p->adjoined = NULL;
+		p->drawlist = NULL;
 	}
 
 	/* Set lod envelope to defaults. */
@@ -257,6 +259,8 @@ detach_hmapf(hmapf_t *p)
 		p->dialog = NULL;
 		p->dialog_len = 0;
 		p->composite = NULL;
+		p->adjoined = NULL;
+		p->drawlist = NULL;
 		attached_hmaps--;
 		return;
 	}
