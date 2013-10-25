@@ -20,7 +20,7 @@ float near_threshf;
 float perif_threshf;
 
 void init_vohspace(void);
-void free_vohspace_memory(void);
+void delete_vohspace(void);
 hmapf_t *attach_hmapf(void);
 void detach_hmapf(hmapf_t *);
 void sort_proc_hmaps(vf_t *viewpoint);

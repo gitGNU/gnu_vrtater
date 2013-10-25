@@ -27,12 +27,13 @@ Window xwin0;
 int xwin0x = 800;
 int xwin0y = 800;
 GLXContext glxcontext0;
-int dbuff = 1; /* single or double buffer video, will mabye be compile opt */
+/* single or double buffer video, would be nice... Needs to be tested. */
+int dbuff = 1;
 ifdpy_t ifdpy0 = {0,
 	1.150, .1, .035,
-	0, .017453, .65,
-	0, .017453, .55,
-	0, .017453, .9,
+	0, .010453, .65,
+	0, .010453, .55,
+	0, .010453, .9,
 	0, .011281, .85,
 	0, .008281, .85,
 	0, .008281, .85};
@@ -65,8 +66,8 @@ void shutdown_glx(void);
 void setup_dialog_interface(void);
 void shutdown_dialog_interface(void);
 void tendto_curr_sessions(void);
-int connect_called_partial(session_t *);
-int connect_caller_partial(session_t *);
+int connect_to_peers(session_t *);
+int accept_login_to_flexible(session_t *);
 int maintain_reputation(session_t *);
 
 /* Temporary diagnostics. */
@@ -728,47 +729,37 @@ node(int argc, char **argv)
 	}
 
 	/* Shutdown node-orgin. */
+	__builtin_printf("Program exit called\n");
 	close_vobspace(0); /* now, for now */
-	close_sessions();
+	answer_accept = 0;
+	reset_sessions();
 	close_node_orgin(); /* note: move to callback_close_vobspace() */
 	shutdown_glx();
 }
 
-/* Tend to curr_session_t and prev_caller_session_t info referencing session
-   info generated thru session.c selection of available nodes for calling(cuing)
-   and running, as well as the previous caller archive that allows sessions to
-   be continued.  Connections are achieved based on configuration files, or
-   calls herein. */
+/* Tend to all_sessions data referencing session info generated thru session.c
+   selection of available nodes for calling, cueing and adding to the formed
+   set. */
 void
 tendto_curr_sessions(void)
 {
 	/* Conditionally connect_vobspace(), etc... */
 }
 
-/* As a caller node-orgin, connect cued session session.  notes: session
-   represents a node-partial to be transfered from a caller node-orgin.  This
-   will be obvious from the directional sense visible looking at all_sessions
-   data from within the interface to be provided herein.  Remote nodes added to
-   the running set for session node-partial will maintain their own
-   representation of given node-partial.  Success is assumed while implied
-   session_t remains in all_sessions data.  Reads from remote node will succeed
-   with no data until session sync or closed. */
+/* As a caller, connect cued session session.  notes: session represents a
+   node-partial to be transfered from a caller node-orgin.  This will be
+   obvious from the directional sense visible looking at all_sessions data from
+   within the interface to be provided herein.  Remote nodes added to the
+   running set for session node-partial will maintain their own representation
+   of given node-partial.  Success is assumed while implied session_t remains
+   in all_sessions data.  Reads from remote node will succeed with no data
+   until session sync or closed. */
 int
-connect_called_partial(session_t *session)
+connect_to_peers(session_t *session)
 {
-	int rval = -1;
-	session_t *last;
+	/* This now completed in test_accept_determined_session. */
 
-	/* Get the session_desc parts maintained in node-partial */
-	/* ... */
-
-	last = (session_t *) fov0->name;
-	/* Enter partial with contingency for backing out. */
-	/* ... */
-
-	rval = accept_called_session(session, last, (session_t *) fov0->name);
-
-	return rval;
+	return 0;
 }
 
 /* As a called node-orgin, connect with cued session session.  notes: session
@@ -778,17 +769,17 @@ connect_called_partial(session_t *session)
    session sync or closed.  Reputation data is syncronized by session.c code
    acceptance of password for given partial. */
 int
-connect_caller_partial(session_t *session)
+accept_login_to_flexible(session_t *session)
 {
 	/* Get the session_desc parts maintained in node-partial */
 	/* ... */
-	return accept_caller_session(session);
+	return form_flexible_session(session);
 }
 
-/* keymap names originating out of given node are always backed up on that
-   node apon any called node url's presence in session.c code's running set.
-   The stack of such names is 2 deep including most recent.  This allows
-   reversion to a known match if the names ever become out of sync. */
+/* keymap names originating out of given node are always backed up on given
+   node vs. any remote node url's presence in the formed set.  The stack of
+   such names is 2 deep including most recent.  This allows reversion to a
+   known match if the names ever become out of sync. */
 int
 maintain_reputation(session_t *session)
 {

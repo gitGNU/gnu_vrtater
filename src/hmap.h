@@ -12,9 +12,9 @@
 typedef int session_t; /* for now */
 
 struct complextimate_s {
-	int hmap_count;
-	int tl_vdata;
-	int tl_dialog;
+	unsigned int hmap_count;
+	unsigned int tl_vdata;
+	unsigned int tl_dialog;
 };
 typedef struct complextimate_s complextimate_t;
 
@@ -36,8 +36,6 @@ struct attribs_s {
 typedef struct attribs_s attribs_t;
 
 enum { /* attribs_t sign, tested at least once every state increment */
-	VRT_ORDINAL_HOLD, /* hold vob for given time */
-#define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
 	VRT_ORDINAL_RECYCLE, /* send to recycler */
 #define VRT_MASK_RECYCLE (1 << VRT_ORDINAL_RECYCLE)
 	VRT_ORDINAL_BUFFER, /* stack in vobspace /w attribute indicator */
@@ -52,7 +50,7 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_VERTICE_MODS (1 << VRT_ORDINAL_VERTICE_MODS)
 	VRT_ORDINAL_DIALOG_MODS, /* unaffix this locally when sending */
 #define VRT_MASK_DIALOG_MODS (1 << VRT_ORDINAL_DIALOG_MODS)
-	VRT_ORDINAL_PARTIAL_MODS, /* sync with nodes in running set */
+	VRT_ORDINAL_PARTIAL_MODS, /* sync with nodes in the formed set */
 #define VRT_MASK_PARTIAL_MODS (1 << VRT_ORDINAL_PARTIAL_MODS)
 	VRT_ORDINAL_RENDER_DIALOG, /* if set and implemented, render dialog */
 #define VRT_MASK_RENDER_DIALOG (1 << VRT_ORDINAL_RENDER_DIALOG)
@@ -64,7 +62,7 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_TRUNKMAP (1 << VRT_ORDINAL_TRUNKMAP)
 	VRT_ORDINAL_TREEMAP, /* composite linked map, is joined to trunk */
 #define VRT_MASK_TREEMAP (1 << VRT_ORDINAL_TREEMAP)
-	VRT_ORDINAL_KEYMAP, /* set when used as caller map */
+	VRT_ORDINAL_KEYMAP /* set when used as caller map */
 #define VRT_MASK_KEYMAP (1 << VRT_ORDINAL_KEYMAP)
 };
 
@@ -75,7 +73,7 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_BALANCE_FILTER (1 << VRT_ORDINAL_BALANCE_FILTER)
 	VRT_ORDINAL_SESSION_FILTER,
 #define VRT_MASK_SESSION_FILTER (1 << VRT_ORDINAL_SESSION_FILTER)
-	VRT_ORDINAL_PUBLISHED, /* is in a partial in a running set */
+	VRT_ORDINAL_PUBLISHED, /* in the formed set of partials */
 #define VRT_MASK_PUBLISHED (1 << VRT_ORDINAL_PUBLISHED)
 	VRT_ORDINAL_RENDER_FOLLOWS, /* for renderer */
 #define VRT_MASK_RENDER_FOLLOWS (1 << VRT_ORDINAL_RENDER_FOLLOWS)
@@ -97,8 +95,12 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_WALL_TYPEA (1 << VRT_ORDINAL_WALL_TYPEA)
 	VRT_ORDINAL_NODEMAP, /* for renderer */
 #define VRT_MASK_NODEMAP (1 << VRT_ORDINAL_NODEMAP)
-	VRT_ORDINAL_SYNC_VERTICES /* keep identical vertices together */
+	VRT_ORDINAL_GROUPMAP, /* for joining and maintaining groups */
+#define VRT_MASK_GROUPMAP (1 << VRT_ORDINAL_GROUPMAP)
+	VRT_ORDINAL_SYNC_VERTICES, /* keep identical vertices together */
 #define VRT_MASK_SYNC_VERTICES (1 << VRT_ORDINAL_SYNC_VERTICES)
+	VRT_ORDINAL_HOLD /* hold vob for preconfigured time */
+#define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
 };
 
 struct envelope_s {

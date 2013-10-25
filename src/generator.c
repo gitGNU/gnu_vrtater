@@ -10,7 +10,6 @@
 #include "global.h"
 #include "transform.h"
 #include "attribs.h"
-#include "session.h"
 #include "stock.h"
 
 #ifdef VRT_X_SUPPORT
@@ -26,23 +25,18 @@ session_t node_orgin = 0;
 /* External */
 unsigned int vrt_hmaps_max;
 
-/* Diagnostics for partial space. */
-#define DIAG_PARTIAL
-#ifdef DIAG_PARTIAL
-char thenode_message[] = "thenode.";
-partial_t *thenode;
-char nicenode_message[] = "the really nice node.";
-partial_t *nicenode;
-#endif
-
 void init_selection_buffers(void);
 void generate_vohspace(void);
 void callback_close_vobspace(void);
 
 /* Tests. */
+partial_t *test_cue_determined_node(char *, complextimate_t *, hmapf_t **);
+int test_form_determined_partial(partial_t *, hmapf_t *keymap, ptlrep_t *, char *url);
 void test_add_repute(hmapf_t *);
-void test_groups(void);
+void test_add_group(session_t *);
+void test_add_member(session_t *, session_t *);
 void test_select_partial_set(void);
+void test_add_diagnostic_maps(session_t *, unsigned int);
 void test_send_partial_changes(void);
 void test_detach_all_partials(void);
 void test_cphmap(hmapf_t *, hmapf_t *);
@@ -74,25 +68,28 @@ generate_node_orgin(void)
 {
 	init_selection_buffers();
 	init_vohspace();
-	__builtin_printf("Reading vohspace from\n"); /* for now */
-	set_node_orgin(&node_orgin, ""); /* for now */
-	__builtin_printf("node-orgin set to %x\n", node_orgin);
-	partial_list = NULL;
-	partials_count = 0;
+	char filename[] = "/dev/zero";
+	__builtin_printf("Reading vohspace from %s\n", filename); /* for now */
+	mk_session_desc_list();
+	hash_session_name(&node_orgin, ""); /* for now */
+	__builtin_printf(" node-orgin set to %x\n", node_orgin);
+	mk_partial_list();
 	generate_vohspace();
 	init_renderer();
+	answer_accept = 0;
 	init_sessions();
 
 	return 0;
 }
 
-/* Add preconfigured hmaps to node-orgin forming vohspace. */
+/* Add preconfigured hmaps and flexible's to node-orgin forming vohspace. */
 void
 generate_vohspace(void)
 {
 	int i;
 	hmapf_t *map;
 	vf_t d, portal = { 560, 560, 560, 969.94845 };
+	session_t session = 0;
 
 	set_vf(&d, 0, .01, -.03, 0);
 	form_mag_vf(&d); 
@@ -116,35 +113,13 @@ generate_vohspace(void)
 			nportf(map, sum_vf(&d, &portal, &portal));
 
 #ifdef DIAG_PARTIAL
-	/* Make 2 partials then remove them below on close_node. */
-	hmapf_t **buffer = (hmapf_t **) selectf_a;
-	select_t t = { 0, 1, buffer, 0, NULL};
+	__builtin_printf(" adding unformed flexible partial in node-orgin\n");
 
-	/* Outer hmap for node-orgin. */
-	if ((map = hmapf_cylinder_c(&node_orgin, 80.5, 25, 112, 0)) != NULL) {
-		map->ang_spd = 0;
-		map->ang_dpl = .761799;
-		set_vf(&(map->vvel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
-		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
-		map->attribs.mode |= VRT_MASK_FIXED_FORM;
-	}
+	/* Make a partial then remove it below on close_node. */
+	hmapf_t **buf = (hmapf_t **) selectf_a;
+	select_t t = { 0, 1, buf, 0, NULL};
 
-	/* Inner hmap, to be attached to other nodes. */
-	if ((map = hmapf_cylinder_c(&node_orgin, 80, 25, 111.5, 0)) != NULL) {
-		map->ang_spd = 0;
-		map->ang_dpl = .761799;
-		set_vf(&(map->vvel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
-		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
-		map->attribs.mode |= VRT_MASK_FIXED_FORM;
-	}
-	*buffer = map;
-	surface_inv_hmapf(&t);
-
-	thenode = mk_partial(thenode_message, map);
-
-	/* Next partial. */
+	/* Outside map. */
 	if ((map = hmapf_cylinder_c(&node_orgin, 80.5, 25, 112, 0)) != NULL) {
 		map->ang_spd = 0;
 		map->ang_dpl = -.761799;
@@ -153,7 +128,7 @@ generate_vohspace(void)
 		form_mag_vf(set_vf(&(map->vpos), 200, 500, 0, 0));
 		map->attribs.mode |= VRT_MASK_FIXED_FORM;
 	}
-
+	/* Inside map. */
 	if ((map = hmapf_cylinder_c(&node_orgin, 80, 25, 111.5, 0)) != NULL) {
 		map->ang_spd = 0;
 		map->ang_dpl = -.761799;
@@ -162,10 +137,12 @@ generate_vohspace(void)
 		form_mag_vf(set_vf(&(map->vpos), 200, 500, 0, 0));
 		map->attribs.mode |= VRT_MASK_FIXED_FORM;
 	}
-	*buffer = map;
+	*buf = map;
 	surface_inv_hmapf(&t);
 
-	nicenode = mk_partial(nicenode_message, map);
+	hash_session_name(&session, "");
+	map->name = session | (0x0000ffff & map->name);
+	mk_partial(&map, 1, VRT_FLEXIBLE);
 #endif /* DIAG_PARTIAL */
 }
 
@@ -213,90 +190,82 @@ regenerate_scene(vf_t *vpt)
 	/* usleep(33400); */ /* @rsfreq 1000 fps = approx 27.8 to 28.6(+2.8%) */
 }
 
-/* Generate a connection point to merge partial vobspace in a peer to peers
-   network.  Given desc, a max 80 chars + NULL reference to a description for a
-   partial vobspace, and map, a refrence to an hmap delimiting partial space.
-   Return reference to partial.  note: Should mabye rewrite as a linked list. */
-partial_t *
-mk_partial(char *desc, hmapf_t *nodemap)
+/* Create a linked list construct for partial_list returning reference to an
+   empty list of partials residing therein. */
+void
+mk_partial_list(void)
 {
-	int i, lval;
-	partial_t *partial, **incpartial = (partial_t **) partial_list;
-	partial_t *swap, **incswap;
-
-	if ((partial = (partial_t *) malloc(sizeof(partial_t))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc for partial struct\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-
-	/* Get an empty node-partial session name, for now. */
-	partial->session = 0;
-	if ((lval = set_node_partial(&(partial->session), "")) != 0) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Attemped addition of node-partial failed.\n"
-			"Perhaps vrt_max_*_sessions needs adjustment...\n",
-			__FILE__, __LINE__);
-		free(partial);
-		return NULL;
-	} else
-		__builtin_printf("generated node-partial %x\n",
-			partial->session);
-
-	/* Rewrite partial_list, empty or not, in a swap buffer. */
-	if ((swap = (partial_t *) malloc((partials_count + 1) * sizeof(partial_t *))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc swap for "
-			"partial_list\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-	incswap = (partial_t **) swap;
-	incpartial = (partial_t **) partial_list;
-	for (i = 0; i < partials_count; i++, incpartial++, incswap++)
-		*incswap = *incpartial;
-	*incswap = partial;
-
-	/* Extend partial_list allocation by space for one partial_t
-	   reference. */
-	free(partial_list);
 	partial_list = NULL;
-	if ((partial_list = (partial_t *) malloc((partials_count + 1) * sizeof(partial_t *))) == NULL) {
+	if ((partial_list = (partial_list_t *) malloc(sizeof(partial_list_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc partial_list\n",
+			"Error: Could not malloc for partial_list\n",
 			__FILE__, __LINE__);
 		abort();
 	}
+	partial_list->last = NULL;
+	partial_list->count = 0;
+}
 
-	/* Write extended partial_list. */
-	incswap = (partial_t **) swap;
-	incpartial = (partial_t **) partial_list;
-	for (i = 0; i < partials_count; i++, incpartial++, incswap++)
-		*incpartial = *incswap;
-	*incpartial = *incswap;
+/* Remove partial_list and all of it's element references. */
+void
+rm_partial_list(void)
+{
+	while (partial_list->last != NULL)
+		rm_partial(partial_list->last);
+	free(partial_list);
+}
 
-	/* Form partial. */
-	(*incpartial)->desc = desc;
-	(*incpartial)->nodemap = nodemap;
-	(*incpartial)->complexity.hmap_count = 1;
-	(*incpartial)->complexity.tl_vdata = nodemap->vmap_total * sizeof(vf_t);
-	(*incpartial)->complexity.tl_dialog = nodemap->dialog_len * sizeof(int);
-	(*incpartial)->ptlreps = mk_ptlreps_list(&(partial->session));
-	(*incpartial)->ptlgrps = mk_ptlgrps_list(&(partial->session));
-	(*incpartial)->ptlmaps = mk_ptlmaps_list(&(partial->session));
-	add_ptlmap((*incpartial)->ptlmaps, (*incpartial)->nodemap);
+/* Generate a connection point to merge partial vobspace in a peer to peers
+   network.  maps provides reference for nodemap hmap delimiting the partial's
+   representation of space, followed by count-1 hmap references if any.  When
+   a partial is made, any maps following nodemap always take on the nodemaps
+   session regardless of their name.  When flexible is true, nodemap and groups
+   are locally stored and maintained, and a session description does not exist
+   until the allowing of logins is desired.  When the flexible flag is false,
+   maps references the determined nodemap and session of a peer node.  Session
+   description for peer node will exist and be called and cued.  In either
+   case, reputations are maintained in any created partial, however, on a
+   flexible partial they are stored with the partial, while on all determined
+   partials, they are cumulatively stored with node-orgin. Successfull function
+   completion return's reference to the partial or NULL apon any error.  note:
+   For now any maps following nodemap are being ignored for simplicity. */
+partial_t *
+mk_partial(hmapf_t **maps, unsigned int count, int flexible)
+{
+	partial_t *listed = NULL;
+	session_t session;
 
-	(*incpartial)->nodemap->name = (*incpartial)->session | (*incpartial)->nodemap->index;
-	(*incpartial)->nodemap->attribs.sign |= (VRT_MASK_PARTIAL | VRT_MASK_PARTIAL_MODS);
+	session = (*maps)->name & 0xffff0000;
+	__builtin_printf(" initializing node-partial with session %x\n",
+		session);
 
-	__builtin_printf("  description:\n%s\n  nodemap: %x\n",
-		(*incpartial)->desc, ((*incpartial)->nodemap)->name);
+	if ((listed = (partial_t *) malloc(sizeof(partial_t))) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: Could not malloc for partial_list entry\n",
+			__FILE__, __LINE__);
+		abort();
+	}
+	listed->session = session;
+	listed->ptlbits = 0xffffffff;
+	listed->nodemap = *maps;
+	if (flexible) {
+		listed->ptlgrps = mk_ptlgrps_list(&(listed->session));
+	} else {
+		listed->ptlgrps = NULL;
+	}
+	listed->ptlreps = mk_ptlreps_list(&(listed->session));
+	listed->ptlmaps = mk_ptlmaps_list(&(listed->session));
+	listed->nodemap->attribs.mode |= VRT_MASK_NODEMAP;
 
-	free(swap);
+	listed->precursor = partial_list->last;
+	partial_list->last = listed;
+	partial_list->count++;
 
-	partials_count++;
-	return partial;
+	add_ptlmap(listed->ptlmaps, listed->nodemap);
+
+	__builtin_printf("  nodemap: %x\n", listed->nodemap->name);
+
+	return listed;
 }
 
 /* Given a node-partial reference partial, send any hmaps collected therein to
@@ -304,104 +273,72 @@ mk_partial(char *desc, hmapf_t *nodemap)
 void
 rm_partial(partial_t *partial)
 {
-	int i;
-	partial_t **incpartial = (partial_t **) partial_list;
-	partial_t *swap, **incswap;
+	partial_t *current, *passed;
 	select_t sel = { 0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
-	/* Make a swap buffer of partials_count refrences. */
-	if ((swap = (partial_t *) malloc((partials_count) * sizeof(partial_t *))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc partial_list\n",
-			__FILE__, __LINE__);
-		abort();
+	current = partial_list->last;
+	passed = partial_list->last;
+	while (1) {
+		if (current != NULL) {
+			if (current->session == partial->session)
+				break;
+			passed = current;
+			current = current->precursor;
+		} else
+			return;
 	}
+	__builtin_printf(" removing partial %x\n",
+		(int) current->session);
 
-	/* Put any partial reference not given in the swap buffer, while
-	   configuring for recycle of given partial. */
-	incswap = (partial_t **) swap;
-	incpartial = (partial_t **) partial_list;
-	for (i = 0; i < partials_count; i++, incpartial++) {
-		if (*incpartial != partial) {
-			*incswap++ = *incpartial;
-		} else {
-			__builtin_printf(" removing: partial %x (%i/%i)\n%s\n",
-				*(partial->ptlmaps->session),
-				(((int) (incpartial - i) - (int) partial_list) / sizeof(partial_t *)) + 1,
-				partials_count, (*incpartial)->desc);
-			/* remove partial list leaving maps selected */
-			(&sel)->counta = select_partial_set(partial->ptlmaps, (&sel)->seta);
-			rm_ptlmaps_list(partial->ptlmaps);
-			rm_ptlgrps_list(partial->ptlgrps);
-			rm_ptlreps_list(partial->ptlreps);
-		}
-	}
-
-	/* Test that the partial given was found. */
-	if ((int) (incswap - partials_count) == (int) partial_list) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Partial given not found in "
-			"partial_list\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-
-	/* Recycle hmaps for given partial. */
+	/* Remove partial list, recycling maps therein. */
+	rm_ptlgrps_list(partial->ptlgrps);
+	rm_ptlreps_list(partial->ptlreps);
+	(&sel)->counta = select_partial_set(partial->ptlmaps, (&sel)->seta);
+	rm_ptlmaps_list(partial->ptlmaps);
+	if (current == passed) {
+		if (!current->precursor)
+			partial_list->last = NULL;
+		else
+			partial_list->last = current->precursor;
+	} else
+		passed->precursor = current->precursor;
+	free(current);
+	partial_list->count--;
 	recycle(&sel);
-
-	/* Free partial and write reduced partial_list from swap. */
-	free(partial);
-	partials_count--;
-	free(partial_list);
-	if ((partial_list = (partial_t *) malloc(partials_count * sizeof(partial_t *))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc partial_list\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-	incswap = (partial_t **) swap;
-	incpartial = (partial_t **) partial_list;
-	for (i = 0; i < partials_count; i++)
-		*incpartial++ = *incswap++;
-	free(swap);
 }
 
-/* Shut down all calling connections to local nodes at when, /w timed messages.
-   Meanwhile disconnect from any called nodes.  Still in template form. */
+/* Shut down all calling connections to local nodes at when, with timed
+   messages. */
 void
 close_vobspace(double when)
 {
-	/* node-orgin closeing */
 	/* dlg(VRT_VOBSPACE,
 		"this node will be closing in" dlgprntime(when - timer(now));
 	   what = VRT_CLOSE;
 	   fork_child_timer_callback(when, what);
 	*/
-	;
+	callback_close_vobspace(); /* for now */
 }
 
-/* Callback for close_vobspace.  Still in template form. */
+/* Remove all partials currently defined while informing one whom runs vrtater
+   locally, and connected nodes. */
 void
 callback_close_vobspace(void)
 {
 	/* dlg(VRT_VOBSPACE_CLOSED, "vobspace" dlg(VRT_NODEDSC) "closing now");
 	   rndr(VRT_VOBSPACE_CLOSED);
-	   cancel_sessions(&sessions);
 	*/
-	;
+	rm_partial_list();
 }
 
-/* Remove all partials currently defined then free all allocated memory. */
+/* Free all allocated memory while informing one whom runs vrtater. */
 void
 close_node_orgin(void)
 {
-	int i;
-	partial_t **partial = (partial_t **) partial_list;
-
-	for (i = partials_count; i > 0; i--)
-		rm_partial(*partial);
-
-	free_vohspace_memory();
+	/* dlg(VRT_NODEORGIN_CLOSED, "orgin" dlg(VRT_NODEDSC) "closing now");
+	   rndr(VRT_VOBSPACE_CLOSED);
+	*/
+	delete_vohspace();
 }
 
 /* Resize vohspace memory allowing for size hmaps.  When supported, if
@@ -433,56 +370,97 @@ resize_node_orgin(int size, int keep_connected)
 void
 diag_ls_partials(int full)
 {
-	int i;
-	partial_t **partial = (partial_t **) partial_list;
+	partial_t *current, *passed;
 
-	__builtin_printf(" partials: (list)\n");
-	for (i = 0; i < partials_count; i++, partial++) {
-		__builtin_printf("%s\n", (*partial)->desc);
-		if (full)
-			diag_hmaps_in_partial(&((*partial)->session));
+	current = partial_list->last;
+	passed = partial_list->last;
+	if (current == NULL) {
+		__builtin_printf("--no partials listed--\n");
+		return;
 	}
-	if (!partials_count)
-		__builtin_printf("--none--\n");
+	while (current != NULL) {
+		__builtin_printf("%x\n", (int) current->session);
+		if (full)
+			diag_hmaps_in_partial(current);
+		passed = current;
+		current = current->precursor;
+	}
 }
 
-/* Temporary diagnostic to list hmaps in given partial session session. */
+/* Temporary diagnostic to list hmaps partial returning count thereof. */
 int
-diag_hmaps_in_partial(session_t *session)
+diag_hmaps_in_partial(partial_t *partial)
 {
-	int i;
-	partial_t **partial;
 	select_t sel = { 0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
-	partial = (partial_t **) partial_list;
-	for (i = 0; i < partials_count; i++, partial++) {
-		if (*session == (*partial)->session) {
-			(&sel)->counta = select_partial_set((*partial)->ptlmaps, (&sel)->seta);
-			diag_selection(&sel);
-			return (*partial)->ptlmaps->count;
-		}
-	}
-	return -1;
+	(&sel)->counta = select_partial_set(partial->ptlmaps, (&sel)->seta);
+	diag_selection(&sel);
+	return partial->ptlmaps->count;
 }
 
 /* Temporary diagnostic to run test on keypress f. (!if diag-text input on).*/
 void
 diag_generator_key_f(void)
 {
+	partial_t *cued = NULL;
+	hmapf_t *welcome, *avatar8, *avatar8_hold, *chartoon;
+	ptlrep_t *repute;
+	int rval;
+
+#ifdef DIAG_FEED_SESSION
 	test_send_partial_changes();
-	test_add_repute(p_hmapf(21));
-	test_add_repute(p_hmapf(24));
-	test_groups();
+#endif
+#ifdef DIAG_GROUPS
+	test_add_group(&(welcome->name));
+	test_add_member(&(avatar8->name), &(welcome->name));
+	test_add_member(&(chartoon->name), &(welcome->name));
+#endif
+#ifdef DIAG_DETERMINED_SESSION
+	/* Pretend to log hwnode, a flexible remote node. */
+	char url[] = "protocol://192.168.0.2"; /* hwnode */
+	complextimate_t lcomplex; /* simulate local complexity */
+	(&lcomplex)->hmap_count = 555;
+	(&lcomplex)->tl_vdata = 4051;
+	(&lcomplex)->tl_dialog = 358;
+	hmapf_t **sela = (hmapf_t **) selectf_a; /* returned nodemap ref. */
+	cued = test_cue_determined_node(url, &lcomplex, sela);
+
+	/* Some usefull maps for testing logins. */
+	test_add_diagnostic_maps(&(cued->session), 4);
+	welcome = p_hmapf(22);
+	welcome->attribs.mode |= VRT_MASK_GROUPMAP;
+	avatar8 = p_hmapf(23);
+	avatar8->attribs.sign |= VRT_MASK_KEYMAP;
+	avatar8_hold = p_hmapf(24);
+	avatar8_hold->attribs.sign |= VRT_MASK_HOLD;
+	chartoon = p_hmapf(25);
+	chartoon->attribs.sign |= VRT_MASK_KEYMAP;
+
+	/* Locally stored with node-orgin for avatar8. */
+	session_t lastkey = 0xb0de0008;
+	session_t validkey = 0xface0008;
+	session_t heldmaps = avatar8_hold->name;
+
+	repute = add_ptlrep(cued->ptlreps, &lastkey, url);
+	repute->bkpkey = validkey; /* assumed established */
+	repute->holdkey = heldmaps;
+	if ((rval = test_form_determined_partial(cued, avatar8, repute, url)) != 0)
+		__builtin_printf("Error: %i on test_form_determined_partial\n",
+			rval);
+#endif
 }
 
 /* Temporary diagnostic to run test on keypress g. */
 void
 diag_generator_key_g(void)
 {
-	hmapf_t *diagtext1 = p_hmapf(15); /* hmap to recieve text entry */
+
+#ifdef DIAG_HMAPWRAP
+	hmapf_t *diagtext1 = p_hmapf(18); /* hmap to recieve text entry */
 	char diagtextmsg[] = "Dialog test.\n";
 	add_dialog(diagtext1, diagtextmsg, diagtext1->dialog_len, 0);
 	test_hmapwrap_unwrap(diagtext1);
+#endif
 }
 
 /* Temporary diagnostic to run test on keypress h. */
@@ -490,61 +468,103 @@ void
 diag_generator_key_h(void)
 {
 	select_t s = {  0, 0, (hmapf_t **) selectf_a, 0, NULL };
-	__builtin_printf("there are %u attached hmaps\n", hmap_count());
-
-	test_detach_all_partials();
-
 	(&s)->counta = search_vohspace((&s)->seta, 0, VRT_MASK_ATTACHED);
 	diag_selection(&s);
 }
 
-/* Diagnostic test: Add a reputation, diagnose.  Partial hosted locally. */
-void
-test_add_repute(hmapf_t *map)
+/* Diagnostic test: Call flexible remote node for a determined nodemap and
+   session description allowing for local complextimate at url.  Given nodemap
+   then available through maps, make an unformed determined partial. */
+partial_t *
+test_cue_determined_node(char *url, complextimate_t *lcomplex, hmapf_t **maps)
 {
-	ptlrep_t *reputed;
-	partial_t *partial;
-	session_t locally_hosted_partial = 0x50940000; /* nicenode */
-	ptlreps_list_t *list;
-	char url[] = "protocol://192.168.0.2";
+	/* Simulate case where one whom is running vrtater calls peer node. */
+	partial_t *partial = NULL;
 
-	map->attribs.sign |= VRT_MASK_KEYMAP;
+	if ((call_session(url, lcomplex, maps)) != 0)
+		return NULL;
+	if (*maps) {
+		/* Session was cued. */
+		__builtin_printf(" adding unformed determined partial in "
+			"node-orgin\n");
+		partial = mk_partial(maps, 1, VRT_DETERMINED);
+	} else
+		__builtin_printf("Error: node failed to cue at %s.  Suspect "
+			"DIAG_DETERMINED_SESSION_OFF.\n", url);
 
-	partial = find_partial(&locally_hosted_partial);
-	list = partial->ptlreps;
-
-	reputed = add_ptlrep(list, &(map->name), url);
-
-	reputed = find_repute(list, &(map->name), VRT_MAPKEY);
-
-#ifdef DIAG_GROUPS
-	__builtin_printf("  key %x\n", (int) reputed->key);
-	__builtin_printf("  url %s\n", reputed->url);
-#endif /* DIAG_GROUPS */
+	return partial;
 }
 
-/* Diagnostic test: Add a reputation, diagnose.  Partial hosted locally. */
+/* Diagnostic test: Accept determined session where keymap with keyname last
+   has entered unformed partial desiring login. */
+int
+test_form_determined_partial(partial_t *forming, hmapf_t *keymap, ptlrep_t *repute, char *url)
+{
+	int rval;
+
+	/* Using repute for keymap, form determined partial. */
+	if ((rval = form_determined_session(forming, &(repute->key), &(keymap->name), url)) != 0) {
+		__builtin_printf("Error: A disk error may have occured either "
+			"locally or on the remote node.  Retrying login with "
+			"a previously authenticated reputation key.\n");
+		if ((rval = form_determined_session(forming, &(repute->bkpkey), &(keymap->name), url)) != 0) {
+			__builtin_printf("Error: vrtater lost reputation sync "
+			"due to a disk sync anomoly re-occurance.  Hopefully "
+			"the maintainer of the node you were logging into can "
+			"restore any held maps and your reputation on that  "
+			"node.\n");
+			return rval;
+		}
+	}
+	add_ptlmap(forming->ptlmaps, keymap);
+
+	return rval;
+}
+
+/* Diagnostic test: Add a group to locally hosted partial. */
 void
-test_groups(void)
+test_add_group(session_t *groupmap_name)
 {
 	partial_t *partial;
-	session_t locally_hosted_partial = 0x50940000;
+	session_t partial_session = *groupmap_name & 0xffff0000;
 	ptlgrp_t *group;
-	session_t groupmap_name = 0x50940019;
-	session_t member1 = 0x50940018;
-	session_t member2 = 0x50940015;
 
-	partial = find_partial(&locally_hosted_partial);
+	if ((partial = find_partial(&partial_session)) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: rand has moved nicenode on test_groups\n",
+			__FILE__, __LINE__);
+		return;
+	}
 	__builtin_printf(" adding group in partial %x vs. groupmap %x\n",
-		(int) partial->session, (int) groupmap_name);
-	group = add_ptlgrp(partial->ptlgrps, &groupmap_name);
-	__builtin_printf(" adding members for group with groupmap %x\n",
-		(int) groupmap_name);
-	add_ptlmbr(group->members, &member1);
-	find_member(group->members, &member1);
-	add_ptlmbr(group->members, &member2);
-	find_member(group->members, &member2);
+		(int) partial->session, (int) *groupmap_name);
+	group = add_ptlgrp(partial->ptlgrps, groupmap_name);
 }
+
+/* Diagnostic test: Add a member to locally hosted group. */
+void
+test_add_member(session_t *sign_in, session_t *groupmap_name)
+{
+	partial_t *partial;
+	session_t partial_session = *groupmap_name & 0xffff0000;
+	ptlgrp_t *group;
+
+	if ((partial = find_partial(&partial_session)) == NULL) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: rand has moved nicenode on test_groups\n",
+			__FILE__, __LINE__);
+		return;
+	}
+	if ((group = find_group(partial->ptlgrps, groupmap_name)) == NULL) {
+		__builtin_printf("Group with groupmap %x not found\n",
+			(int) groupmap_name);
+		return;
+	}
+	__builtin_printf(" adding member for group with groupmap %x\n",
+		(int) *groupmap_name);
+	add_ptlmbr(group->members, sign_in);
+	find_member(group->members, sign_in);
+}
+
 /* Diagnostic test: Place first two defined partials in selectf_a. */
 void
 test_select_partial_set(void)
@@ -560,58 +580,59 @@ test_select_partial_set(void)
 	diag_selection(&sel);
 }
 
-/* Diagnostic test: See that session receive's all needed maps per a partial. */
+/* Diagnostic test: Place quantity test hmaps in partial session
+   partial_session. */
+void
+test_add_diagnostic_maps(session_t *partial_session, unsigned int quantity)
+{
+	int i;
+	hmapf_t *map;
+	partial_t *partial;
+
+	if ((partial = find_partial(partial_session)) == NULL) {
+		__builtin_printf("Cant find session to add maps to.\n");
+		return;
+	}
+
+	/* Nodemaps become listed when mk_partial is run.  For testing add n
+	   more hmaps to partial, new maps representing partial changes. */
+	for (i = 0; i < quantity; i++) {
+		if ((map = hmapf_cylinder_c(&node_orgin, 40, 25, 55.75, 0)) != NULL) {
+			map->ang_spd = 0;
+			map->ang_dpl = .761799;
+			set_vf(&(map->vvel), 0, 0, 0, 0);
+			form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
+			form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
+		} else {
+			__builtin_printf("Ran out of maps while running "
+				"test_add_diagnostic_maps\n");
+			return;
+		}
+
+		map->name = partial->session | map->index;
+		add_ptlmap(partial->ptlmaps, map);
+		map->attribs.sign |= (VRT_MASK_PARTIAL_MODS | VRT_MASK_PARTIAL);
+
+		__builtin_printf("  added hmap %x to node-partial %x\n",
+			map->name, partial->session);
+	}
+}
+
+/* Diagnostic test: Send all relevant partial maps in vohspace to respective
+   connected nodes. */
 void
 test_send_partial_changes(void)
 {
-	int i;
-	partial_t **partial;
-	hmapf_t *map;
+	partial_t *current, *passed;
 	select_t sel = { 0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
-	/* Nodemaps become listed when mk_partial is run
-	   add some changed or new hmaps(for test add a cylinder). */
-	partial = (partial_t **) partial_list;
-	if ((map = hmapf_cylinder_c(&node_orgin, 40, 25, 55.75, 0)) != NULL) {
-		map->ang_spd = 0;
-		map->ang_dpl = .761799;
-		set_vf(&(map->vvel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
-		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
-	}
-	map->name = (*partial)->session | map->index;
-	add_ptlmap((*partial)->ptlmaps, map);
-	map->attribs.sign |= (VRT_MASK_PARTIAL_MODS | VRT_MASK_PARTIAL);
-	(*partial)->complexity.hmap_count += 1;
-	(*partial)->complexity.tl_vdata += map->vmap_total * sizeof(vf_t);
-	(*partial)->complexity.tl_dialog += map->dialog_len * sizeof(int);
-
-	__builtin_printf("added hmap %x to node-partial %x\n",
-		map->name, (*partial)->session);
-
-	/* For testing groups add another cylinder). */
-	if ((map = hmapf_cylinder_c(&node_orgin, 40, 25, 55.75, 0)) != NULL) {
-		map->ang_spd = 0;
-		map->ang_dpl = .761799;
-		set_vf(&(map->vvel), 0, 0, 0, 0);
-		form_mag_vf(set_vf(&(map->vaxi), -.5, 1, 0, 0));
-		form_mag_vf(set_vf(&(map->vpos), -200, 500, 0, 0));
-	}
-	map->name = (*partial)->session | map->index;
-	add_ptlmap((*partial)->ptlmaps, map);
-	map->attribs.sign |= (VRT_MASK_PARTIAL_MODS | VRT_MASK_PARTIAL);
-	(*partial)->complexity.hmap_count += 1;
-	(*partial)->complexity.tl_vdata += map->vmap_total * sizeof(vf_t);
-	(*partial)->complexity.tl_dialog += map->dialog_len * sizeof(int);
-
-	__builtin_printf("added hmap %x to node-partial %x\n",
-		map->name, (*partial)->session);
-
-	/* Send all partials. */
-	partial = (partial_t **) partial_list;
-	for (i = 0; i < partials_count; i++, partial++) {
-		(&sel)->counta = select_partial_set((*partial)->ptlmaps, (&sel)->seta);
-		buffer_maps_to_peer_partial(&((*partial)->session), &sel);
+	current = partial_list->last;
+	passed = partial_list->last;
+	while (current != NULL) {
+		(&sel)->counta = select_partial_set(current->ptlmaps, (&sel)->seta);
+		buffer_maps_to_peer_partial(&(current->session), &sel);
+		passed = current;
+		current = current->precursor;
 	}
 }
 
@@ -619,11 +640,15 @@ test_send_partial_changes(void)
 void
 test_detach_all_partials(void)
 {
-	int i;
-	partial_t **p = (partial_t **) partial_list;
+	partial_t *current, *passed;
 
-	for (i = partials_count; i > 0; i--)
-		rm_partial(*p);
+	current = partial_list->last;
+	passed = partial_list->last;
+	while (current != NULL) {
+		rm_partial(current);
+		passed = current;
+		current = current->precursor;
+	}
 }
 
 /* Diagnostic test: Run transform cp_hmapf with hmap ref arg's a to b. */

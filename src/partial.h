@@ -73,15 +73,28 @@ struct partial_s {
 	ptlmaps_list_t *ptlmaps;
 	ptlgrps_list_t *ptlgrps;
 	ptlreps_list_t *ptlreps;
-	char *desc; /* set when calling mk_partial */
 	hmapf_t *nodemap; /* hmap describing the volume of given partial */
-	complextimate_t complexity;
-	int running; /* is in session code's running set */
+	btoggles_t ptlbits;
+	struct partial_s *precursor;
 };
 typedef struct partial_s partial_t;
 
-partial_t *partial_list;
-int partials_count;
+/* partial_t ptlbits. */
+enum {
+	VRT_ORDINAL_UNFORMED, /* not in session code's formed set */
+#define VRT_MASK_UNFORMED (1 << VRT_ORDINAL_UNFORMED)
+	VRT_ORDINAL_FLEXIBLE
+#define VRT_MASK_FLEXIBLE (1 << VRT_ORDINAL_FLEXIBLE)
+};
+
+
+struct partial_list_s {
+	partial_t *last;
+	unsigned int count;
+};
+typedef struct partial_list_s partial_list_t;
+
+partial_list_t *partial_list;
 
 partial_t *find_partial(session_t *partial_session);
 int select_partial_set(ptlmaps_list_t *list, hmapf_t **maps);
@@ -90,7 +103,7 @@ void rm_ptlmaps_list(ptlmaps_list_t *);
 ptlmap_t *add_ptlmap(ptlmaps_list_t *, hmapf_t *);
 void subtract_ptlmap(ptlmaps_list_t *, hmapf_t *);
 
-ptlrep_t *find_repute(ptlreps_list_t *list, session_t *keyname, int flag);
+ptlrep_t *find_repute(ptlreps_list_t *list, session_t *keyname, int srchbkp);
 int sync_reputation(ptlreps_list_t *list, session_t *last, session_t *new, char *url);
 ptlreps_list_t *mk_ptlreps_list(session_t *partial_session);
 void rm_ptlreps_list(ptlreps_list_t *);

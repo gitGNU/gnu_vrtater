@@ -12,8 +12,10 @@
 struct session_desc_s {
 	session_t session;
 	btoggles_t level;
-	char adesc[81]; /* if called, cued */
+	char oneliner[81];
 	complextimate_t complexity;
+	session_t behind;
+	struct session_desc_s *precursor;
 };
 typedef struct session_desc_s session_desc_t;
 
@@ -28,27 +30,29 @@ enum { /* session_desc_t level */
 #define VRT_MASK_SESSION_INBOUND (1 << VRT_ORDINAL_SESSION_INBOUND)
 };
 
-struct caller_sessions_s {
-	session_t session;
+struct session_desc_list_s {
+	session_desc_t *last;
+	unsigned int count;
 };
-typedef struct caller_sessions_s caller_sessions_t;
+typedef struct session_desc_list_s session_desc_list_t;
 
-session_desc_t *all_sessions;
-caller_sessions_t *caller_sessions;
+session_desc_list_t *all_sessions;
+int answer_accept;
 
 void init_sessions(void);
-int set_node_orgin(session_t *, char *seedfiles);
-int set_node_partial(session_t *, char *seedfiles);
+int hash_session_name(session_t *, char *seedfiles);
 void list_nodes(char *);
-session_desc_t *session_descriptions(void);
-caller_sessions_t *previous_caller_sessions(void);
-hmapf_t *call_session(char *url, complextimate_t *);
-int accept_called_session(session_t *, session_t *last, session_t *new);
-int accept_caller_session(session_t *);
+int call_session(char *url, complextimate_t *, hmapf_t **maps);
+int form_determined_session(partial_t *, session_t *last, session_t *new, char *url);
+int form_flexible_session(session_t *);
 void sync_sessions(void);
-int buffer_maps_to_peer_partial(session_t *s, select_t *sel);
-hmapf_t *recieve_maps_from_peer_partial(session_t *s, select_t *sel);
+int buffer_maps_to_peer_partial(session_t *, select_t *sel);
+hmapf_t *recieve_maps_from_peer_partial(session_t *, select_t *sel);
+session_desc_t *find_in_all_sessions(session_t *);
+void mk_session_desc_list(void);
 int close_session(session_desc_t *);
-int close_sessions(void);
+int reset_sessions(void);
+/* Diagnostics. */
+void diag_ls_partial_sessions(int full);
 
 #endif /* VRT_SESSION_H */

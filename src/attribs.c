@@ -173,7 +173,7 @@ init_vohspace(void)
 
 /* Free all dynamic memory associated with vohspace and selection buffer. */
 void
-free_vohspace_memory(void)
+delete_vohspace(void)
 {
 	int i;
 	for (i = 0; i < vrt_hmaps_max; i++) {

@@ -7,19 +7,23 @@
 #include <stdio.h>
 #include "partial.h"
 
-/* Return list of hmaps for partial refrenced by partial_session. */
+/* Return partial reference vs. partial_session or NULL if not found. */
 partial_t *
 find_partial(session_t *partial_session)
 {
-	int i;
-	partial_t **partial;
+	partial_t *current, *passed;
 
-	partial = (partial_t **) partial_list;
-	for (i = 0; i < partials_count; i++, partial++) {
-		if (*partial_session == (*partial)->session)
-			return *partial;
+	current = partial_list->last;
+	passed = partial_list->last;
+	while (1) {
+		if (current != NULL) {
+			if (current->session == *partial_session)
+				return current;
+			passed = current;
+			current = current->precursor;
+		} else
+			return NULL;
 	}
-	return NULL;
 }
 
 /* Copy any refrences for partial in list to allocation referenced by maps. */
@@ -67,7 +71,9 @@ rm_ptlmaps_list(ptlmaps_list_t *list)
 }
 
 /* Add an element reference to partial hmap map in the linked list construct
-   list.  Return reference to element listed. */
+   list.  Set VRT_MASK_PARTIAL.  Also set VRT_MASK_PARTIAL_MODS informing code
+   in session.c that this map should be sync'd with remote nodes.  Return
+   reference to element listed. */
 ptlmap_t *
 add_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
 {
@@ -83,11 +89,13 @@ add_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
 	listed->map = map;
 	list->last = listed;
 	list->count++;
+	listed->map->attribs.sign |= (VRT_MASK_PARTIAL | VRT_MASK_PARTIAL_MODS);
 
 	return listed;
 }
 
-/* Subtract linked list element referencing hmap map from list. */
+/* Subtract linked list element referencing hmap map from list.  Unset
+   VRT_MASK_PARTIAL.  */
 void
 subtract_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
 {
@@ -111,6 +119,7 @@ subtract_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
 			list->last = current->precursor; /* reset */
 	} else
 		passed->precursor = current->precursor; /* relink */
+	map->attribs.sign &= (0xffffffff ^ VRT_MASK_PARTIAL);
 	free(current);
 	list->count--;
 }
@@ -130,8 +139,9 @@ find_repute(ptlreps_list_t *list, session_t *keyname, int srchbkp)
 			if (current != NULL) {
 				if (current->bkpkey == *keyname)
 				{
-					__builtin_printf(" backup reputation "
-						"%x was added/found\n",
+					__builtin_printf(" previous local "
+						"backup reputation %x was "
+						"found\n",
 						(int) current->bkpkey);
 					return current;
 				}
@@ -145,8 +155,8 @@ find_repute(ptlreps_list_t *list, session_t *keyname, int srchbkp)
 			if (current != NULL) {
 				if (current->key == *keyname)
 				{
-					__builtin_printf(" reputation %x was "
-						"added/found\n",
+					__builtin_printf(" previous local "
+						"reputation %x was found\n",
 						(int) current->key);
 					return current;
 				}
@@ -159,31 +169,46 @@ find_repute(ptlreps_list_t *list, session_t *keyname, int srchbkp)
 }
 
 /* For the purposes of illustration, push keyname new down onto 2 deep
-   reputation stack for list member, shifting keyname last and allowing any
-   previous keyname to overflow.  Update list locally for outbound keymap
-   logging url or for inbound keymap with no url.  If inbound and never having
-   logged this partial, start a new reputation.  Inbound connections with a used
-   outbound session name hash part are rejected returning -1.  If the node
-   hosting partial changes it's url, sync will also reflect new url.  note:
-   test vs. hash part not yet added. */
+   reputation stack for list member, usually shifting keyname elderkey, and
+   allowing any previous backup keyname to overflow.  Update list locally for
+   outbound keymap logging url or for inbound keymap with no url.  If inbound
+   and never having logged this partial, start a new reputation.  If in the
+   _extremely_ unusual case that elderkey does not match either the last key
+   assumed used nor the last valid key, a reputation recovery option should be
+   made avaiable.  Inbound connections with a used outbound session name hash
+   part are rejected returning -1.  If the node hosting partial changes it's
+   url, sync will also reflect new url.  note: test vs. hash part not yet
+   added. */
 int
-sync_reputation(ptlreps_list_t *list, session_t *last, session_t *new, char *url)
+sync_reputation(ptlreps_list_t *list, session_t *elderkey, session_t *loginkey, char *url)
 {
 	ptlrep_t *reputed = NULL;
 
-	if ((reputed = find_repute(list, last, VRT_MAPKEY))) {
+	if ((reputed = find_repute(list, elderkey, VRT_MAPKEY))) {
 		if (url)
 			reputed->url = url; /* outbound */
-		else if (reputed->url)
-			return -1; /* inbound reputation match exclusion */
+		else if (reputed->url) {
+			__builtin_printf(" inbound reputation match "
+				"exclusion\n");
+			return -1;
+		}
+		__builtin_printf(" syncing local reputation key %x, "
+			"previously %x, at:\n  %s\n", (int) *loginkey,
+			(int) *elderkey, url);
 		reputed->bkpkey = reputed->key;
-		reputed->key = *new;
-	} else if ((reputed = find_repute(list, last, VRT_MAPKEYBKP))) {
+		reputed->key = *loginkey;
+	} else if ((reputed = find_repute(list, elderkey, VRT_MAPKEYBKP))) {
 		if (url)
 			reputed->url = url; /* outbound */
-		else if (reputed->url)
-			return -1; /* inbound reputation match exclusion */
-		reputed->key = *new;
+		else if (reputed->url) {
+			__builtin_printf(" inbound reputation match "
+				"exclusion\n");
+			return -1;
+		}
+		__builtin_printf(" syncing local reputation bkpkey %x, "
+			"previously %x, at:\n  %s\n", (int) *loginkey,
+			(int) *elderkey, url);
+		reputed->key = *loginkey;
 	} else {
 		if ((reputed = (ptlrep_t *) malloc(sizeof(ptlrep_t))) == NULL) {
 			__builtin_fprintf(stderr, "vrtater:%s:%d: "
@@ -193,7 +218,9 @@ sync_reputation(ptlreps_list_t *list, session_t *last, session_t *new, char *url
 			abort();
 		}
 		/* url will be NULL if inbound */
-		reputed = add_ptlrep(list, new, url);
+		__builtin_printf(" adding new local reputation for %x\n",
+			(int) *loginkey);
+		reputed = add_ptlrep(list, loginkey, url);
 	}
 
 	return 0;
@@ -243,6 +270,7 @@ add_ptlrep(ptlreps_list_t *list, session_t *key, char *url)
 	listed->url = url;
 	listed->key = *key;
 	listed->bkpkey = *key;
+	listed->holdkey = 0x00000000;
 	listed->precursor = list->last;
 	list->last = listed;
 	list->count++;
@@ -451,10 +479,12 @@ mk_ptlgrps_list(session_t *partial_session)
 void
 rm_ptlgrps_list(ptlgrps_list_t *list)
 {
-	while (list->last != NULL) {
-		subtract_ptlgrp(list, list->last);
+	if (list) {
+		while (list->last != NULL) {
+			subtract_ptlgrp(list, list->last);
+		}
+		free(list);
 	}
-	free(list);
 }
 
 /* Add an element reference to partial group in the linked list construct list.

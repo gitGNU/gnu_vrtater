@@ -1,4 +1,4 @@
-/* dialogX11.c: A dialog representer for one who runs vrtater.  Still template.
+/* dialogX11.c: A dialog representer for one whom runs vrtater.  Template.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -29,10 +29,10 @@ refresh_dialog_interfaces(void)
 /* Given selection in selectf_a, present dialog for partial referenced.  Caller
    generator.c sends any newly arrived hmaps with dialog, and any ones with
    locally modified dialog, as a series of sets per partial per call.  note:
-   Needs support for any dialog features enabled for the person running vrtater
+   Needs support for any dialog features enabled for one whom runs vrtater
    locally, perhaps escaped in the dialog itself.  Also support for delimiter
    in hmaps arriving with VRT_MASK_KEYMAP set.  These will have dynamic dialog
-   representing chat like or text bubble like input from people running vrtater.
+   representing chat like or text bubble like input from vrtater peer nodes.
    These may contain a [tab]===comma,seperated,list\n delimiter that may contain
    tokens added by dialog*.c calls on other nodes.  As long as these tokens
    effect only hmaps and the token related calls in render*.c, and since the
@@ -63,7 +63,7 @@ node_partial_dialog(select_t *sel, session_t *partial)
 	; /* remote features eg: VRT_MASK_HOLD */
 }
 
-/* Given selection in selectf_a, display local dialog for the person running
+/* Given selection in selectf_a, display local dialog for one whom is runing
    vrtater.  Also support node-orgin dialog features affecting hmaps through
    calls in transform.c, and through dialog interface features herein. */
 int *

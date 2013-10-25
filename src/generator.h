@@ -10,6 +10,10 @@
 #include "vectors.h"
 #include "hmap.h"
 #include "partial.h"
+#include "session.h"
+
+#define VRT_DETERMINED 0
+#define VRT_FLEXIBLE 1
 
 /* These generator options are all set by ifnode**.c, some through data
    maintained in dialog.c.  balance_criteria is still in the works, and may be
@@ -29,20 +33,22 @@ typedef struct genopts_s genopts_t;
 enum {
 	VRT_ORDINAL_SHUTDOWN,
 #define VRT_MASK_SHUTDOWN (1 << VRT_ORDINAL_SHUTDOWN)
-	VRT_ORDINAL_DASHF,
+	VRT_ORDINAL_DASHF
 #define VRT_MASK_DASHF (1 << VRT_ORDINAL_DASHF)
 };
 
 int generate_node_orgin(void);
 void regenerate_scene(vf_t *);
-partial_t *mk_partial(char *desc, hmapf_t *map);
+void mk_partial_list(void);
+void rm_partial_list(void);
+partial_t *mk_partial(hmapf_t **, unsigned int count, int flexible);
 void rm_partial(partial_t *partial);
 void close_vobspace(double time_till_closed);
 void close_node_orgin(void);
 int resize_node_orgin(int, int);
 /* Diagnostics. */
 void diag_ls_partials(int full);
-int diag_hmaps_in_partial(session_t *partial);
+int diag_hmaps_in_partial(partial_t *);
 void diag_generator_key_f(void);
 void diag_generator_key_g(void);
 void diag_generator_key_h(void);

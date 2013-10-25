@@ -18,15 +18,12 @@ hmapf(session_t *session)
 	hmapf_t *map;
 
 	if ((map = attach_hmapf()) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: All hmaps are currently attached\n",
-			__FILE__, __LINE__);
-		/* dlg(VRT_VOBSPACE,
-			"Error: Attempted to exceed hmap limit\n"); */
+		__builtin_fprintf(stderr, "Error: All hmaps are currently "
+			"attached\n");
 		return NULL;
 	}
 	map->name = (*session & 0xffff0000) | map->index; /* for now */
-	__builtin_printf("generated hmap %x (index %i, free maps %u/%u)\n",
+	__builtin_printf(" generated hmap %x (index %i, free maps %u/%u)\n",
 		map->name, map->index, vrt_hmaps_max - attached_hmaps,
 		vrt_hmaps_max);
 	return map;
@@ -109,8 +106,6 @@ diag_selection(select_t *sel)
 
 	for (i = 0; i < count; i++, map++) {
 		__builtin_printf("  %x ", (int)(*map)->name);
-		if ((*map)->attribs.sign & VRT_MASK_HOLD)
-			__builtin_printf("HOLD ");
 		if ((*map)->attribs.sign & VRT_MASK_RECYCLE)
 			__builtin_printf("RECYC ");
 		if ((*map)->attribs.sign & VRT_MASK_BUFFER)
@@ -165,8 +160,12 @@ diag_selection(select_t *sel)
 			__builtin_printf("wtypea ");
 		if ((*map)->attribs.mode & VRT_MASK_NODEMAP)
 			__builtin_printf("nodemap ");
+		if ((*map)->attribs.mode & VRT_MASK_GROUPMAP)
+			__builtin_printf("groupmap ");
 		if ((*map)->attribs.mode & VRT_MASK_SYNC_VERTICES)
 			__builtin_printf("vxsync ");
+		if ((*map)->attribs.mode & VRT_MASK_HOLD)
+			__builtin_printf("HOLD ");
 		__builtin_printf("\n");
 	}
 }
