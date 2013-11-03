@@ -455,25 +455,29 @@ surface_inv_hmapf(select_t *sel)
 /* hmap transformative functions affecting ip network or filesystem. */
 
 /* Format and write hmaps referenced in selectf_a vs. sel, in format specified
-   by options, named name(if applicable) or available referenced by output.
-   filename and output are exclusive, therefore filename must be NULL where
-   reference output is to be used.  If filename is omitted, caller is expected
-   to free data referenced by output after use.  If VRT_MASK_OPT_COMPOUNDED is
-   set, multiple maps may be provided in selection.  notes: Once stablized, any
-   file written will recieve .vrtater extension and be readable by current and
-   future hmapunwrapf versions.  Mask options VRT_MASK_OPT_NULL_SESSION_NAME,
-   VRT_MASK_OPT_MINIMAL, VRT_MASK_OPT_UPDATE, VRT_MASK_OPT_COMPRESSED and
-   VRT_MASK_OPT_ENCRYPTED are not working fully or at all yet, however testing
-   of session.c code may still proceed without these.  */
+   by options, named name(if applicable) _or_ available referenced by output.
+   filename and output are exclusive, therefore where filename is NULL, output
+   is a pointer to pointer, and where output is NULL filename is a string.  If
+   filename is omitted, caller is expected to _free_data_referenced_by_output_
+   after use.  If VRT_MASK_OPT_COMPOUNDED is set, multiple maps may be provided
+   in selection.  notes: Once stablized, any file written will recieve .vrtater
+   extension and be readable by current and future hmapunwrapf versions.  Masks
+   VRT_MASK_OPT_NULL_SESSION_NAME, VRT_MASK_OPT_MINIMAL, VRT_MASK_OPT_UPDATE,
+   VRT_MASK_OPT_COMPRESSED and VRT_MASK_OPT_ENCRYPTED are not working fully or
+   at all yet when applied as options, however testing of session.c code may
+   still proceed without these.  Return total of int type wrapped on success or
+   a value less than 0 on any error. */
 int
 hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 {
-	int fd, i, j, bufsz = 0;
+	int fd, bufsz = 0;
+	int i, j, enqueue = 1;
 	int *pb, *pi, *dlg, *nxtmapsz, *outbuf = NULL;
 	float *pf;
 	hmapf_t **maps;
 	vf_t *v;
 	ssize_t nwritten = 0;
+	int mapstruct = sizeof(hmapf_t) - sizeof(options_t *) - sizeof(vf_t *) - sizeof(int *) - (2 * sizeof(hmapf_t *)) - sizeof(drawlist_t *);
 
 	/* Allocate outbuf of bufsz bytes for file write or ip network send. */
 	maps = sel->seta;
@@ -481,7 +485,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 	if (options & VRT_MASK_OPT_COMPOUNDED)
 		bufsz += sel->counta * sizeof(int); /* nxtmapsz's */
 	for (i = 0; i < sel->counta; i++, maps++)
-		bufsz += (sizeof(hmapf_t) - sizeof(vf_t *) - sizeof(int *) - sizeof(hmapf_t *) - sizeof(options_t *)) + ((*maps)->vmap_total * sizeof(vf_t)) + ((*maps)->dialog_len * sizeof(int));
+		bufsz += mapstruct + ((*maps)->vmap_total * sizeof(vf_t)) + ((*maps)->dialog_len * sizeof(int));
 	if ((outbuf = (int *) malloc(bufsz)) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for outbuf\n",
@@ -637,41 +641,59 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 
 	*pb = (int) (pi - pb); /* write length at pb */
 	__builtin_printf("total count including size and options %i\n", *pb);
+	if (!(abs(*pb) <= 0x7fffffff)) {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: hmapwrapf got cold feet wrapping, as the "
+			"count of int type elements exceeded pre-alpha "
+			"version limit\n",
+			__FILE__, __LINE__);
+		return -1;
+	}
 
 	if (filename) {
-
 		if ((fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0644)) == -1) {
-			__builtin_fprintf(stderr, "Error: Couldn't create %s\n",
-				filename);
-			return(-1);
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: hmapwrapf couldn't open %s when "
+				"attempting to write\n",
+				__FILE__, __LINE__, filename);
+			return -1;
 		}
-
 		if((*pb * sizeof(int)) == bufsz) { /* for now */
-			nwritten = write(fd, (char *) outbuf, bufsz);
+			while (enqueue) {
+				nwritten = write(fd, (char *) outbuf, bufsz);
+				enqueue = 0;
+			}
 			__builtin_printf("%s: %i bytes written\n",
 				filename, (int) nwritten);
 		} else {
-			__builtin_fprintf(stderr, "Error: %s 0 bytes written\n",
-				filename);
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: hmapwrapf found a mismatch between "
+				"calculated hmap size and it's actual size.  "
+				"0 bytes were written\n",
+				__FILE__, __LINE__);
 			close(fd);
 			return -1;
 		}
+		close(fd);
 	}
 
-	close(fd);
-	return 0;
+	return *pb;
 }
 
-/* Read .vrtater file data filename or input, unwrapping and referencing it's
-   hmap(s) into selectf_b vs. sel and writing or overwriting them into vohspace
-   based on options within data.  Set VRT_OPT_MASK_BUFFER for each hmap implied.
-   If filename is not given input references data.  When input is not NULL,
-   caller is expected to free input after use.  If VRT_MASK_OPT_COMPOUNDED is
-   set there may be multiple maps.  If session is given, an index unique for
-   node-orgin and node-orgin originating maps is applied and map(s) implied
-   are then part of session.  notes: Once resizing of vohspace is fully
-   supported, a check for enough space would be done in advance of each new map
-   placement with a resize call conditionally. */
+/* Read .vrtater file data filename _or_ input, unwrapping and referencing it's
+   hmap(s) into selectf_b vs. sel (and soon to come writing or overwriting them
+   into vohspace) based on options within data.  Set VRT_OPT_MASK_BUFFER for
+   each hmap implied.  If filename is not given, input references data.  In
+   this case, count of data should never exceed what ssize_t can handle nor
+   0x7fffffff, for now.  When input is not NULL, caller is expected to free
+   input after use.  If VRT_MASK_OPT_COMPOUNDED is set there may be multiple
+   maps.  If session is given, an index unique for node-orgin and node-orgin
+   originating maps is applied and map(s) implied are then part of session.
+   notes: Once resizing of vohspace is fully supported, a check for enough
+   space would be done in advance of each new map placement with a resize call
+   conditionally.  Return number of int's read from the .vrtater file or data,
+   or a value less than zero for errors.  note: For now calling this with
+   session name of selected map may cause breakage, see note in following. */
 int
 hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 {
@@ -688,8 +710,9 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 	if (filename) {
 		/* Read from filename. */
 		if ((fd = open(filename, O_RDONLY)) == -1) {
-			__builtin_printf("hmapunwrap: Couldn't open %s\n",
-				filename);
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: hmapunwrapf couldn't open %s\n",
+				__FILE__, __LINE__, filename);
 			return -1;
 		}
 		filesz = lseek(fd, (off_t) 0, SEEK_END);
@@ -704,23 +727,37 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 				__FILE__, __LINE__);
 			abort();
 		}
-		nread = read(fd, filebuf, filesz);
+		if ((nread = read(fd, filebuf, filesz)) == -1) {
+			__builtin_fprintf(stderr,  "vrtater:%s:%d: "
+				"Error: hmapwrapf couldn't read %s\n",
+				__FILE__, __LINE__, filename);
+			abort(); /* for now */
+		}
 
 		pi = (int *) filebuf;
 
 	} else
 		pi = input;
 
+	/* notes: Adding integrity checking.  Reading from .vrtater data, code
+	   in session.c would check vs. a maximum threshold for data totals
+	   received, also providing the actual value that should then be
+	   converted to ssize_t and placed in nread.  size should match this
+	   value.  Calculating size while unwrapping should also produce value.
+	   Perhaps a magic number or a key in the options bits could be used
+	   for further integrity.  Any dialog data is checked for within
+	   printable range when applied. */
 	size = *pi;
 	__builtin_printf("Unwrapping %i int size elements\n", (int) *pi++);
 
 	options = *pi++;
 	print_toggles("options ", (btoggles_t *) &options);
 
+	/* Count b maps are unwrapped, then referenced thru set b. */
 	map = sel->setb;
 
 	/* Place all maps in the .vrtater file into vohspace.  sum begins at
-	   2 representing .vrtater size and options */
+	   2, just beyond .vrtater size and options */
 	for (tl = 0, sum = 2; sum < size; map++, tl++) {
 		/* Determine size for this map. */
 		if (options & VRT_MASK_OPT_COMPOUNDED) {
@@ -729,9 +766,10 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 		} else
 			sum = size;
 
-		/* If data sessionless, hmapf requires session or break. If not,
-		   use session if provided else data provided session for hmapf.
-		   Use mapref to mask out hmapf call where this is an update. */
+		/* If data sessionless, hmapf requires session or break. If
+		   not, use session if provided else data provided session for
+		   hmapf.  Use mapref to mask out hmapf call where this is an
+		   update. */
 		if (options & VRT_MASK_OPT_NULL_SESSION_NAME) {
 
 			if (session) {
@@ -756,8 +794,17 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 					(int) current);
 			}
 			if ((*map = mapref(&current)) != NULL) {
-
-				/* Update one map with name current. */
+				/* note: map is incremented above every pass.
+				   If countb gets an increment, the map will
+				   not be present so for now do not argue
+				   session name of selected map.  When
+				   additions here are made, (soon), if passed
+				   session name of selected map, update.  To
+				   update for now possibly call hmapf here,
+				   after planned addition swap_hmaps transform
+				   with a full option is written, then recycle
+				   the original map.  also: mapref still needs
+				   revision. */
 				__builtin_printf("Updating one map %x\n",
 					(int) current);
 				sel->countb += 1;
@@ -975,7 +1022,7 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 			__builtin_printf("dialog gscn: %i %i %i %i\n",
 				graph, space, ctrl, null);
 		}
-		__builtin_printf("Byte total %i\n", sum);
+		__builtin_printf("type int elements total %i\n", sum);
 	}
 
 	if (filename)
@@ -984,7 +1031,15 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 		free(filebuf);
 
 	__builtin_printf("Total maps %i\n", sel->countb);
-	return 0;
+	if (abs(size) <= 0x7fffffff)
+		return size;
+	else {
+		__builtin_fprintf(stderr, "vrtater:%s:%d: "
+			"Error: hmapunwrapf got cold feet unwrapping  %s, as "
+			"it's size exceeded pre-alpha version limit.\n",
+			__FILE__, __LINE__, filename);
+		return -1;
+	}
 }
 
 /* hmap dialog referenced recieves allocation of len + 1 int's.  This maintains

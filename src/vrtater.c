@@ -163,7 +163,7 @@ main(int argc, char **argv)
 	}
 
 	/* Read defaults. */
-	vrt_hmaps_max = 30; /* for now */
+	vrt_hmaps_max = 40; /* for now */
 
 	/* vrtater */
 	node(argc, argv);

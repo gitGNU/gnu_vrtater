@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "partial.h"
+#include "global.h"
 
 /* Return partial reference vs. partial_session or NULL if not found. */
 partial_t *
@@ -55,9 +56,11 @@ mk_ptlmaps_list(session_t *partial_session)
 			__FILE__, __LINE__);
 		abort();
 	}
-	list->session = partial_session;
 	list->last = NULL; /* first in list will have a NULL precursor */
 	list->count = 0;
+
+	list->session = partial_session;
+
 	return list;
 }
 
@@ -86,9 +89,10 @@ add_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
 		abort();
 	}
 	listed->precursor = list->last;
-	listed->map = map;
 	list->last = listed;
 	list->count++;
+
+	listed->map = map;
 	listed->map->attribs.sign |= (VRT_MASK_PARTIAL | VRT_MASK_PARTIAL_MODS);
 
 	return listed;
@@ -168,62 +172,111 @@ find_repute(ptlreps_list_t *list, session_t *keyname, int srchbkp)
 	}
 }
 
-/* For the purposes of illustration, push keyname new down onto 2 deep
-   reputation stack for list member, usually shifting keyname elderkey, and
-   allowing any previous backup keyname to overflow.  Update list locally for
-   outbound keymap logging url or for inbound keymap with no url.  If inbound
-   and never having logged this partial, start a new reputation.  If in the
-   _extremely_ unusual case that elderkey does not match either the last key
-   assumed used nor the last valid key, a reputation recovery option should be
-   made avaiable.  Inbound connections with a used outbound session name hash
-   part are rejected returning -1.  If the node hosting partial changes it's
-   url, sync will also reflect new url.  note: test vs. hash part not yet
-   added. */
+/* For the purposes of illustration, push keyname loginkey down onto 2 deep
+   reputation stack for list member, usually shifting list keyname lastkey
+   over any validkey, and allowing any previous validkey in list to overflow.
+   Update list locally for outbound keymap logging flexible node at url or for
+   inbound keymap with no url.  If inbound and never having logged local
+   flexible partial, start a new reputation.  In this case lastkey and validkey
+   will be -1 were they an int.  If in the _extremely_ unusual case that given
+   validkey does not match either of lastkey nor validkey listed, a reputation
+   recovery option should be made avaiable in the ifnode interface when added.
+   Any login with loginkey matching any currently listed key are rejected.  If
+   node with flexible partial changes it's url, sync will also reflect new url.
+   Return values given in partial.h else -1. */
 int
-sync_reputation(ptlreps_list_t *list, session_t *elderkey, session_t *loginkey, char *url)
+sync_reputation(ptlreps_list_t *list, ptlrep_t *reputed, session_t *loginkey, session_t *lastkey, session_t *validkey, char *url, int keyuse)
 {
-	ptlrep_t *reputed = NULL;
+	ptlrep_t *match = NULL;
+	ptlrep_t *tmp = NULL;
+	ptlrep_t *local = NULL;
 
-	if ((reputed = find_repute(list, elderkey, VRT_MAPKEY))) {
-		if (url)
-			reputed->url = url; /* outbound */
-		else if (reputed->url) {
-			__builtin_printf(" inbound reputation match "
-				"exclusion\n");
-			return -1;
-		}
-		__builtin_printf(" syncing local reputation key %x, "
-			"previously %x, at:\n  %s\n", (int) *loginkey,
-			(int) *elderkey, url);
-		reputed->bkpkey = reputed->key;
-		reputed->key = *loginkey;
-	} else if ((reputed = find_repute(list, elderkey, VRT_MAPKEYBKP))) {
-		if (url)
-			reputed->url = url; /* outbound */
-		else if (reputed->url) {
-			__builtin_printf(" inbound reputation match "
-				"exclusion\n");
-			return -1;
-		}
-		__builtin_printf(" syncing local reputation bkpkey %x, "
-			"previously %x, at:\n  %s\n", (int) *loginkey,
-			(int) *elderkey, url);
-		reputed->key = *loginkey;
-	} else {
-		if ((reputed = (ptlrep_t *) malloc(sizeof(ptlrep_t))) == NULL) {
-			__builtin_fprintf(stderr, "vrtater:%s:%d: "
-				"Error: Could not malloc for "
-				"partial_reps_list entry\n",
-				__FILE__, __LINE__);
-			abort();
-		}
-		/* url will be NULL if inbound */
-		__builtin_printf(" adding new local reputation for %x\n",
-			(int) *loginkey);
-		reputed = add_ptlrep(list, loginkey, url);
+#ifdef DIAG_FLEXIBLE_MAPKEY_REDUNDANT
+	/* Place a key that will test as redundant in the reputation data */
+	reputed->key = *loginkey;
+#elif defined DIAG_FLEXIBLE_MAPBKPKEY_REDUNDANT
+	reputed->bkpkey = *loginkey;
+#endif
+
+	/* Never write a new loginkey unless it is unique.  This only applies
+	   to a flexible partial session as a continuing one will have an
+	   empty ptlreps list. */
+	if (((match = find_repute(list, loginkey, VRT_PARTIAL_SRCHMAPKEY)) != NULL) || ((match = find_repute(list, loginkey, VRT_PARTIAL_SRCHMAPBKPKEY)) != NULL)) {
+		__builtin_printf("Flexible login failed, redundant login key "
+			"given was unusable.\n");
+		return VRT_PARTIAL_RETRY;
 	}
-
-	return 0;
+	if (url) {
+		/* Sync local reputations for remote continuing partial login.
+		   Given a password, if any, reputation sync, has already
+		   suceeded or failed on remote, returning keyuse. */
+		if (keyuse == VRT_PARTIAL_LASTKEY) {
+			__builtin_printf(" syncing local reputation vs. login "
+				"with %x %x %x at:\n  %s\n", (int) *loginkey,
+				(int) *lastkey, (int) *validkey, url);
+			reputed->url = url;
+			reputed->bkpkey = reputed->key;
+			reputed->key = *loginkey;
+			return keyuse;
+		} else if (keyuse == VRT_PARTIAL_VALIDUSE) {
+			/* An unknown lastkey has failed to match either on
+			   remote or local reputation list. A disk write may
+			   have failed while a partial login succeeded. */
+			__builtin_printf(" syncing local reputation vs. "
+				"continuing login with loginkey %x, unknown "
+				"lastkey %x, and validkey %x, at:\n  %s\n",
+				(int) *loginkey, (int) *lastkey,
+				(int) *validkey, url);
+			reputed->url = url;
+			reputed->key = *loginkey;
+			return keyuse;
+		} else if (keyuse == VRT_PARTIAL_SYNCERR) {
+			/* Given keys failed to match, requires recovery
+			   option. */
+			return keyuse;
+		} else {
+			/* Start a new reputation. */
+			__builtin_printf("Adding new reputation for %x for "
+				"remote continuing partial at:\n  %s\n",
+				(int) *loginkey, url);
+			tmp = add_ptlrep(list, loginkey, url);
+			tmp->bkpkey = *loginkey;
+			tmp->holdkey = 0;
+			return VRT_PARTIAL_NEWREPUTED;
+		}
+	} else {
+		/* Sync local reputations for local flexible partial login. */
+		if ((*lastkey == 0xffffffff) && (*validkey == 0xffffffff)) {
+			/* Start new reputation. */
+			__builtin_printf("Adding new reputation on local "
+				"flexible partial for %x\n", (int) *loginkey);
+			tmp = add_ptlrep(list, loginkey, url);
+			tmp->bkpkey = *loginkey;
+			tmp->holdkey = 0;
+			return VRT_PARTIAL_NEWREPUTED;
+		} else if ((local = find_repute(list, lastkey, VRT_PARTIAL_SRCHMAPKEY))) {
+			/* Continue. */
+			local->bkpkey = *lastkey;
+			local->key = *loginkey;
+			return VRT_PARTIAL_SRCHMAPKEY;
+		} else if ((local = find_repute(list, validkey, VRT_PARTIAL_SRCHMAPKEY))) {
+			/* Sync issue.  Key was never shifted locally.  Remote
+			   lastkey not in list.  list still references remote
+			   validkey as local lastkey. */
+			local->bkpkey = *validkey;
+			local->key = *loginkey;
+			return VRT_PARTIAL_VALIDUSE;
+		} else if ((local = find_repute(list, validkey, VRT_PARTIAL_SRCHMAPBKPKEY))) {
+			/* Sync issue.  lastkey was never written successfully
+			   on one or both puters.  Remote lastkey is thus not
+			   in list.  list still references remote validkey as
+			   local validkey. */
+			local->key = *loginkey;
+			return VRT_PARTIAL_VALIDUSE;
+		} else 
+			/* Sync error.  validkey nor lastkey found in list. */
+			return VRT_PARTIAL_SYNCERR;
+	}
 }
 
 /* Create a linked list construct for partial_session returning reference to an
@@ -238,9 +291,10 @@ mk_ptlreps_list(session_t *partial_session)
 			__FILE__, __LINE__);
 		abort();
 	}
-	list->session = partial_session;
 	list->last = NULL;
 	list->count = 0;
+
+	list->session = partial_session;
 
 	return list;
 }
@@ -267,13 +321,15 @@ add_ptlrep(ptlreps_list_t *list, session_t *key, char *url)
 			__FILE__, __LINE__);
 		abort();
 	}
+	listed->precursor = list->last;
+	list->last = listed;
+	list->count++;
+
 	listed->url = url;
 	listed->key = *key;
 	listed->bkpkey = *key;
 	listed->holdkey = 0x00000000;
-	listed->precursor = list->last;
-	list->last = listed;
-	list->count++;
+	listed->logged_on = 0;
 
 	return listed;
 }
@@ -351,6 +407,7 @@ mk_ptlmbrs_list(ptlgrp_t *group)
 	}
 	list->last = NULL;
 	list->count = 0;
+
 	group->members = list;
 
 	return list;
@@ -383,6 +440,7 @@ add_ptlmbr(ptlmbrs_list_t *list, session_t *sign_in)
 	listed->precursor = list->last;
 	list->last = listed;
 	list->count++;
+
 	listed->sign_in = *sign_in;
 
 	return listed;
@@ -468,9 +526,10 @@ mk_ptlgrps_list(session_t *partial_session)
 			__FILE__, __LINE__);
 		abort();
 	}
-	list->session = partial_session;
 	list->last = NULL;
 	list->count = 0;
+
+	list->session = partial_session;
 
 	return list;
 }
@@ -500,13 +559,14 @@ add_ptlgrp(ptlgrps_list_t *list, session_t *groupmap_name)
 			__FILE__, __LINE__);
 		abort();
 	}
-	__builtin_printf("  group vs. %x added...\n",
-		(int) *groupmap_name);
 	listed->precursor = list->last;
 	list->last = listed;
 	list->count++;
+
 	listed->map_name = *groupmap_name;
 	listed->members = mk_ptlmbrs_list(listed);
+	__builtin_printf("  group vs. %x added...\n",
+		(int) *groupmap_name);
 
 	return listed;
 }

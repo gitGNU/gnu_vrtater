@@ -11,10 +11,11 @@
 
 struct session_desc_s {
 	session_t session;
+	session_t peer;
+	session_t from; /* for forwarding when supported, else proxy */
 	btoggles_t level;
 	char oneliner[81];
 	complextimate_t complexity;
-	session_t behind;
 	struct session_desc_s *precursor;
 };
 typedef struct session_desc_s session_desc_t;
@@ -42,15 +43,17 @@ int answer_accept;
 void init_sessions(void);
 int hash_session_name(session_t *, char *seedfiles);
 void list_nodes(char *);
-int call_session(char *url, complextimate_t *, hmapf_t **maps);
-int form_determined_session(partial_t *, session_t *last, session_t *new, char *url);
-int form_flexible_session(session_t *);
+int call_session(char *url, complextimate_t *, hmapf_t **maps, session_t *lsession);
+int form_continuing_session(char *url, partial_t *forming, session_t *loginkey, ptlrep_t *repute);
+int answer_session(session_t *session); /* here for testing */ 
 void sync_sessions(void);
 int buffer_maps_to_peer_partial(session_t *, select_t *sel);
-hmapf_t *recieve_maps_from_peer_partial(session_t *, select_t *sel);
+hmapf_t *receive_map_from_peer_partial(session_t *, select_t *sel); /* here for testing */
 session_desc_t *find_in_all_sessions(session_t *);
 void mk_session_desc_list(void);
+session_desc_t *add_session_desc(session_t *local, session_t *peer, session_t *from, btoggles_t *level, char *briefdesc, complextimate_t *);
 int close_session(session_desc_t *);
+int close_all_sessions(void);
 int reset_sessions(void);
 /* Diagnostics. */
 void diag_ls_partial_sessions(int full);

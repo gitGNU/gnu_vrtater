@@ -1,4 +1,4 @@
-/* vectors.c: A vector library for vrtater. Full testing not completed.
+/* vectors.c: A vector library for vrtater.  Full testing not completed.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */

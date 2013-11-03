@@ -578,17 +578,9 @@ flow_over(btoggles_t *balance_criteria)
    determinate where if seekpos calculation is successful, arrival becomes
    successful. */
 void
-nportf(hmapf_t *map, vf_t *loc)
+nportf(hmapf_t *map, vf_t *loc, int wander)
 {
 	float r, e;
-
-	if (!map) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Attempted nport of NULL vob\n"
-			"Nport destination was %f %f %f\n",
-			__FILE__, __LINE__, loc->x, loc->y, loc->z);
-		return;
-	}
 
 	/* seekpos calculation. */
 	r = estimate_radiusf(map);
@@ -597,8 +589,10 @@ nportf(hmapf_t *map, vf_t *loc)
 	/* arrival, for now */
 	cp_vf(loc, &(map->vpos));
 	form_mag_vf(&(map->vpos));
-	e = rand() * TINYRANDOM;
-	wanderf(map, e, map->attribs.kg, r);
+	if (wander) {
+		e = rand() * TINYRANDOM;
+		wanderf(map, e, map->attribs.kg, r);
+	}
 }
 
 /* Aproximate and return, for hmap map, a fair proportion vs. where it were the

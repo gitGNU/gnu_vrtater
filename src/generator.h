@@ -12,9 +12,6 @@
 #include "partial.h"
 #include "session.h"
 
-#define VRT_DETERMINED 0
-#define VRT_FLEXIBLE 1
-
 /* These generator options are all set by ifnode**.c, some through data
    maintained in dialog.c.  balance_criteria is still in the works, and may be
    proposed as some hybrid of bits vs. a quantity once needed.
@@ -41,7 +38,7 @@ int generate_node_orgin(void);
 void regenerate_scene(vf_t *);
 void mk_partial_list(void);
 void rm_partial_list(void);
-partial_t *mk_partial(hmapf_t **, unsigned int count, int flexible);
+partial_t *mk_partial(session_t *, hmapf_t **, unsigned int count);
 void rm_partial(partial_t *partial);
 void close_vobspace(double time_till_closed);
 void close_node_orgin(void);
