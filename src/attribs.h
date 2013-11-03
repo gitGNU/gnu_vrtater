@@ -25,6 +25,6 @@ hmapf_t *attach_hmapf(void);
 void detach_hmapf(hmapf_t *);
 void sort_proc_hmaps(vf_t *viewpoint);
 void proc_hmapf(hmapf_t *, int lodval, int sort_ratio);
-void nportf(hmapf_t *, vf_t *);
+void nportf(hmapf_t *, vf_t *, int wander);
 
 #endif /* VRT_ATTRIBS_H */

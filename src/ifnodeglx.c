@@ -57,7 +57,7 @@ vf_t ksb = { 0, 0, 5, 5 };
 vf_t vrloc8 = { 0, 0, -80, 80 };
 
 /* Pre-alpha dialog. */
-hmapf_t *diagtext0; /* reference hmap to recieve text entry */
+hmapf_t *diagtext0; /* reference hmap to receive text entry */
 int dialogrecurrant = 0;
 char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
 
@@ -67,7 +67,6 @@ void setup_dialog_interface(void);
 void shutdown_dialog_interface(void);
 void tendto_curr_sessions(void);
 int connect_to_peers(session_t *);
-int accept_login_to_flexible(session_t *);
 int maintain_reputation(session_t *);
 
 /* Temporary diagnostics. */
@@ -631,7 +630,6 @@ node(int argc, char **argv)
 		normz_vf(&(fov0->vaxi), &(fov0->vaxi));
 		normz_vf(&(fov0->vrel), &(fov0->vrel));
 
-
 		/* fov0 is passed and rendered first to set fp_oa. */
 		init_next_buffer();
 		proc_hmapf(fov0, VRT_MASK_LOD_INF, 1);
@@ -757,23 +755,9 @@ tendto_curr_sessions(void)
 int
 connect_to_peers(session_t *session)
 {
-	/* This now completed in test_accept_determined_session. */
+	/* This now completed in test_accept_continuing_session. */
 
 	return 0;
-}
-
-/* As a called node-orgin, connect with cued session session.  notes: session
-   represents a node-partial present in called running instance of vrtater with
-   a receiving node-partial.  Success is assumed while implied session_t remains
-   in all_sessions data.  Reads from remote node will succeed with no data until
-   session sync or closed.  Reputation data is syncronized by session.c code
-   acceptance of password for given partial. */
-int
-accept_login_to_flexible(session_t *session)
-{
-	/* Get the session_desc parts maintained in node-partial */
-	/* ... */
-	return form_flexible_session(session);
 }
 
 /* keymap names originating out of given node are always backed up on given

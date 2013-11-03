@@ -23,9 +23,13 @@ hmapf(session_t *session)
 		return NULL;
 	}
 	map->name = (*session & 0xffff0000) | map->index; /* for now */
+
+#ifdef DIAG_HMAP_MESSAGES
 	__builtin_printf(" generated hmap %x (index %i, free maps %u/%u)\n",
 		map->name, map->index, vrt_hmaps_max - attached_hmaps,
 		vrt_hmaps_max);
+#endif
+
 	return map;
 }
 

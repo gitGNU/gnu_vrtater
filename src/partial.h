@@ -8,9 +8,6 @@
 
 #include "hmap.h"
 
-#define VRT_MAPKEY 0
-#define VRT_MAPKEYBKP 1
-
 struct ptlmap_s {
 	hmapf_t *map;
 	struct ptlmap_s *precursor;
@@ -30,6 +27,7 @@ struct ptlrep_s {
 	session_t bkpkey; /* 2nd most recent */
 	session_t holdkey; /* last held session */
 	char *passwd; /* NULL till supported, see: session.c */
+	int logged_on;
 	struct ptlrep_s *precursor;
 };
 typedef struct ptlrep_s ptlrep_t;
@@ -83,16 +81,30 @@ typedef struct partial_s partial_t;
 enum {
 	VRT_ORDINAL_UNFORMED, /* not in session code's formed set */
 #define VRT_MASK_UNFORMED (1 << VRT_ORDINAL_UNFORMED)
-	VRT_ORDINAL_FLEXIBLE
+	VRT_ORDINAL_FLEXIBLE,
 #define VRT_MASK_FLEXIBLE (1 << VRT_ORDINAL_FLEXIBLE)
+	VRT_ORDINAL_REQUIRE_PASSWD,
+#define VRT_MASK_REQUIRE_PASSWD (1 << VRT_ORDINAL_REQUIRE_PASSWD)
+	VRT_ORDINAL_ANSWER_ACCEPT
+#define VRT_MASK_ANSWER_ACCEPT (1 << VRT_ORDINAL_ANSWER_ACCEPT)
 };
-
 
 struct partial_list_s {
 	partial_t *last;
 	unsigned int count;
 };
 typedef struct partial_list_s partial_list_t;
+
+/* Keyuse values for sync_reputation. */
+enum {
+	VRT_PARTIAL_SRCHMAPKEY,
+	VRT_PARTIAL_SRCHMAPBKPKEY,
+	VRT_PARTIAL_RETRY,
+	VRT_PARTIAL_LASTKEY,
+	VRT_PARTIAL_VALIDUSE,
+	VRT_PARTIAL_SYNCERR,
+	VRT_PARTIAL_NEWREPUTED
+};
 
 partial_list_t *partial_list;
 
@@ -104,7 +116,8 @@ ptlmap_t *add_ptlmap(ptlmaps_list_t *, hmapf_t *);
 void subtract_ptlmap(ptlmaps_list_t *, hmapf_t *);
 
 ptlrep_t *find_repute(ptlreps_list_t *list, session_t *keyname, int srchbkp);
-int sync_reputation(ptlreps_list_t *list, session_t *last, session_t *new, char *url);
+int sync_reputation(ptlreps_list_t *, ptlrep_t *, session_t *, session_t *, session_t *, char *url, int keyuse);
+
 ptlreps_list_t *mk_ptlreps_list(session_t *partial_session);
 void rm_ptlreps_list(ptlreps_list_t *);
 ptlrep_t *add_ptlrep(ptlreps_list_t *, session_t *keyname, char *url);

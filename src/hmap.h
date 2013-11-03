@@ -85,7 +85,7 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_FLOW_OVER (1 << VRT_ORDINAL_FLOW_OVER)
 	VRT_ORDINAL_FIXED_FORM, /* requests no deformation */
 #define VRT_MASK_FIXED_FORM (1 << VRT_ORDINAL_FIXED_FORM)
-	VRT_ORDINAL_EXTEND_BY_FILTER, /* this map may only extend to keygroup */
+	VRT_ORDINAL_EXTEND_BY_FILTER, /* map may only extend to keygroup */
 #define VRT_MASK_EXTEND_BY_FILTER (1 << VRT_ORDINAL_EXTEND_BY_FILTER)
 	VRT_ORDINAL_EXTEND_ANY,
 #define VRT_MASK_EXTEND_ANY (1 << VRT_ORDINAL_EXTEND_ANY)
@@ -212,7 +212,7 @@ extern hmapf_t *selectf_a;
 extern hmapf_t *selectf_b;
 
 hmapf_t *hmapf(session_t *);
-hmapf_t *p_hmapf(int i);
+hmapf_t *p_hmapf(int i); /* note: replacement will match on session name. */
 hmapf_t *mapref(session_t *session);
 unsigned int hmap_count(void);
 unsigned int search_vohspace(hmapf_t **, btoggles_t signs, btoggles_t modes);
