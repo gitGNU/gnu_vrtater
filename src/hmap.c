@@ -5,13 +5,121 @@
 
 #include <stdio.h>
 #include "hmap.h"
+#include "global.h"
 #include "attribs.h"
 
 /* External. */
 unsigned int vrt_hmaps_max;
 
+/* Set session hash referenced to all zero's.  (0 0 0)' ?. */
+void
+zero_session(session_t *session)
+{
+	int i, *p = &(session->hash.h);
+
+	for (i = 0; i < 3; i++)
+		*p++ = 0;
+}
+
+/* Set session name referenced to all zero's.  (0 0 0)' 0'. */
+void
+zero_fullname(session_t *session)
+{
+	int i, *p = &(session->hash.h);
+
+	for (i = 0; i < 4; i++)
+		*p++ = 0;
+}
+
+/* Set nodename to session.  (hash)' 0' <-- (hash) ?. */
+void
+set_nodename(session_t *nodename, session_t *session)
+{
+	int i, *c = &(nodename->hash.h);
+	int *d = &(session->hash.h);
+
+	for (i = 0; i < 3; i++)
+		*c++ = *d++;
+	*c = 0;
+}
+
+/* Copy session hash a to session hash b.  (hash) ? --> (hash)' ?. */
+void
+cp_session(session_t *a, session_t *b)
+{
+	int i, *c = &(a->hash.h);
+	int *d = &(b->hash.h);
+
+	for (i = 0; i < 3; i++)
+		*d++ = *c++;
+}
+
+/* Copy map name a to map name b.  (hash) seq --> (hash)' seq' */
+void
+cp_mapname(session_t *a, session_t *b)
+{
+	int i, *c = &(a->hash.h);
+	int *d = &(b->hash.h);
+
+	for (i = 0; i < 4; i++)
+		*d++ = *c++;
+}
+
+/* Return true if mapnames a and b match else 0.  (hash) seq == (hash) seq */
+int
+match_mapname(session_t *a, session_t *b)
+{
+	int i, *c = &(a->hash.h);
+	int *d = &(b->hash.h);
+
+	for (i = 0; i < 4; i++)
+		if (*c++ != *d++)
+			return 0;
+	return 1;
+}
+
+/* Return true if session hashes a and b match else 0.  (hash) ? == (hash) ? */
+int
+match_session(session_t *a, session_t *b)
+{
+	int i, *c = &(a->hash.h);
+	int *d = &(b->hash.h);
+
+	for (i = 0; i < 3; i++)
+		if (*c++ != *d++)
+			return 0;
+	return 1;
+}
+
+/* True if mapname a and b hash.l and seq match.  (? ? l) seq == (? ? l) seq */
+int
+match_mapped(session_t *a, session_t *b)
+{
+	int i, *c = &(a->hash.l);
+	int *d = &(b->hash.l);
+
+	for (i = 0; i < 2; i++)
+		if (*c++ != *d++)
+			return 0;
+	return 1;
+}
+
+/* Return true if name member hash.l matches p, else 0.  (? ? l) ? == *p
+   note: If a hash.l is non unique arriving in vohspace over ip, the map
+   already in vohspace will simply take a new hash yet retain it's hash.l part. 
+   This will only happen once every 2^32 times for any new map,,, well
+   hopefully. */
+int
+match_little(session_t *name, int *p)
+{
+	if (name->hash.l != *p)
+		return 0;
+	return 1;
+}
+
 /* Attach empty hmap to given session.  Applied index reflects hmaps ordinal
-   position in vohspace for node-orgin maps. */
+   position in vohspace for node-orgin maps.  note: When resizing while
+   connected is added, call for more vohspace when it becomes full. */
 hmapf_t *
 hmapf(session_t *session)
 {
@@ -22,12 +130,12 @@ hmapf(session_t *session)
 			"attached\n");
 		return NULL;
 	}
-	map->name = (*session & 0xffff0000) | map->index; /* for now */
+	cp_session(session, &(map->name));
 
 #ifdef DIAG_HMAP_MESSAGES
-	__builtin_printf(" generated hmap %x (index %i, free maps %u/%u)\n",
-		map->name, map->index, vrt_hmaps_max - attached_hmaps,
-		vrt_hmaps_max);
+	__builtin_printf(" generated hmap (%x %x %x) %i (free maps %u/%u)\n",
+		map->name.hash.h, map->name.hash.m, map->name.hash.l,
+		 map->name.seq, vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);
 #endif
 
 	return map;
@@ -53,10 +161,9 @@ mapref(session_t *session)
 	hmapf_t *map;
 
 	map = vohspace;
-	for (i = 0; i < vrt_hmaps_max; i++, map++) {
-		if (*session == map->name)
+	for (i = 0; i < vrt_hmaps_max; i++, map++)
+		if (match_mapname(&(map->name), session))
 			return map;
-	}
 	return NULL;
 }
 
@@ -109,7 +216,9 @@ diag_selection(select_t *sel)
 	}
 
 	for (i = 0; i < count; i++, map++) {
-		__builtin_printf("  %x ", (int)(*map)->name);
+		__builtin_printf("  (%x %x %x) %i", (*map)->name.hash.h,
+			(*map)->name.hash.m, (*map)->name.hash.l,
+			(*map)->name.seq);
 		if ((*map)->attribs.sign & VRT_MASK_RECYCLE)
 			__builtin_printf("RECYC ");
 		if ((*map)->attribs.sign & VRT_MASK_BUFFER)
@@ -142,8 +251,10 @@ diag_selection(select_t *sel)
 			__builtin_printf("balancef ");
 		if ((*map)->attribs.mode & VRT_MASK_SESSION_FILTER)
 			__builtin_printf("sessionf ");
-		if ((*map)->attribs.mode & VRT_MASK_PUBLISHED)
-			__builtin_printf("pub ");
+		if ((*map)->attribs.mode & VRT_MASK_IP)
+			__builtin_printf("ip ");
+		if ((*map)->attribs.mode & VRT_MASK_FLOW)
+			__builtin_printf("flow ");
 		if ((*map)->attribs.mode & VRT_MASK_RENDER_FOLLOWS)
 			__builtin_printf("rndf ");
 		if ((*map)->attribs.mode & VRT_MASK_VOB_SELECTED)

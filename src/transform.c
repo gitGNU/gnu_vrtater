@@ -15,7 +15,7 @@
 #include "global.h"
 #include "rotation.h"
 
-float vrt_render_cyc; /* external */
+float vrt_render_cyc; /* extern */
 
 
 /* Transform hmaps.
@@ -37,7 +37,7 @@ float vrt_render_cyc; /* external */
    their composite pointer.  Through their adjoined pointer they specify
    their relative position vs. other map.  Through their drawlist pointer, they
    are processed in the correct precedence.  Whenever a trunkmap is read
-   leading a compounded .vrtater file on filesystem, any treemap sequencially
+   leading a compounded .vrtater file on filesystem, any treemap sequentially
    following is joined to it using this function.  Calls to this function cause
    a resend of the effecting set to connected nodes where applicable.
    unjoin_hmaps compliment function reverses this process.  note: This function
@@ -134,7 +134,8 @@ intersection(select_t *sel)
 	mapa = *(sel->seta);
 	mapb = *(sel->setb);
 
-	if (mapa->name == mapb->name)
+	/* note: Test for the inf bit instead. ... */
+	if (match_mapname(&(mapa->name), &(mapb->name)))
 		return 0;
 
 	scale = .0008;
@@ -323,7 +324,9 @@ recycle(select_t *sel)
 	hmapf_t **map = sel->seta;
 
 	for (i = 0; i < sel->counta; i++, map++) {
-		__builtin_printf(" recycling: %x\n", (*map)->name);
+		__builtin_printf(" recycling: (%x %x %x) %i\n",
+			(*map)->name.hash.h, (*map)->name.hash.m,
+			(*map)->name.hash.l, (*map)->name.seq);
 		(*map)->attribs.sign |= VRT_MASK_DETACH;
 	}
 
@@ -460,13 +463,13 @@ surface_inv_hmapf(select_t *sel)
    is a pointer to pointer, and where output is NULL filename is a string.  If
    filename is omitted, caller is expected to _free_data_referenced_by_output_
    after use.  If VRT_MASK_OPT_COMPOUNDED is set, multiple maps may be provided
-   in selection.  notes: Once stablized, any file written will recieve .vrtater
-   extension and be readable by current and future hmapunwrapf versions.  Masks
-   VRT_MASK_OPT_NULL_SESSION_NAME, VRT_MASK_OPT_MINIMAL, VRT_MASK_OPT_UPDATE,
-   VRT_MASK_OPT_COMPRESSED and VRT_MASK_OPT_ENCRYPTED are not working fully or
-   at all yet when applied as options, however testing of session.c code may
-   still proceed without these.  Return total of int type wrapped on success or
-   a value less than 0 on any error. */
+   in selection.  notes: _Once stablized_, any file written will recieve
+   .vrtater extension and be readable by current and future hmapunwrapf
+   versions.  Masks VRT_MASK_OPT_NULL_SESSION_NAME, VRT_MASK_OPT_MINIMAL,
+   VRT_MASK_OPT_UPDATE, VRT_MASK_OPT_COMPRESSED and VRT_MASK_OPT_ENCRYPTED are
+   not working fully or at all yet when applied as options, however testing of
+   session.c code may still proceed without these.  Return total of int type
+   wrapped on success or a value less than 0 on any error. */
 int
 hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 {
@@ -477,6 +480,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 	hmapf_t **maps;
 	vf_t *v;
 	ssize_t nwritten = 0;
+	int fileszmax_fortesting = 0x7ffff; /* bogus yet safe guess for now */
 	int mapstruct = sizeof(hmapf_t) - sizeof(options_t *) - sizeof(vf_t *) - sizeof(int *) - (2 * sizeof(hmapf_t *)) - sizeof(drawlist_t *);
 
 	/* Allocate outbuf of bufsz bytes for file write or ip network send. */
@@ -512,22 +516,23 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 			nxtmapsz = pi++; /* space for map size */
 
 		if (!(options & VRT_MASK_OPT_NULL_SESSION_NAME)) {
-			*pi++ = (int) (*maps)->name;
-			__builtin_printf("Wrapping map %x\n",
-				(int) (*maps)->name);
-		} else {
-
-			__builtin_printf("hmap file recieves no session name\n");
-
-		}
+			*pi++ = (int) (*maps)->name.hash.h;
+			*pi++ = (int) (*maps)->name.hash.m;
+			*pi++ = (int) (*maps)->name.hash.l;
+			*pi++ = (int) (*maps)->name.seq;
+			__builtin_printf("Wrapping map (%x %x %x) %i\n",
+				(int) (*maps)->name.hash.h,
+				(int) (*maps)->name.hash.m,
+				(int) (*maps)->name.hash.l,
+				(int) (*maps)->name.seq);
+		} else
+			__builtin_printf("hmap file recieves no session "
+				"name\n");
 
 		if (!(options & VRT_MASK_OPT_MINIMAL))
 			*pi++ = (*maps)->index;
-		else {
-
+		else
 			__builtin_printf("hmap file is written minimally\n");
-
-		}
 
 		pf = (float *) pi;
 		*pf++ = (*maps)->vpos.x;
@@ -641,7 +646,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 
 	*pb = (int) (pi - pb); /* write length at pb */
 	__builtin_printf("total count including size and options %i\n", *pb);
-	if (!(abs(*pb) <= 0x7fffffff)) {
+	if (!(abs(*pb) <= fileszmax_fortesting)) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: hmapwrapf got cold feet wrapping, as the "
 			"count of int type elements exceeded pre-alpha "
@@ -658,7 +663,7 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 				__FILE__, __LINE__, filename);
 			return -1;
 		}
-		if((*pb * sizeof(int)) == bufsz) { /* for now */
+		if ((*pb * sizeof(int)) == bufsz) { /* for now */
 			while (enqueue) {
 				nwritten = write(fd, (char *) outbuf, bufsz);
 				enqueue = 0;
@@ -680,20 +685,25 @@ hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
 	return *pb;
 }
 
-/* Read .vrtater file data filename _or_ input, unwrapping and referencing it's
-   hmap(s) into selectf_b vs. sel (and soon to come writing or overwriting them
-   into vohspace) based on options within data.  Set VRT_OPT_MASK_BUFFER for
-   each hmap implied.  If filename is not given, input references data.  In
-   this case, count of data should never exceed what ssize_t can handle nor
-   0x7fffffff, for now.  When input is not NULL, caller is expected to free
-   input after use.  If VRT_MASK_OPT_COMPOUNDED is set there may be multiple
-   maps.  If session is given, an index unique for node-orgin and node-orgin
-   originating maps is applied and map(s) implied are then part of session.
-   notes: Once resizing of vohspace is fully supported, a check for enough
-   space would be done in advance of each new map placement with a resize call
-   conditionally.  Return number of int's read from the .vrtater file or data,
-   or a value less than zero for errors.  note: For now calling this with
-   session name of selected map may cause breakage, see note in following. */
+/* Read .vrtater data as filename _or_ input, unwrapping hmap(s) into vohspace
+   and referencing any in selectf_b vs. sel (and soon to come overwriting them
+   into vohspace) based on options within data.  If filename is not given,
+   input pointer is assumed to reference .vrtater data allocated by caller
+   before calling.  If session is given, a unique index among local hmaps,
+   weather in node-orgin or in a local node (on local side of partial) is also
+   applied, these hmaps then becoming part of session.  If not, (this is not
+   working fully yet, but soon ... ) use the session name in the .vrtater,
+   placing hmaps in the partial session they are from or the session they are
+   behind when having arrived off the ip network.  Files off disk may also use
+   this feature if the session written into those already exists, however the
+   result is still indeterminate for now.  Return number of int's read from the
+   .vrtater file or data, or a value less than zero for errors.  note:
+   VRT_OPT_MASK_BUFFER is set for each hmap unwrapped.  If the .vrtater options
+   bit VRT_MASK_OPT_COMPOUNDED is set there may be multiple maps.  For now a
+   temporary file size limit is set to fileszmax_fortesting.  vohspace is
+   resizable for unwrapping maps when full however this only works when
+   disconnected and this issue is in the process of being resolved thus for now
+   resizing is not applied. */
 int
 hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 {
@@ -706,6 +716,7 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 	vf_t *rebuild;
 	session_t current;
 	btoggles_t options;
+	int fileszmax_fortesting = 0x7ffff; /* bogus yet safe guess for now */
 
 	if (filename) {
 		/* Read from filename. */
@@ -766,58 +777,84 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 		} else
 			sum = size;
 
-		/* If data sessionless, hmapf requires session or break. If
-		   not, use session if provided else data provided session for
-		   hmapf.  Use mapref to mask out hmapf call where this is an
-		   update. */
+		/* If session given by caller is non-zero, use it when calling
+		   hmapf.  Caller will know what node the hmap reference is
+		   placed in.  For authorship mechanism, usually a file read
+		   will come after seedfiles have derived session name used to
+		   partial to a flexible node that might be set up to timestamp
+		   and distribute those to other nodes logged when keymap
+		   enters with those hmaps.  Code in dialog.c on flexible could
+		   also add more info with the timestamp and session name
+		   arranged during continued vrtlogins.  Thereafter such maps
+		   could be forwarded to other nodes that login there.
+		   Forwarding always happens automatically for nodes with
+		   keymaps near other keymaps in a flexible.  Way's concerning
+		   how dialog*.c could enhance this are an open question. */
 		if (options & VRT_MASK_OPT_NULL_SESSION_NAME) {
 
 			if (session) {
-				current = (session_t) *session;
-				if (!(*map = hmapf(&current)))
+				if (!(*map = hmapf(session)))
 					break;
-					sel->countb += 1;
-				__builtin_printf("Argued session %x\n",
-					(int) current);
-			} else
-				break;
-		} else {
-
-			if (session) {
-				current = *session;
-				pi++;
-				__builtin_printf("Using argued session %x\n",
-					(int) current);
+				sel->countb += 1;
+				__builtin_printf("hmap read has no session "
+					"name.  Using supplied session "
+					"(%x %x %x)\n", session->hash.h,
+					session->hash.m, session->hash.l);
 			} else {
-				current = (session_t) *pi++;
-				__builtin_printf("Last valid session %x\n",
-					(int) current);
+				__builtin_printf("No session names provided");
+				break;
 			}
+		} else {
+			/* Decide on session name.  Set value of current now
+			   so that there is no context split. */
+			if (session) {
+				cp_mapname(session, &current);
+				pi += 4;
+				__builtin_printf("hmap read to recieve "
+					"session (%x %x %x) supplied by "
+					"caller\n", session->hash.h,
+					session->hash.m, session->hash.l);
+			} else {
+				(&current)->hash.h = (int) *pi++;
+				(&current)->hash.m = (int) *pi++;
+				(&current)->hash.l = (int) *pi++;
+				(&current)->seq = (int) *pi++;
+				__builtin_printf("hmap read to recieve last "
+					"session applied from .vrtater data "
+					"(%x %x %x) %i\n", (&current)->hash.h,
+					(&current)->hash.m, (&current)->hash.l,
+					(&current)->seq);
+			}
+			/* Is this an update? */
 			if ((*map = mapref(&current)) != NULL) {
 				/* note: map is incremented above every pass.
 				   If countb gets an increment, the map will
-				   not be present so for now do not argue
-				   session name of selected map.  When
-				   additions here are made, (soon), if passed
-				   session name of selected map, update.  To
-				   update for now possibly call hmapf here,
-				   after planned addition swap_hmaps transform
-				   with a full option is written, then recycle
-				   the original map.  also: mapref still needs
-				   revision. */
-				__builtin_printf("Updating one map %x\n",
-					(int) current);
-				sel->countb += 1;
-			} else {
-
-				/* Build new map. */
+				   not be present so for now do not provide
+				   mapname of an existing map as an argument.
+				   When additions here are made, (soon),
+				   do update.  To update for now possibly call
+				   hmapf here, after planned addition
+				   swap_hmaps transform with a full option is
+				   written, then recycle the original map.
+				   also: mapref still needs revision. */
+				__builtin_printf("Pretending to update one "
+					"map (%x %x %x) %i\n Update still in "
+					"the works ...",
+					(&current)->hash.h, (&current)->hash.m,
+					(&current)->hash.l, (&current)->seq);
 				if (!(*map = hmapf(&current)))
 					break;
 				sel->countb += 1;
+			} else {
+				if (!(*map = hmapf(&current)))
+					break;
+				__builtin_printf("New hmap added in vohspace "
+					"(%x %x %x) %i\n",
+					(&current)->hash.h, (&current)->hash.m,
+					(&current)->hash.l, (&current)->seq);
+				sel->countb += 1;
 			}
 		}
-		__builtin_printf("Added/updating map %x index %i\n",
-			(int) (*map)->name, (*map)->index);
 
 		if (!(options & VRT_MASK_OPT_MINIMAL))
 			pi++; /* skip index part of data */
@@ -1031,7 +1068,7 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 		free(filebuf);
 
 	__builtin_printf("Total maps %i\n", sel->countb);
-	if (abs(size) <= 0x7fffffff)
+	if (abs(size) <= fileszmax_fortesting)
 		return size;
 	else {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "

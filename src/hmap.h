@@ -9,7 +9,26 @@
 #include "bittoggles.h"
 #include "vectors.h"
 
-typedef int session_t; /* for now */
+/* Proposed now 96 bit session_t session with adjunct sequence value.  An hmap
+   index continues, usefull for a fixed reference per vohspace.  A match on
+   session.hash.l member alone or with seq will speed up matching while the m
+   and h members can be skipped when sending over the ip network after partial
+   exists using hmapwrapf with .vrtater options set using VRT_MASK_OPT_MINIMAL.
+   Peer nodes then become 'partial' based apon having unique hash->l part in
+   partial.  Meanwhile the session_t loginkeys for syncronizing nodes remain
+   highly unique, providing an authorship mechanism when hmaps are timestamped
+   and flow out of partial flexible nodes. */
+struct hash_s {
+	int h;
+	int m;
+	int l;
+};
+
+struct session_s {
+	struct hash_s hash;
+	int seq;
+};
+typedef struct session_s session_t;
 
 struct complextimate_s {
 	unsigned int hmap_count;
@@ -44,7 +63,7 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_DETACH (1 << VRT_ORDINAL_DETACH)
 	VRT_ORDINAL_DIALOG, /* dialog may be buffered in hmaps */
 #define VRT_MASK_DIALOG (1 << VRT_ORDINAL_DIALOG)
-	VRT_ORDINAL_PARTIAL, /* is in a partial */
+	VRT_ORDINAL_PARTIAL, /* apon arriving, partial */
 #define VRT_MASK_PARTIAL (1 << VRT_ORDINAL_PARTIAL)
 	VRT_ORDINAL_VERTICE_MODS, /* unaffix this locally when sending */
 #define VRT_MASK_VERTICE_MODS (1 << VRT_ORDINAL_VERTICE_MODS)
@@ -67,19 +86,23 @@ enum { /* attribs_t sign, tested at least once every state increment */
 };
 
 enum { /* attribs_t mode, tested in context based functions */
-	VRT_ORDINAL_ATTACHED, /* true when hmap is not detached */
+	VRT_ORDINAL_ATTACHED,
 #define VRT_MASK_ATTACHED (1 << VRT_ORDINAL_ATTACHED)
 	VRT_ORDINAL_BALANCE_FILTER,
 #define VRT_MASK_BALANCE_FILTER (1 << VRT_ORDINAL_BALANCE_FILTER)
 	VRT_ORDINAL_SESSION_FILTER,
 #define VRT_MASK_SESSION_FILTER (1 << VRT_ORDINAL_SESSION_FILTER)
-	VRT_ORDINAL_PUBLISHED, /* in the formed set of partials */
-#define VRT_MASK_PUBLISHED (1 << VRT_ORDINAL_PUBLISHED)
+	VRT_ORDINAL_IP, /* any map that has ever been partial */
+#define VRT_MASK_IP (1 << VRT_ORDINAL_IP)
+	VRT_ORDINAL_FLOW, /* ask code in dialog*.c to timestamp, publicize */
+#define VRT_MASK_FLOW (1 << VRT_ORDINAL_FLOW)
+	VRT_ORDINAL_HOLD, /* hold hmap time preconfigured on node */
+#define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
 	VRT_ORDINAL_RENDER_FOLLOWS, /* for renderer */
 #define VRT_MASK_RENDER_FOLLOWS (1 << VRT_ORDINAL_RENDER_FOLLOWS)
 	VRT_ORDINAL_VOB_SELECTED,
 #define VRT_MASK_VOB_SELECTED (1 << VRT_ORDINAL_VOB_SELECTED)
-	VRT_ORDINAL_LEFT_IN_TUNNEL, /* send to recycler(), 'may be deleted' */
+	VRT_ORDINAL_LEFT_IN_TUNNEL, /* send to recycler, 'may be deleted' */
 #define VRT_MASK_LEFT_IN_TUNNEL (1 << VRT_ORDINAL_LEFT_IN_TUNNEL)
 	VRT_ORDINAL_FLOW_OVER,
 #define VRT_MASK_FLOW_OVER (1 << VRT_ORDINAL_FLOW_OVER)
@@ -97,10 +120,8 @@ enum { /* attribs_t mode, tested in context based functions */
 #define VRT_MASK_NODEMAP (1 << VRT_ORDINAL_NODEMAP)
 	VRT_ORDINAL_GROUPMAP, /* for joining and maintaining groups */
 #define VRT_MASK_GROUPMAP (1 << VRT_ORDINAL_GROUPMAP)
-	VRT_ORDINAL_SYNC_VERTICES, /* keep identical vertices together */
+	VRT_ORDINAL_SYNC_VERTICES /* keep identical vertices together */
 #define VRT_MASK_SYNC_VERTICES (1 << VRT_ORDINAL_SYNC_VERTICES)
-	VRT_ORDINAL_HOLD /* hold vob for preconfigured time */
-#define VRT_MASK_HOLD (1 << VRT_ORDINAL_HOLD)
 };
 
 struct envelope_s {
@@ -211,6 +232,15 @@ enum {
 extern hmapf_t *selectf_a;
 extern hmapf_t *selectf_b;
 
+void zero_session(session_t *);
+void zero_fullname(session_t *);
+void set_nodename(session_t *b, session_t *a);
+void cp_session(session_t *a, session_t *b);
+void cp_mapname(session_t *a, session_t *b);
+int match_mapname(session_t *a, session_t *b);
+int match_session(session_t *a, session_t *b);
+int match_mapped(session_t *a, session_t *b);
+int match_little(session_t *name, int *p);
 hmapf_t *hmapf(session_t *);
 hmapf_t *p_hmapf(int i); /* note: replacement will match on session name. */
 hmapf_t *mapref(session_t *session);

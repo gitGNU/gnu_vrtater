@@ -24,7 +24,7 @@
 #include "ifnodeglx.h"
 #endif /* VRT_X_SUPPORT && VRT_RENDERER_GL */
 
-extern unsigned int vrt_hmaps_max;
+extern unsigned int vrt_hmaps_max; /* extern for now */
 static int verbose_flag;
 
 void version(void);
@@ -70,7 +70,7 @@ main(int argc, char **argv)
 
 	/* optional args */
 	int option;
-	while(1) {
+	while (1) {
 		static struct option long_options[] = {
 			{"brief", no_argument, &verbose_flag, 0},
 			{"diag", optional_argument, 0, 'd'},
@@ -86,9 +86,9 @@ main(int argc, char **argv)
 		int option_index = 0;
 		option = getopt_long(argc, argv, "d::f:?o:p:", long_options,
 			 &option_index);
-		if(option == -1)
+		if (option == -1)
 			break;
-		switch(option) {
+		switch (option) {
 
 			case 0:
 			if(long_options[option_index].flag != 0) {
@@ -166,5 +166,5 @@ main(int argc, char **argv)
 	vrt_hmaps_max = 40; /* for now */
 
 	/* vrtater */
-	node(argc, argv);
+	peer(argc, argv);
 }

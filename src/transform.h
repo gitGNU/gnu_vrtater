@@ -9,14 +9,6 @@
 #include "hmap.h"
 #include "bittoggles.h"
 
-/* meta_u */
-union meta_unit_u {
-	char c;
-	int i;
-	float f;
-};
-typedef union meta_unit_u meta_u;
-
 /* Options to hmap transform functions affecting ip network or filesystem. */
 enum {
 	VRT_ORDINAL_OPT_NULL_SESSION_NAME,

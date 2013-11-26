@@ -51,15 +51,21 @@ init_next_buffer(void)
 }
 
 /* Called per hmap per frame, draw map vs. lod given VRT_DRAWGEOM_* support.
-   notes: These may needs not necessairilly be drawn here, as they could be
+   note: These may needs not necessairilly be drawn here, as they could be
    represented entirely or in part in render_vobspace.  A description
    representing what an hmap would like to look like may be provided where
-   VRT_MASK_DIALOG_MODS flag is set.  This is then contained in the hmap dialog
-   delimiter [tab]===comma,seperated,list\n.  Various tokens defined herein may
-   be supported with adjoining data of a fixed prescribed length.  For example
+   VRT_MASK_DIALOG_MODS flag remains set after passing through code in
+   dialog*.c.  This is then contained in the hmap dialog delimiter
+   [tab]===comma,seperated,list\n.  Various tokens defined herein may be
+   supported with adjoining data of a fixed prescribed length.  For example
    where a file.ext token is encountered, it will be followed by an alt.ext
    (available in a planned data distro), followed by relative coordinates, then
-   2 basis vectors for orientation.  This may be resolved to be a texture. */
+   2 basis vectors for orientation.  This may be resolved to be a texture
+   already read into memory.  hmap->index is now fixed forming a 0 to n <=
+   vrt_hmaps_max hmaps set.  Using VRT_ORDINAL_VERTICE_MODS and
+   VRT_MASK_ATTACHED, a list can be used to maintain hmap references for
+   rendering contextually.  If possible, generic parts of those could be
+   added to the hmap itself making a second list un-necessairy eventually. */
 void
 render_hmapf(hmapf_t *map, int lod)
 {
@@ -110,7 +116,7 @@ render_hmapf(hmapf_t *map, int lod)
 				/* Add colors/effects for diagnostic use. */
 				if ((map->index >= 0) && (map->index <= 5)) {
 					if (map->index == 0) {
-						YEL();
+						GRN();
 						if (i == 0)
 							RED();
 					}
@@ -140,10 +146,10 @@ render_hmapf(hmapf_t *map, int lod)
 				if ((map->index >= 20) & (map->index <= 23)) {
 					static int osc = 0;
 					if ((osc++) % 2) {
-						GRN();
+						RED();
 						glPolygonMode(GL_FRONT, GL_LINE);
 					} else {
-						RED();
+						YEL();
 						glPolygonMode(GL_FRONT, GL_FILL);
 					}
 				}

@@ -130,8 +130,8 @@ enum {
 };
 #endif /* VRT_US101KBD_X11_DIAG */
 	
-extern float vrt_render_cyc;
+extern float vrt_render_cyc; /* extern for now */
 
-void node(int argc, char **argv);
+void peer(int argc, char **argv);
 
 #endif /* VRT_IFNODEGLX_H */

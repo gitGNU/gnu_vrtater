@@ -20,7 +20,15 @@
 #include "rendergl.h"
 #include "transform.h"
 #include "attribs.h"
+#include "stock.h"
+#include "loginkeys.h"
+#include "partial.h"
 
+/* vrtater. */
+session_desc_t *orgin_desc;
+int runnode = 1;
+
+/* Displays. */
 Display *dpy0, *dpy_dialog;
 XVisualInfo *xvinf0, *xvinf_dialog;
 Window xwin0;
@@ -39,14 +47,18 @@ ifdpy_t ifdpy0 = {0,
 	0, .008281, .85};
 hmapf_t *fov0;
 int fov0_available = 0;
-int runnode = 1;
-int diagtext = 0;
 
 /* Time related. */
 time_t start, stop;
 int run, frames, sfreq, reads, infcount;
 float fps;
-float vrt_render_cyc; /* external */
+float vrt_render_cyc;
+
+/* Pre-alpha dialog. */
+int diagtext = 0;
+hmapf_t *diagtext0; /* reference hmap to receive text entry */
+int dialogrecurrant = 0;
+char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
 
 /* Temporary diagnostics. */
 hmapf_t *ryg, *ryg1, *diag1, *diag2, *diag3, *diag4, *diag5, *diag6, *diag8;
@@ -55,11 +67,6 @@ vf_t isb = { 5, 0, 0, 5 };
 vf_t jsb = { 0, 5, 0, 5 };
 vf_t ksb = { 0, 0, 5, 5 };
 vf_t vrloc8 = { 0, 0, -80, 80 };
-
-/* Pre-alpha dialog. */
-hmapf_t *diagtext0; /* reference hmap to receive text entry */
-int dialogrecurrant = 0;
-char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
 
 void setup_glx(int argc, char **argv);
 void shutdown_glx(void);
@@ -75,6 +82,13 @@ void diag_node_key_f(void);
 void diag_node_key_g(void);
 void diag_node_key_h(void);
 void diag_message(void);
+
+/* Testing. */
+partial_t *test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, complextimate_t *cmplxt);
+int test_continue_partial(partial_t *node, char *url, ptlrepute_list_t *new, ptlrepute_t *repute, session_t *session_here, hmapf_t *keymap, hmapf_t *holdmap, unsigned int tl_cmplxt);
+partial_t *test_mk_flexible_node(char *seedfiles, hmapf_t **, complextimate_t *);
+void test_detach_all_partials(void);
+void test_continue_repute(hmapf_t *);
 
 /* Setup for given display and rendering libs. */
 void
@@ -169,12 +183,12 @@ shutdown_dialog_interface(void)
 
 /* Given argc/argv, run vrtater statefully while runnode equals 0. */
 void
-node(int argc, char **argv)
+peer(int argc, char **argv)
 {
 	XEvent xevent;
 
 	setup_glx(argc, argv);
-	generate_node_orgin();
+	orgin_desc = generate_node_orgin();
 
 	fov0 = p_hmapf(0); /* for now */
 	fov0_available = 1; /* will be default in vanilla config file */
@@ -257,12 +271,25 @@ node(int argc, char **argv)
 	set_vf(&(diag6->vpos), 0, 0, 0, 0);
 	cp_vf(&ksb, &(diag6->vpos));
 
+	/* set of cubes 9 - 18 */
+	int i;
+	for (i = 9; i < 19; i++)
+	{
+		set_vf(&(p_hmapf(i)->vpos),
+			p_hmapf(i)->vpos.x + (i * 10000) / (i * i),
+			p_hmapf(i)->vpos.y + (i * 10000) / (i * i),
+			p_hmapf(i)->vpos.z + (i * 10000) / (i * i),
+			0);
+		form_mag_vf(&(p_hmapf(i)->vpos));
+	}
+
+	/* cylinder stock */
 	diag8 = p_hmapf(19);
 	diag8->ang_spd = 0;
 	diag8->ang_dpl = M_PI_2;
 	set_vf(&(diag8->vvel), 0, 0, 0, 0);
 	set_vf(&(diag8->vaxi), 0, .707106, .707106, 1);
-	set_vf(&(diag8->vpos), 0, 0, 0, 0);
+	set_vf(&(diag8->vpos), 70.71, 70.71, 70.71, 122.473312);
 	cp_vf(&vrloc8, &(diag8->vpos));
 
 	/* Interface nodes. */
@@ -729,29 +756,27 @@ node(int argc, char **argv)
 	/* Shutdown node-orgin. */
 	__builtin_printf("Program exit called\n");
 	close_vobspace(0); /* now, for now */
-	answer_accept = 0;
+	session_nodemask = 0;
 	reset_sessions();
 	close_node_orgin(); /* note: move to callback_close_vobspace() */
 	shutdown_glx();
 }
 
 /* Tend to all_sessions data referencing session info generated thru session.c
-   selection of available nodes for calling, cueing and adding to the formed
-   set. */
+   selection of available nodes for vrtlogin continuity and partial. */
 void
 tendto_curr_sessions(void)
 {
 	/* Conditionally connect_vobspace(), etc... */
 }
 
-/* As a caller, connect cued session session.  notes: session represents a
-   node-partial to be transfered from a caller node-orgin.  This will be
+/* After receiving nodemap, connect session session.  notes: session represents
+   a node-partial to be transfered from a caller node-orgin.  This will be
    obvious from the directional sense visible looking at all_sessions data from
    within the interface to be provided herein.  Remote nodes added to the
    running set for session node-partial will maintain their own representation
    of given node-partial.  Success is assumed while implied session_t remains
-   in all_sessions data.  Reads from remote node will succeed with no data
-   until session sync or closed. */
+   in all_sessions data. */
 int
 connect_to_peers(session_t *session)
 {
@@ -760,10 +785,7 @@ connect_to_peers(session_t *session)
 	return 0;
 }
 
-/* keymap names originating out of given node are always backed up on given
-   node vs. any remote node url's presence in the formed set.  The stack of
-   such names is 2 deep including most recent.  This allows reversion to a
-   known match if the names ever become out of sync. */
+/* Maintain reputation for session. */
 int
 maintain_reputation(session_t *session)
 {
@@ -786,6 +808,117 @@ void
 diag_node_key_f(void)
 {
 	diag_generator_key_f();
+
+#ifdef DIAG_CONTINUING_ENABLE
+	/* vrtlogin to flexible node from continuing node. */
+	ptlrepute_t *repute;
+	char url[] = "protocol://192.168.0.2/nothernode/"; /* refers to */
+	char oneliner[] = "nothernode";
+	hmapf_t *avatar555, *avatar555_hold, *flow_map = NULL;
+	session_t lastkey = { { 0, 0, 0xb0de }, 8 };
+	session_t contingentkey = { { 0, 0, 0xface }, 8 };
+	session_t holdkey = { { 0, 0, 0 }, 0 };
+	session_t z = { { 0, 0, 0 }, 0 };
+	complextimate_t cmplxt_here = { 0, 0, 0 };
+	hmapf_t **sela = (hmapf_t **) selectf_a; /* returned nodemap ref. */
+	select_t sel = {  0, 0, (hmapf_t **) selectf_a, 0, NULL };
+	int rval;
+
+	__builtin_printf("Simulated vrtlogin to flexible node\n");
+	partial_t *node = NULL;
+	if ((node = test_continuity(url, oneliner, NULL, sela, &cmplxt_here)) == NULL) {
+		__builtin_fprintf(stderr, "Error: Failed to provide "
+			"continuing node with continuity\n");
+		return;
+	}
+
+	/* Now that continuity exists, enter continuing with selectf_a maps. */
+	test_add_maps(5, 0, &(node->session), &(node->nodemap->vpos), &sel, &cmplxt_here);
+
+	/* For testing avatar555 volunteers. */
+	avatar555 = p_hmapf(23);
+	cp_session(&(node->session), &(avatar555->name));
+	avatar555->attribs.sign |= VRT_MASK_KEYMAP;
+	avatar555_hold = p_hmapf(24);
+	cp_session(&(node->session), &(avatar555_hold->name));
+	avatar555_hold->attribs.sign |= VRT_MASK_HOLD;
+
+#ifdef DIAG_CONTINUING_OTHRHOLDKEY
+	/* Set an initial holdkey on continuing for a continued session.
+	   Value indicates it was set >1 flexible sessions ago. */
+	(&holdkey)->hash.l = 0xface;
+	(&holdkey)->seq = 555;
+#endif
+
+#ifdef DIAG_CONTINUING_SETHOLDKEY
+	/* Ask flexible to try to publicize held maps having VRT_MASK_PUB */
+	flow_map = avatar555_hold;
+#endif
+
+#ifdef DIAG_CONTINUING_FLEXIBLE_SENDS_NEWREPUTED
+	/* Sign that a new reputation is requested.  Passing a flag forward for
+	   this is not possible as the defines for what the flexible feeds back
+	   simulate an assumed state of the flexible's data.  This just to make
+	   the diagnostic look correct.  When the ip network code is added,
+	   the implied defines would be removed and then this could work. */
+	zero_fullname(&lastkey);
+	zero_fullname(&contingentkey);
+#endif
+
+	/* Add repute for avatar555 in node-orgin reputation list providing
+	   loginkeys at url.  Since this is setup to be a continued session,
+	   find_loginkeys would normally be used for same.  Sync for this
+	   is provided in continue_node. */
+	repute = add_ptlrepute(node->ptlrepute, &lastkey, &holdkey, url);
+	cp_mapname(&contingentkey, &(repute->contingentkey)); /* established */
+	cp_mapname(&holdkey, &(repute->holdkey)); /* with holdkey */
+	/* Continue. */
+	if ((rval = test_continue_partial(node, url, node->ptlrepute, repute, &(node->session), avatar555, flow_map, calc_cmplxt(&cmplxt_here))) != 0)
+		; /* could not vrtlogin */
+#endif /* DIAG_CONTINUING_ENABLE */
+
+#ifdef DIAG_FLEXIBLE_ENABLE
+	/* Make a flexible node. */
+	partial_t *node = NULL;
+	char url[] = "protocol://192.168.0.2/nothernode/";
+	char oneliner[] = "nothernode"; /* 79 chars max */
+	session_t z = { { 0, 0, 0 }, 0 };
+	complextimate_t cmplxt = { 0, 0, 0 };
+	char seedfiles[] = "";
+	hmapf_t *map, **maps = (hmapf_t **) selectf_a;
+	select_t t = { 0, 1, maps, 0, NULL};
+
+	__builtin_printf("Simulated creation of flexible node "
+		"\"nothernode\"\n makeing an flexible node in node-orgin\n");
+
+	/* Outside map. */
+	if ((map = hmapf_cylinder_c(&(orgin_desc)->session, 80.5, 25, 112, 0)) != NULL) {
+		map->ang_spd = 0;
+		map->ang_dpl = -.761799;
+		set_vf(&(map->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(map->vaxi), .5, 1, 0, 0));
+		form_mag_vf(set_vf(&(map->vpos), 200, 500, 0, 0));
+		map->attribs.mode |= VRT_MASK_FIXED_FORM;
+	}
+	/* nodemap. */
+	if ((map = hmapf_cylinder_c(&(orgin_desc)->session, 80, 25, 111.5, 0)) != NULL) {
+		map->ang_spd = 0;
+		map->ang_dpl = -.761799;
+		set_vf(&(map->vvel), 0, 0, 0, 0);
+		form_mag_vf(set_vf(&(map->vaxi), .5, 1, 0, 0));
+		form_mag_vf(set_vf(&(map->vpos), 200, 500, 0, 0));
+		map->attribs.mode |= VRT_MASK_FIXED_FORM;
+	}
+	*maps = map;
+#ifdef DIAG_UNDEFINED
+	surface_inv_hmapf(&t);
+#endif
+
+	node = test_mk_flexible_node(seedfiles, maps, &cmplxt);
+	/* note: ptlrepute added as code in session.c calls sync_loginkeys. */
+
+	add_session_desc(&(node->session), &z, &z, 0, url, oneliner, &cmplxt, map, node->ptlrepute);
+#endif /* DIAG_FLEXIBLE_ENABLE */
 }
 
 /* Temporary diagnostic to run test on keypress g. */
@@ -793,6 +926,62 @@ void
 diag_node_key_g(void)
 {
 	diag_generator_key_g();
+
+#ifdef DIAG_FLEXIBLE_ENABLE
+	__builtin_printf("\nSimulate received vrtlogin to \"nothernode\" "
+		"after generating flexible.\n");
+	partial_t *flexible;
+	char url[] = "protocol://192.168.0.2/nothernode/";
+	session_t session_peer = { { 0, 0, 0xc0de }, 0 };
+	session_t z = { { 0, 0, 0 }, 0 };
+	session_desc_t *desc_here;
+	complextimate_t cmplxt_here = { 0, 0, 0 };
+	hmapf_t *nother_hold;
+	vf_t portal, d = { 1., 0., 0., 1. };
+	select_t sel = {  0, 0, (hmapf_t **) selectf_a, 0, NULL };
+
+	if ((desc_here = find_url(url)) == NULL) {
+		printf("desc_here not found\n");
+		return;
+	}
+printf("session %x\n", desc_here->session.hash.l);
+	if ((flexible = find_partial(&(desc_here->session))) == NULL) {
+		printf("pointer %x flexible not found\n", (int) flexible);
+		return;
+	}
+	cp_vf(&(flexible->nodemap->vpos), &portal);
+
+	/* Simulate provision for flexible. */
+	__builtin_printf(" adding some hmaps to flexible\n");
+	test_add_maps(1, 0, &(flexible->session), &portal, &sel, &cmplxt_here);
+	nother_hold = p_hmapf(26);
+	nother_hold->attribs.sign |= VRT_MASK_HOLD;
+	nportf(nother_hold, sum_vf(&portal, &d, &portal), 0);
+
+	/* Complete session description enabling logins. */
+	desc_here->cmplxt.hmap_count = 8;
+	desc_here->cmplxt.tl_vdata = 288;
+	desc_here->cmplxt.tl_dialog = 314;
+	desc_here->nodemap = flexible->nodemap;
+	desc_here->ptlrepute = flexible->ptlrepute;
+	desc_here->level = VRT_MASK_SESSION_DETACHED | VRT_MASK_SESSION_ENABLE;
+
+	session_nodemask |= VRT_MASK_ACCEPT_VRTLOGIN; /* temporarily here */
+	diag_ls_all_sessions(1);
+	__builtin_printf(" accepting vrtlogins on flexible (%x %x %x)...\n",
+		flexible->session.hash.h, flexible->session.hash.m,
+		flexible->session.hash.l);
+
+	/* Now that a flexible node is in shape, a vrtlogin arrives.  The
+	   data sent contains the url for the node requested, the session of
+	   the peer node and perhaps the session of a thru node.  continuing
+	   node vrtlogging in will show up in all_sessions as a peer.
+	   VRT_MASK_ACCEPT_VRTLOGIN bit for all local flexible nodes has
+	   already been set to true through ifnode**.c interface part.
+	   With received data, continuity may be retreived.  note:
+	   answer_vrtlogin would normally be called by code in session.c. */
+	answer_vrtlogin(&session_peer, &z, url); /* url here indexes desc */
+#endif /* DIAG_FLEXIBLE_ENABLE */
 }
 
 /* Temporary diagnostic to run test on keypress h. */
@@ -800,6 +989,181 @@ void
 diag_node_key_h(void)
 {
 	diag_generator_key_h();
+
+#ifdef DIAG_FLEXIBLE_ENABLE
+	/* Simulate phase-b vrtlogin data received by code in session.c.
+	   Imediately after data is sent a password may be requested.  note:
+	   flexible side here represented is assumed to have reputation for
+	   avatar555 whom is vrtlogging. */
+	complextimate_t cmplxt = { 1, 555, 3 }; /* avatar555's hmaps */
+	session_t z = { { 0, 0, 0 }, 0 };
+	int rval;
+
+	/* Received before sync_vrtlogin is called. */
+	char url[] = "protocol://192.168.0.2/nothernode/";
+	session_t session_peer = { { 0, 0, 0xc0de }, 0 };
+	session_t loginkey = { { 0, 0, 0xc0de }, 8 };
+	session_t lastkey = { { 0, 0, 0xb0de }, 8 };
+	session_t contingentkey = { { 0, 0, 0xface }, 8 };
+	session_t holdkey = { { 0, 0, 0 }, 0 };
+	unsigned int tl_cmplxt = calc_cmplxt(&cmplxt);
+
+	/* Error values for diagnostic. */
+	session_t anomalesslast = { { 0xf, 0xade, 0xd }, 8 };
+	session_t anomalesscontingent = { { 0xf, 0xade, 0xd }, 8 };
+
+#ifdef DIAG_FLEXIBLE_LASTKEYERR
+	/* Simulate keysync error from a disk or memory related event.  This
+	   non-contingent key was successfully used with vrtlogin previously,
+	   however it has an error on at least one side of partial somehow,
+	   likely after a write to disk or memory, or having never been written
+	   to disk before a reset or power-off.  Since this is a match test,
+	   inverse test also valid. */
+	cp_mapname(&anomalesslast, &lastkey);
+#endif
+
+#ifdef DIAG_FLEXIBLE_CONTINGENTKEYERR
+	/* Simulate keysync error from a disk or memory related event.  This
+	   key was successfully used possibly becoming shifted (system may have
+	   gone down during shift).  When possibly written to disk then, or in
+	   memory on either either side of partial, it somehow was in error.
+	   As test implies an error in lastkey it is also in err. */
+	cp_mapname(&anomalesslast, &lastkey);
+	cp_mapname(&anomalesscontingent, &contingentkey);
+#endif
+
+#ifdef DIAG_FLEXIBLE_NEWREPUTED
+	zero_fullname(&lastkey);
+	zero_fullname(&contingentkey);
+#endif
+
+#ifdef DIAG_FLEXIBLE_MAPKEY_REDUNDANT
+	/* Use a loginkey that is already present in reputation data */
+	if (rand() % 2)
+		cp_mapname(&lastkey, &loginkey);
+	else
+		cp_mapname(&contingentkey, &loginkey);
+#endif
+
+#ifdef DIAG_FLEXIBLE_SETHOLDKEY
+	holdkey.hash.l = 0xc0de;
+	holdkey.seq = 555;
+#endif
+
+#ifdef DIAG_FLEXIBLE_CMPLXT
+	(&cmplxt)->hmap_count = 9385;
+	(&cmplxt)->tl_vdata = 903329;
+	(&cmplxt)->tl_dialog = 90374043;
+#endif
+
+	/* phase-b data arrives.  On syncronization, nodes may become partial
+	   or continuing may join partial. */
+	__builtin_printf("Reputation data received for session (%x %x %x), "
+		"meanwhile,\n login authentication has succeeded.\n",
+		(&session_peer)->hash.h, (&session_peer)->hash.m,
+		(&session_peer)->hash.l);
+	if ((rval = sync_vrtlogin(&session_peer, &z, &loginkey, &lastkey, &contingentkey, &holdkey, calc_cmplxt(&cmplxt), url)) < 0) {
+		/* Contingency for errors. */
+		if (rval == -1)
+			__builtin_printf(" ...size of selected hapmaps "
+				"exceeds flexible setting.\nSync failed.  "
+				"Awaiting retry.\n");
+	} else
+		/* Contingency for keyuse. */
+		;
+#endif /* DIAG_FLEXIBLE_ENABLE */
+}
+
+/* Diagnostic test: Make a detached flexible node with a session name based on
+   given seedfiles and placing hmaps referenced by maps therein.  note: For a
+   flexible session, mk_partial takes the session name of the first map
+   referenced by maps.  For now mk_partial can only receive a non compounded
+   hmap. */
+partial_t *
+test_mk_flexible_node(char *seedfiles, hmapf_t **maps, complextimate_t *cmplxt)
+{
+	partial_t *node = NULL;
+	session_t session;
+
+	hash_session_name(&session, seedfiles);
+	cp_session(&session, &((*maps)->name));
+	__builtin_printf(" adding detached flexible node in node-orgin\n");
+	node = mk_partial(NULL, maps, 1, cmplxt);
+
+	return node;
+}
+
+/* Diagnostic test: Try to retreive continuity for flexible session described
+   in reputation orgin_repute.  Working in tandem with the interface part,
+   vrtlogin using keymap.  */
+void
+test_continue_repute(hmapf_t *keymap)
+{
+	;
+}
+
+/* Diagnostic test: Call flexible node for nodemap and session details,
+   allowing for cmplxt at url.  If successfull, continuing session receives
+   continuity apon receiving nodemap. */
+partial_t *
+test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, complextimate_t *cmplxt)
+{
+	partial_t *node = NULL;
+	session_t session;
+	char seedfiles[] = ""; /* directory containing maps for session */
+
+	hash_session_name(&session, seedfiles);
+	if ((node_continuity(url, oneliner, &session, NULL, maps)) != 0)
+		return NULL;
+	if (*maps) {
+		/* Continuity received for session. */
+		__builtin_printf("Adding continuing node in node-orgin...\n");
+		node = mk_partial(&session, maps, 1, cmplxt);
+	} else
+		__builtin_printf("Error: node did not receive continuity at "
+			"\"%s\".  Suspect DIAG_CONTINUING_SESSION_OFF.\n",
+			url);
+
+	return node;
+}
+
+/* Diagnostic test: After making continuing node, try to continue partial with
+   flexible at url using new list with repute for keymap, using session_here
+   for node, and provided flexible will accept cmplxt.  note: hmap keymap has
+   entered node desiring vrtlogin, cmplxt reflecting maps selected. */
+int
+test_continue_partial(partial_t *node, char *url, ptlrepute_list_t *list, ptlrepute_t *repute, session_t *session_here, hmapf_t *keymap, hmapf_t *holdmap, unsigned int tl_cmplxt)
+{
+	session_t *flow_name, zero_session = { { 0, 0, 0 }, 0 };
+	int rval;
+	/* Using repute for keymap, continue a previous or new partial. */
+	if ((rval = continue_node(url, list, repute, session_here, &(keymap->name), flow_name = holdmap ? &(holdmap->name) : &zero_session, tl_cmplxt)) == 0) {
+		add_ptlmap(node->ptlmaps, keymap);
+		__builtin_printf("Now representing partial.\n");
+		diag_ls_all_sessions(1);
+	} else {
+		if (rval == -1)
+			__builtin_printf("Continuity timed out.\n");
+		else
+			__builtin_printf("Could not resume partial.\n");
+	}
+
+	return rval;
+}
+
+/* Diagnostic test: Remove all partials currently defined. */
+void
+test_detach_all_partials(void)
+{
+	partial_t *current, *passed;
+
+	current = partial_list->last;
+	passed = partial_list->last;
+	while (current != NULL) {
+		rm_partial(current);
+		passed = current;
+		current = current->precursor;
+	}
 }
 
 /* Temporary message about exit key sequence. */

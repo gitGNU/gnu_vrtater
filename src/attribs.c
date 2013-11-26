@@ -38,7 +38,7 @@ unsigned int passes;
 
 /* Renderer. */
 float vrt_render_cyc;
-int fov0_name;
+session_t fov0_name; /* holds refrence to hmap with fov0. */
 
 /* External. */
 unsigned int vrt_hmaps_max;
@@ -119,7 +119,10 @@ init_vohspace(void)
 	/* Set all maps to unattached default. */
 	p = vohspace;
 	for (i = 0; i < vrt_hmaps_max; i++, p++) {
-		p->name = 0;
+		p->name.hash.h = 0;
+		p->name.hash.m = 0;
+		p->name.hash.l = 0;
+		p->name.seq = 0;
 		p->vpos.x = 0;
 		p->vpos.y = 0;
 		p->vpos.z = 0;
@@ -190,7 +193,8 @@ delete_vohspace(void)
 	free(selectf_b);
 }
 
-/* From given set, find then attach and return unattached hmap. */
+/* Find the lowest indexed unattached hmap in vohspace, Return reference to
+   map if found, else NULL indicating vohspace full. */
 hmapf_t *
 attach_hmapf(void)
 {
@@ -199,12 +203,15 @@ attach_hmapf(void)
 
 	for (i = 0; i < vrt_hmaps_max; i++, map++) {
 		if (!(map->attribs.mode & VRT_MASK_ATTACHED)) {
-			map->index = i; /* node-orgin unique index */
+			/* Assign fixed vohspace set value index and initial
+			   node set value seq vs. maps in vohspace. */
+			map->index = map->name.seq = i;
 			map->attribs.mode |= VRT_MASK_ATTACHED;
 			attached_hmaps++;
 			return map;
 		}
 	}
+
 	return NULL;
 }
 
@@ -216,7 +223,10 @@ detach_hmapf(hmapf_t *p)
 	hmapf_t *eb = &vohspace[vrt_hmaps_max];
 
 	if ((p >= sb) && (p <= eb)) {
-		p->name = 0;
+		p->name.hash.h = 0;
+		p->name.hash.m = 0;
+		p->name.hash.l = 0;
+		p->name.seq = 0;
 		p->vpos.x = 0;
 		p->vpos.y = 0;
 		p->vpos.z = 0;
@@ -262,6 +272,11 @@ detach_hmapf(hmapf_t *p)
 		p->adjoined = NULL;
 		p->drawlist = NULL;
 		attached_hmaps--;
+
+		__builtin_printf("detached hmap (%x %x %x) %i\n",
+			p->name.hash.h, p->name.hash.m, p->name.hash.l,
+			p->name.seq);
+
 		return;
 	}
 	__builtin_fprintf(stderr, "vrtater:%s:%d: "
@@ -515,20 +530,23 @@ proc_hmapf(hmapf_t *map, int lod, int sort_ratio)
 	hmapf_t **selb = (hmapf_t **) selectf_b;
 	select_t sel = { 0, 0, sela, 0, selb };
 
-	/* Filter out hmap holding fov0 in alternate passes while setting up for
-	   intersection on the first alternate.  It arrives immediately before
-	   sort_proc_hmaps per frame, then again in sort. */
+	/* Filter out hmap holding fov0 in alternate passes while setting up
+	   for intersection on the first alternate.  It arrives immediately
+	   before sort_proc_hmaps per frame, then again in sort. note: Soon,
+	   more than one hmap may hold VRT_MASK_LOD_INF, this is why matching
+	   is done on session_t.  Now that session_t has grown hash.l will
+	   be used instead.  For now doing the copy, match, with the full
+	   session_t.  Will revisit soon. ... */
 	if (lod & VRT_MASK_LOD_INF) {
-		fov0_name = map->name;
+		cp_mapname(&(map->name), &fov0_name); /* vohspace issue */
 		*sela = map; /* for intersection */
-	} else { /* skip hmap holding fov0 unless it has VRT_MASK_LOD_INF */
-		if (map->name == fov0_name)
+	} else
+		/* skip hmap holding fov0 unless it has VRT_MASK_LOD_INF */
+		if (match_mapname(&(map->name), &fov0_name))
 			return;
-	}
 
 	/* Tend to attribs bits. */
 	if (map->attribs.sign & VRT_MASK_DETACH) {
-		__builtin_printf("detaching hmap %x (", map->name);
 		detach_hmapf(map);
 		__builtin_printf("free maps %u/%u)\n",
 			vrt_hmaps_max - attached_hmaps, vrt_hmaps_max);

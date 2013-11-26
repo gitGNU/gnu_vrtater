@@ -65,7 +65,7 @@ tele_magz_vf(vf_t *a, float n, vf_t *b)
 		b->m = n < .0 ? -n : n;
 	} else {
 		/* Vector a has 0 magnitude; try to produce magnitude. */
-		if((b->m = sqrtf(a->x * a->x + a->y * a->y + a->z * a->z))) {
+		if ((b->m = sqrtf(a->x * a->x + a->y * a->y + a->z * a->z))) {
 			b->x = (a->x / a->m) * n;
 			b->y = (a->y / a->m) * n;
 			b->z = (a->z / a->m) * n;

@@ -11,6 +11,7 @@
 #include "hmap.h"
 #include "partial.h"
 #include "session.h"
+#include "loginkeys.h"
 
 /* These generator options are all set by ifnode**.c, some through data
    maintained in dialog.c.  balance_criteria is still in the works, and may be
@@ -34,17 +35,18 @@ enum {
 #define VRT_MASK_DASHF (1 << VRT_ORDINAL_DASHF)
 };
 
-int generate_node_orgin(void);
+session_desc_t *generate_node_orgin(void);
+unsigned int calc_cmplxt(complextimate_t *cmplxt);
 void regenerate_scene(vf_t *);
 void mk_partial_list(void);
 void rm_partial_list(void);
-partial_t *mk_partial(session_t *, hmapf_t **, unsigned int count);
+partial_t *mk_partial(session_t *, hmapf_t **, unsigned int count, complextimate_t *cmplxt);
 void rm_partial(partial_t *partial);
 void close_vobspace(double time_till_closed);
 void close_node_orgin(void);
 int resize_node_orgin(int, int);
 /* Diagnostics. */
-void diag_ls_partials(int full);
+void diag_ls_partials(void);
 int diag_hmaps_in_partial(partial_t *);
 void diag_generator_key_f(void);
 void diag_generator_key_g(void);
@@ -52,5 +54,7 @@ void diag_generator_key_h(void);
 /* Supported calls for bus input. */
 void generator_join_hmaps(void);
 void generator_intersection(void);
+/* Tests. */
+void test_add_maps(unsigned int n, int mapstock, session_t *, vf_t *portal, select_t *, complextimate_t *);
 
 #endif /* VRT_GENERATOR_H */

@@ -1,4 +1,4 @@
-/* session.c: Connect sessions.  Simulated.  Lacks the most critical parts.
+/* session.c: Connect sessions.  Simulated.  Still lacks most critical parts.
    Copyright (C) 2012, 2013 J. A. Green <green8@sdf-eu.org>
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
@@ -10,442 +10,599 @@
 #include "global.h"
 #include "transform.h"
 
-int generate_session_name_from_files_in_dir(session_t *, char *seedfiles);
-int get_session_name_from_file_in_dir(session_t *, char *seedfiles);
-int complete_negotiation(session_desc_t *, session_t *loginkey, int keyuse);
+int keyuse_feedback(session_desc_t *, session_t *loginkey, int keyuse);
 void read_from_network(void);
 void rm_session_desc_list(void);
 void subtract_session_desc(session_desc_t *desc);
 
-/* Called last when generating node-orgin, all_sessions list construct is
-   already set up when this function is called. */
+#ifdef DIAG_FLEXIBLE_SESSION
+hmapf_t *diag_receive_nodemap(session_t *, select_t *);
+#endif
+
+/* Called after node-orgin is set up.  all_sessions list construct is already
+   present and contains node-orgin and any flexible nodes read from config. */
 void
 init_sessions(void)
 {
 	;
 }
 
-/* Using seedfiles produce session name referenced by name, also clobbering
-   it's value to file seedfiles/uniqueness.  Return 0 if seedfiles/ had
-   ordinary files therein, otherwise return 1.  If seedfiles/ is not a
-   directory fail returning -1.  note: For now, use a pseudorandom session name
-   of 16 bits with 16 bits of trailing zero's, otherwise, same contents in
-   seedfiles/ must always produce same session name.  Currently session_t is of
-   int type and has somewhat wimpy namespace leverage.  Expansion of the
-   session name then desires a set of functions for setting and testing
-   expanded to ease adjustment needed.  These then would need to be implemented
-   or found.  The current situation will hopefully be adequate for testing. */
+/* Using seedfiles produce a 96 bit hash value, writing it to name->hash.h,
+   name->hash.m and name->hash.l, also writing it's value to file
+   seedfiles/uniqueness.  Using search_vohspace, very soon to be extended for
+   this purpose, if name->hash.l is not unique in vohspace vs. any other
+   name->hash.l, try again after first modding the contents of seedfiles/,
+   perhaps adding the just generated name->hash.l as a file of name
+   uniqueness_artifact to seedfiles/ (if not already present).  Return 0 if
+   seedfiles/ had ordinary files therein or 1 if it is empty, otherwise < 0. */
 int
 hash_session_name(session_t *name, char *seedfiles)
 {
-	*name = rand() << 16; /* for now */
+	/* Simulate. */
+	name->hash.h = 0;
+	name->hash.m = 0;
+	name->hash.l = rand();
 
-	/* Clobber session name to seedfiles/uniqueness. */
+	/* Write session name to seedfiles/uniqueness. */
 	/* ... */
 
-	return 0; /* for now */
+	return 0;
 }
 
-/* Generate session name referenced by session from files in seedfiles/.
-   Return 0, else -1 on error. */
+/* Read session name in seedfiles/uniqueness into session.  Return 0, else < 0
+   on error. */
 int
-generate_session_name_from_files_in_dir(session_t *session, char *seedfiles)
+read_hash(session_t *session, char *seedfiles)
 {
 	return 0;
 }
 
-/* Copy session name in seedfiles/uniqueness to struct referenced by session.
-   Return 0, else -1 on error. */
+/* For phase-a of continuing partial, send request to url for continuity in
+   flexible node at url.  Request contains url, oneliner if available,
+   session_here, and possibly session_thru if continuing is being forwarded.
+   flexible at url may then provide continuity represented by returned,
+   possibly updated oneliner describing node, any updated url, flexible's
+   session number, complextimate representing arrival metaloc, and a nodemap
+   referenced through maps.  Return 0 on success else < 0.  note: If
+   successfull the following occurs.  level bit for continuity in session_here
+   becomes set.  If the url has changed, a new session description for the
+   continuing node is added to all_sessions while the unlinked level bit on
+   the previous one is set.  Around this time a single .vrtater data element
+   is received and hmapunwrapf'd referenced as nodemap.  After calling
+   successfully and waiting for nodemap, caller then calls mk_partial using
+   session_here and given nodemap in continuing context.  During a configured
+   lengthly timeout flexible session continuity normally remains valid awaiting
+   call to continue_node for phase-b syncronization.  During this time the
+   person running vrtater may evaluate the nodemap sent, then possibly
+   continuing partial with the flexible bringing any hmaps selected.  This may
+   fail yet the flexible session providing continuity will by default renew the
+   timeout if any, allowing successive tries with lower complextimate or
+   regenerated session_here hash.  further notes: Flexible session hash will
+   usually be subject to uptime, the url may also change, so to the 79 chars
+   max oneliner.  The session description created with received data is used
+   by the ifnode**.c interface part to select flexible's.  The url must be
+   unique in all_sessions and is used to partial.  Parts or the whole of the
+   oneliner may be present in the url possibly allowing extraction of the
+   oneliner from there optionally, however the oneliner always represent's the
+   specific flexible node.  By default allowing multiple nodes at same url. */
 int
-get_session_name_from_file_in_dir(session_t *session, char *seedfiles)
+node_continuity(char *url, char *oneliner, session_t *session_here, session_t *session_thru, hmapf_t **maps)
 {
-	return 0;
-}
-
-/* Search for available nodes matching desc.  note: This would be nice... */
-void
-list_nodes(char *desc)
-{
-	;
-}
-
-/* Try to cue 'continuing' session lsession, with node at url that accords with
-   local complexitimate lcomplex.  If successfull, cued session should then
-   appear in all_sessions and .vrtater data is hmapunwrapf'd with produced hmap
-   referenced through nodemap.  note: As a partial session number may change,
-   for now the oneliner could be used to attain the nodemap.  Statefull
-   maintainance function sync_session, will need to read in any incoming ip
-   network transfers.  A healthy sign will be exchange of relevant
-   session_desc_s data followed by an inbound nodemap.  note: There are several
-   reasons why this function might fail returning non-zero.  examples: nodemap
-   name offered by remote node has hash part that conflicts in local session
-   namespace.  Timeout waiting for nodemap.  lcomplex or nodemap data exceeds
-   continuing partial maximum.  Return 0 on success else less than 0. */
-
-int
-call_session(char *url, complextimate_t *lcomplex, hmapf_t **nodemap, session_t *lsession)
-{
-	btoggles_t level;
-	session_desc_t *desc;
-	*nodemap = NULL;
-
-	/* Send data for call attempt. */
-	/* ... */
-
-#ifdef DIAG_CONTINUING_SESSION
-	/* Attempting to cue, here is the data that might be returned by node
-	   _hw_node_ vs. local complextimate lcomplex through sync_sessions and
-	   read_from_network at url. */
-	session_t flexible = 0xd1610000;
-	char oneliner[] = "hw node"; /* 80 chars max */
-	complextimate_t rcomplex; /* guessing */
-	(&rcomplex)->hmap_count = 8;
-	(&rcomplex)->tl_vdata = 288;
-	(&rcomplex)->tl_dialog = 314;
-
-	__builtin_printf(" flexible node %x at url %s was called, responded\n",
-		(int) flexible, url);
-	level = VRT_MASK_SESSION_CALLED;
-
-	/* Simulate a session description for a continuing partial.
-	   Description will have session lsession on this side of connection
-	   uniquely identifying continuing in partial.  Node called will be
-	   flexible node hw node will be described with session 0xd1610000. */
-	session_t from = 0; /* applies only in a flexible description */
-	if ((desc = add_session_desc(lsession, &flexible, &from, &level, oneliner, lcomplex)) == NULL)
-		return -1;
-	diag_ls_partial_sessions(1);
-
-	/* Save state, continue checking starting on next frame */
-	/* ... */
-	__builtin_printf(" waiting for nodemap\n");
-
-	/* Simulate remote sends nodemap for non-cued session. */
-	hmapf_t *map;
-	session_t session = 0;
+	session_desc_t *desc_here = NULL;
+	session_t z = { { 0, 0, 0 }, 0 };
+	session_t session_peer = { { 0, 0, 0 }, 0 };
+	complextimate_t cmplxt_peer, cmplxt_here = { 0, 0, 0 };
+	hmapf_t *nodemap;
 	hmapf_t **sela = (hmapf_t **) selectf_a;
 	hmapf_t **selb = (hmapf_t **) selectf_b;
 	select_t receiver = { 0, 1, sela, 0, selb };
 
-	map = receive_map_from_peer_partial(&session, &receiver);
-	__builtin_printf(" received .vrtater nodemap data from flexible with "
-		"session %x\n", (int) flexible);
+	*maps = NULL;
 
-	map->name = flexible | (map->name & 0x0000ffff);
+	__builtin_printf(" calling for continuity on flexible node (%x %x %x) "
+		"%s\n", (&session_peer)->hash.h, (&session_peer)->hash.m,
+		(&session_peer)->hash.l, url);
 
-	/* Test if nodemap is within remote flexible. */
-	if ((map->name & 0xffff0000) != flexible) {
+	/* Send data for continuity attempt.  Resume instructions following
+	   if continuity succeeds. */
+	/* ... */
+
+	/* Simulating retreival of continuity, here is data that might be
+	   returned from flexible node nothernode.  This is then written to
+	   all_sessions as a session description, added or changed reflecting
+	   latest details.  all_sessions is accessable from a menu in the
+	   ifnode**.c interface part for reading arguments passed to
+	   continue_node. */
+	char newurl[] = ""; /* usually */
+	char newoneliner[] = "nothernode";
+	(&session_peer)->hash.l = 0xca11ed;
+	(&cmplxt_peer)->hmap_count = 8;
+	(&cmplxt_peer)->tl_vdata = 288;
+	(&cmplxt_peer)->tl_dialog = 314;
+
+	__builtin_printf("  ...flexible node description data received.\n");
+
+	/* Check if too complex. */
+	/* ... */
+
+	/* For simulation desc_here needs to be created while normally it
+	   will already exist.  This type of all_sessions description exists
+	   as a continuing session with no implied node yet in node_orgin,
+	   either read from disk or created by continue_repute.  This is
+	   not the same as the description of a peer of a flexible, but
+	   similar.  For now forego updating descriptions.   Later, set
+	   unlinked level bit in an old description before adding updated one.
+	   Person running vrtater will be able to restore an old description
+	   in an unusual case, provided they are not logged in to node
+	   represented by updated. */
+	/* ... */
+	if ((desc_here = add_session_desc(session_here, &session_peer, &z, VRT_MASK_SESSION_CALLED, url, newoneliner, &cmplxt_here, NULL, NULL)) == NULL)
+		return -1;
+	diag_ls_all_sessions(1);
+
+	/* Retreive nodemap now or in a later pass. */
+	__builtin_printf(" waiting for nodemap...\n\n");
+	/* ... */
+
+	/* Save state.  Continue checking resuming instructions following on
+	   nodemap per this session. */
+	/* ... */
+
+	/* Simulate reception of continuity. */
+	nodemap = diag_receive_nodemap(session_here, &receiver);
+	__builtin_printf(" received .vrtater nodemap data from flexible node "
+		"with session (%x %x %x)\n", (&session_peer)->hash.h,
+		(&session_peer)->hash.m, (&session_peer)->hash.l);
+	cp_session(&session_peer, &(nodemap->name));
+
+	/* Set continuity. */
+	if (match_session(&(nodemap->name), &session_peer)) {
+		desc_here->level |= VRT_MASK_SESSION_CONTINUITY;
+		__builtin_printf(" continuity on flexible node at url %s\n",
+			url);
+		*maps = nodemap;
+		diag_ls_all_sessions(1);
+	} else {
 		__builtin_fprintf(stderr, "Error: nodemap vs session "
 			"mismatch.\n");
 		return -2;
 	}
 
-	/* Now that the nodemap is available, the session is considered cued
-	   while VRT_MASK_SESSION_CUED remains in the session description. */
-	desc->level |= VRT_MASK_SESSION_CUED;
-	__builtin_printf(" in cue on flexible node at url %s\n", url);
-	diag_ls_partial_sessions(1);
-	*nodemap = map;
+	return 0;
+}
+
+/* For phase-b of continuing partial, send syncronization key data in repute
+   to url for loginkey in session_here along with any further details for
+   session_here, then requesting login authentication if added.  A value
+   is then fed back from flexible and used to syncronize reputatations in list.
+   If successfull, continuing node with session_here becomes partial with a
+   flexible node that retreives continuity.  Return value fed back else < 0.
+   note: Optional password may automatically succeed based on the sense of
+   the usepasswd level bit maintained flexible session description.  Reputation
+   data is treated in loginkeys.c.  Reputations data (repute) is composed of
+   session numbers with sequence indicies of hmap keymaps that were previously
+   partial with a flexible, or are currently vrtlogging, these maintained on
+   both sides of partial.  complextimate data is always set in advance of
+   calling this function.  Therein is derived size of data that will transfer
+   if implied vrtlogin succeeds.  A keymap is an hmap that represents all the
+   hmaps from a continuing node in a given partial.  It's mapname is used as
+   loginkey. */
+int
+continue_node(char *url, ptlrepute_list_t *list, ptlrepute_t *repute, session_t *session_here, session_t *loginkey, session_t *holdkey, unsigned int tl_cmplxt)
+{
+	session_desc_t *desc = NULL;
+	ptlrepute_t *unique_repute;
+	int keyuse, rval = -1;
+
+	/* Looking at all_sessions, the nodemap, and any dialog therein, person
+	   running vrtater decides to accept session desc->peer indexed by
+	   session_here, as VRT_MASK_SESSION_CONTINUITY remains true. */
+	__builtin_printf(" person running vrtater decides to log node\n");
+
+	/* Likely passed in as arg. */
+	if ((desc = find_session(session_here)) == NULL) {
+		__builtin_printf("continue_node cant find_session\n");
+		abort();
+	}
+	if (!(desc->level & VRT_MASK_SESSION_CONTINUITY))
+		return -1;
+
+	/* Send sync_vrtlogin keydata in repute to flexible. Implicit are url
+	   and session, to reference earlier exchange.  Inclusive are loginkey,
+	   holdkey, repute->lastkey, repute->contingentkey, and tl_cmplxt, . */
+	/* ... */
+
+	/* If password added, fork initiating password authentication with url
+	   that determines flexible node connection.  Resume instructions
+	   following if successfull and keyuse value is returned. */
+	/* ... */
+#ifdef DIAG_CONTINUING_SESSION
+	__builtin_printf(" continuing loginkeys sent to flexible\n\tloginkey "
+		"(%x %x %x) %i\n\tlastkey (%x %x %x) %i  if error assume it's "
+		"on flexible side\n\tcontingentkey (%x %x %x) %i  if error "
+		"assume it's on flexible side\n\tholdkey (%x %x %x) %i  "
+		"update if not zero_mapname\n\tholdbkp (%x %x %x) %i  for now "
+		"zero_mapname during diagnostic\n", loginkey->hash.h,
+		loginkey->hash.m, loginkey->hash.l, loginkey->seq,
+		repute->lastkey.hash.h, repute->lastkey.hash.m,
+		repute->lastkey.hash.l, repute->lastkey.seq,
+		repute->contingentkey.hash.h, repute->contingentkey.hash.m,
+		repute->contingentkey.hash.l, repute->contingentkey.seq,
+		holdkey->hash.h, holdkey->hash.m, holdkey->hash.l,
+		holdkey->seq, repute->holdbkp.hash.h, repute->holdbkp.hash.m,
+		repute->holdbkp.hash.l, repute->holdbkp.seq);
 #endif /* DIAG_CONTINUING_SESSION */
 
-	return 0;
-}
+	/* Simulate a keyuse value fed back from flexible and related to this
+	   session arriving, describing how reputation data on flexible was or
+	   was not modified. */
+	keyuse = VRT_LOGIN_LAST; /* lastkey succeeded, usual case */
 
-/* Try to log in to cued flexible session at url(an optional password may be
-   implemented).  partial forming becomes 'partial' with the continued or
-   new continued session and the flexible.  partial's are selected from
-   descriptions appearing in all_sessions.  If successfull, continued session
-   is then added to the set of sessions with VRT_MASK_SESSION_PARTIAL true
-   locally in all_sessions.  Representational data described by hmap with
-   session name loginkey will then become partial to forming partial using
-   repute refrences if any.  If sync can not be established, no data is sent
-   and any of data for loginkey present in disconnected partial has it's
-   VRT_MASK_PARTIAL bit set false, any associated maps receiving selection and
-   a session name within node-orgin.  If successfull update outbound keyname
-   reputation locally vs. forming.  Return 0 on success.  Connection is then
-   assumed while session name of forming remains in all_sessions data.  If
-   forming can not be connected return non-zero. */
-int
-form_continuing_session(char *url, partial_t *forming, session_t *loginkey, ptlrep_t *repute)
-{
-	session_desc_t *desc;
-	int keyuse, rval = -1;
-
-#ifdef DIAG_CONTINUING_SESSION
-	/* Looking at all_sessions, the nodemap, and any dialog therein, one
-	   whom runs vrtater accepts the cued session offered.  This would
-	   normally be done using accept_called_session. */
-	__builtin_printf(" person running vrtater decides to log node\n");
+#ifdef DIAG_CONTINUING_FLEXIBLE_SENDS_RETRY
+	keyuse = VRT_LOGIN_RETRY; /* newly given login or holdkey redundant */
+#elif defined DIAG_CONTINUING_FLEXIBLE_SENDS_LASTKEYERR
+	keyuse = VRT_LOGIN_CONTINGENT; /* lastkey failed, contingent used */
+#elif defined DIAG_CONTINUING_FLEXIBLE_SENDS_BOTHKEYERR
+	keyuse = VRT_LOGIN_SYNCERR; /* both keys failed, recover */
+#elif defined DIAG_CONTINUING_FLEXIBLE_SENDS_NEWREPUTED
+	keyuse = VRT_LOGIN_NEWREPUTED; /* both sync keys zero_mapname */
 #endif
 
-	desc = find_in_all_sessions(&(forming->session));
-	/* Retrieve password locally, authenticate on remote. */
-	/* ... */
-
-	/* Retreive from remote a value describing how the remote reputation
-	   data was or was not modified, assigning this value to keyuse. */
-	/* ... */
-	keyuse = VRT_PARTIAL_LASTKEY; /* lastkey succeeded, usual case */
-
-#ifdef DIAG_CONTINUING_REMOTE_SENDS_RETRY
-	keyuse = VRT_PARTIAL_RETRY; /* loginkey given redundant, unusable */
-#elif defined DIAG_CONTINUING_REMOTE_SENDS_KEYERR_LAST
-	keyuse = VRT_PARTIAL_VALIDUSE; /* lastkey failed, validkey succeeded */
-#elif defined DIAG_CONTINUING_REMOTE_SENDS_KEYERR_BOTH
-	keyuse = VRT_PARTIAL_SYNCERR; /* both keys failed, recover */
-#endif
-
-	if (keyuse == VRT_PARTIAL_RETRY) {
-		/* Login to remote flexible failed.  Retry.*/
-		__builtin_printf("Redundant login key remotely.  Try again "
-			"with something any bit different.\n");
-		return -1;
-	}
-	/* Login to flexible succeeded.  Syncronize reputations locally. */
-	if ((rval = sync_reputation(forming->ptlreps, repute, loginkey, &(repute->key), &(repute->bkpkey), url, keyuse)) != 0) {
-		if (rval == VRT_PARTIAL_LASTKEY)
-			__builtin_printf("Reputation found\n");
-		else if (rval == VRT_PARTIAL_VALIDUSE)
-			__builtin_printf("Reputation found\nnote: "
-				"lastkey mismatch.\n");
-		else if (rval == VRT_PARTIAL_SYNCERR) {
-			__builtin_printf("Error: Continuing requires "
-				"recovery.\nOption to simplify this, in "
-				"ifnode interface, not yet added\n");
-			return -1;
-		} else
-			__builtin_printf("New reputation.\n");
-	}
-	if ((rval = complete_negotiation(desc, loginkey, 0)) != 0)
-		return -1;
-
-#ifdef DIAG_CONTINUING_SESSION
-	__builtin_printf("  reputation data: %x %x %x\n", repute->key,
-		repute->bkpkey, repute->holdkey);
-
-	__builtin_printf("Forming a continuing session %x now partial with "
-		"\"%s\".\n", (int) desc->session, desc->oneliner);
-
-	/* Add partial session. */
-	/* ... */
-	desc->level |= VRT_MASK_SESSION_PARTIAL;
-#endif
-
-	return 0;
-}
-
-/* If answer_accept is true, try to cue a flexible session locally for a
-   calling peer node, providing a login for peer_session.  session will be
-   refrenceable through all_sessions if not already, peer_session becoming
-   likewise apon successfully returning.  If session is not already in the set
-   of sessions with VRT_MASK_SESSION_PARTIAL set high, add it as such returning
-   0, connection then being assumed thereafter while it remains true.  If
-   peer_session can not be connected return non-zero. */
-int
-answer_session(session_t *session)
-{
-	partial_t *partial;
-	session_t peer_session, loginkey, lastkey, validkey;
-	session_desc_t *desc = NULL;
-	session_desc_t *peer_desc = NULL;
-	ptlreps_list_t *list;
-	ptlrep_t *rrepute;
-	int keyuse, rval = -1;
-
-	partial = find_partial(session);
-	list = partial->ptlreps;
-	answer_accept = 1; /* for now */
-	partial->ptlbits |= VRT_MASK_ANSWER_ACCEPT; /* for now */
-	if (!answer_accept) {
-		/* Nobody home.  Disconnect. */
-		/* ... */
-		return -1;
-	} else if (!(partial->ptlbits & VRT_MASK_ANSWER_ACCEPT)) {
-		/* Nobody home in that partial.  Disconnect. */
-		/* ... */
-		return -1;
-	}
-
-#ifdef DIAG_FLEXIBLE_SESSION
-	/* Simulate session description values that would be retrieved or set
-	   here. */
-	peer_session = 0x330d0000; /* nicenode calling */
-	session_t null = 0;
-	loginkey = 0xc0de0008;
-	lastkey = 0xb0de0008;
-	validkey = 0xface0008;
-	btoggles_t level = VRT_MASK_SESSION_CALLED;
-	complextimate_t rcomplex; /* guessing */
-	(&rcomplex)->hmap_count = 345;
-	(&rcomplex)->tl_vdata = 7071;
-	(&rcomplex)->tl_dialog = 51213;
-	if ((peer_desc = add_session_desc(&peer_session, session, &null, &level, NULL, &rcomplex)) == NULL)
-		return -1;
-	/* Now the session is cued, but a session description is needed for the
-	   simulation to set the cued bit on hw node flexible. */
-	__builtin_printf(" accepting logins on flexible partial %x\n",
-		(int) *session);
-	peer_desc->level |= VRT_MASK_SESSION_CUED; /* nicenode assumed cued */
-	__builtin_printf(" it seems like nanoseconds ago ...\n");
-	/* Create a session description for flexible local node hwnode. */
-	char oneliner[] = "hw node"; /* 80 chars max */
-	level = VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_INBOUND;
-	complextimate_t complex;
-	(&complex)->hmap_count = 8;
-	(&complex)->tl_vdata = 288;
-	(&complex)->tl_dialog = 314;
-	if ((desc = add_session_desc(session, &peer_session, &null, &level, oneliner, &complex)) == NULL)
-		return -1;
-	desc->level |= VRT_MASK_SESSION_CUED; /* hw node */
-	if ((desc = find_in_all_sessions(session)) == NULL)
-		return -1;
-	diag_ls_partial_sessions(1);
-#endif
-
-	if ((peer_desc = find_in_all_sessions(&peer_session)) !=  NULL) {
-		__builtin_printf(" \"%s\" authenticating login\n",
-			desc->oneliner);
-		/* Optional password authentication with remote, if added.
-		   For given partial, option is specified in partial_t member
-		   ptlbits, masked by VRT_MASK_REQUIRE_PASSWD. */
-		/* ... */
-
-#ifdef DIAG_FLEXIBLE_SESSION
-		/* Assuming that this is running on hw node, create simulated
-		   and already active local keymap info for avatar8, placed in
-		   a local reputation. */
-		session_t synclastkey, syncvalidkey;
-		synclastkey = 0xb0de0008;
-		syncvalidkey = 0xface0008;
-		hmapf_t *holdmap = p_hmapf(26);
-		rrepute = add_ptlrep(list, &synclastkey, NULL);
-		rrepute->bkpkey = syncvalidkey;
-		rrepute->holdkey = holdmap->name;
-#endif
-#ifdef DIAG_FLEXIBLE_KEYERR
-		/* Simulate keysync error from a disk or memory related event.
-		   This key (non-bkpkey) was successfully used by remote,
-		   however it has an error either remotely or locally somehow
-		   after likely write to disk or memory, or having never
-		   been written to disk before a reset or power-off. */
-		rrepute->key = 0xfaded000; /* inverse test also valid */
-#endif
-#ifdef DIAG_FLEXIBLE_BKPKEYERR
-		/* Simulate keysync error from a disk or memory related event.
-		   This key was successfully used possibly becoming shifted
-		   (system may have gone down during shift).  When possibly
-		   written to disk then, or in memory either remotely or
-		   locally, it somehow was in error. */
-		rrepute->bkpkey = 0xfaded000; /* inverse test also valid */
-#endif
-#ifdef DIAG_FLEXIBLE_NEWREPUTE
-		lastkey = 0xffffffff;
-		validkey = 0xffffffff;
-#endif
-		/* Some keyuse values for sync_reputation, see header.
-		   VRT_PARTIAL_RETRY.  As a flexible partial receiving logins,
-		   loginkey given may be used by another reputation.
-		   VRT_PARTIAL_SYNC_*.  When any login arrives, it should be
-		   rejected if it's lastkey or validkey matches on any lastkey
-		   or respective validkey of any keymap that is in the
-		   reputation data read from disk or generated while running.
-		   This protect's the sync for all further login's.  Also,
-		   logins that are archived due to disuse will need to be
-		   exclusive or they will require interactive recovery. */
-
-		/* Syncronize reputations locally vs. login from remote
-		   continuing partial.  Tend to any issues. */
-		rval = sync_reputation(list, rrepute, &loginkey, &lastkey, &validkey, NULL, keyuse);
-		if ((rval = complete_negotiation(peer_desc, &loginkey, rval)) != 0)
-			return rval;
-
-		/* Add partial session. */
-		/* ... */
-		desc->level |= VRT_MASK_SESSION_PARTIAL;
-		peer_desc->level |= VRT_MASK_SESSION_PARTIAL; /* assumed cued */
-		diag_ls_partial_sessions(1);
-	}
-
-	return 0;
-}
-
-/* Using last and new keynames connect session described in desc.  Return 0 on
-   success else nonzero.  notes: Consideration for the eventuality that remote
-   continuing nodes may share the same url assumes that all nodes behind url
-   may be allowed to be connected simutaniously if desc is accepted by one whom
-   runs vrtater locally.  This means that the exchange of a list of n
-   session_desc_t data should be supported so that block of sessions then would
-   all be connected.  session_desc_t therefore now includes session_t from,
-   that specifies the node that session described is from.  For a flexible
-   node, any sessions calling for a login out of node at url after a continuing
-   partial session exists there are then automatically behind continuing. */
-int
-complete_negotiation(session_desc_t *desc, session_t *loginkey, int keyuse)
-{
-#ifdef DIAG_FLEXIBLE_SESSION
-	ptlrep_t *reputed;
-	/* Messages to remote.  If this is a local flexible partial, forward
-	   keyuse value to peer and ... */
-	if (!(desc->level & VRT_MASK_SESSION_INBOUND)) {
-		if (keyuse == VRT_PARTIAL_RETRY) {
-			__builtin_printf("Sending message:\n Redundant "
-			"loginkey.  Try again with something any bit "
-			"different.\n");
-			/* Send VRT_PARTIAL_RETRY. */
-			return keyuse;
-		} else if (keyuse == VRT_PARTIAL_NEWREPUTED) {
-			__builtin_printf("Sending message:\n New "
-				"reputation on %x.\n", desc->peer);
-			/* Send VRT_PARTIAL_NEW_REPUTED. */
-		} else if (keyuse == VRT_PARTIAL_SRCHMAPKEY) {
-			__builtin_printf("Sending message:\n Continuing "
-				"lastkey session.\n");
-			/* Send VRT_PARTIAL_LASTKEY vs. ..._SRCHMAPKEY. */
-		} else if (keyuse == VRT_PARTIAL_VALIDUSE) {
-			__builtin_printf("Sending message:\n Continuing "
-				"session. note: validkey usage.\n");
-			/* Send VRT_PARTIAL_VALIDUSE. */
-		} else if (keyuse == VRT_PARTIAL_SYNCERR) {
-			__builtin_printf("Sending message:\n Oops! A highly "
-				"unlikely pair of exclusive errors has "
-				"occured on one or both\n node systems.  "
-				"Recovery option (if added) is required to "
-				"continue session.\n See ifnode interface for "
-				"more.\n");
-			/* Send VRT_PARTIAL_SYNCERR. */
-			return keyuse;
+	/* Mapping keyuse determinacy, try to make session partial. */
+	if ((rval = sync_loginkeys(url, list, repute, loginkey, holdkey, &(repute->lastkey), &(repute->contingentkey), keyuse))) {
+		if ((rval == VRT_LOGIN_RETRY) || (rval == VRT_LOGIN_SYNCERR)) {
+			__builtin_printf("given keyuse %i sync_loginkeys "
+				"returns %i\n", keyuse, rval); /* diag */
+			return -2;
 		}
 	}
 
-	/* Login succeeded.  On the flexible node side, one line description of
-	   the node now logged is the NULL string. */
-	if (desc->oneliner) {
-		__builtin_printf(" successfull login by %x on %x\n",
-			(int) *loginkey, (int) desc->peer);
-		/* Send nodemap and ... */
-	} else
-		__builtin_printf(" successfull login of %x at %x\n",
-			(int) *loginkey, (int) desc->peer);
+#ifdef DIAG_CONTINUING_SESSION
+	__builtin_printf(" keyuse given %i sync returned %i\n", keyuse, rval);
+	if ((unique_repute = find_lastkey(list, loginkey)) == NULL) {
+		__builtin_printf("continue_node cant find_lastkey\n");
+		abort();
+	}
+	__builtin_printf(" continuing loginkey data after sync\n\tlastkey "
+		"(%x %x %x) %i\n\tcontingentkey (%x %x %x) %i  "
+		"(key = ovrflo ? match : !!mismatch)\n"
+		"\tholdkey (%x %x %x) %i  empty previous or pushed down\n"
+		"\tholdbkp (%x %x %x) %i  pushed down if any\n",
+		unique_repute->lastkey.hash.h, unique_repute->lastkey.hash.m,
+		unique_repute->lastkey.hash.l, unique_repute->lastkey.seq,
+		unique_repute->contingentkey.hash.h,
+		unique_repute->contingentkey.hash.m,
+		unique_repute->contingentkey.hash.l,
+		unique_repute->contingentkey.seq,
+		unique_repute->holdkey.hash.h, unique_repute->holdkey.hash.m,
+		unique_repute->holdkey.hash.l, unique_repute->holdkey.seq,
+		repute->holdbkp.hash.h, unique_repute->holdbkp.hash.m,
+		unique_repute->holdbkp.hash.l, unique_repute->holdbkp.seq);
+	__builtin_printf(" continuing session (%x %x %x) now partial with "
+		"\"%s\".\n", desc->session.hash.h, desc->session.hash.m,
+		desc->session.hash.l, desc->oneliner);
+#endif /* DIAG_CONTINUING_SESSION */
+
+	desc->level &= ((VRT_MASK_SESSION_CALLED ^ 0xffffffff));
+	desc->level |= VRT_MASK_SESSION_PARTIAL;
+
+	return 0;
+}
+
+/* For phase-a of flexible partial with continuing nodes, having received
+   vrtlogin data components url, possibly oneliner, session_peer, and possibly
+   session_thru, search all_sessions for a description with url.  This
+   indicates that the receiving flexible node exists.  If found test for
+   session enabled, login's enabled, and flexible not overloaded.  Passing all
+   this, send description details oneliner, url if changed, flexible session
+   number, a size total derived from complextimate at the arrival point, and
+   the nodemap.  Return 0 on success.  note:  After this function completes,
+   tend to session_peer restoring continuation of partial if requested by
+   the receiving of phase-b (syncronization) parts of the vrtlogin data then
+   calling sync_vrtlogin (see: hacking notes below for more).  Any description
+   of a peer in all_sessions only ever applies as a continuing session
+   description on a flexible, those having no implied node in node_orgin and
+   having a vrtlogin underway or partial with an adjunct described flexible
+   node. */
+int
+answer_vrtlogin(session_t *session_peer, session_t *session_thru, char *url)
+{
+	session_desc_t *desc_here = NULL;
+	session_desc_t *desc_peer = NULL;
+	complextimate_t cmplxt_peer = { 0, 0, 0 }; /* unknown until sync */
+
+	/* Simulate receiving vrtlogin phase-a. */
+	__builtin_printf("\n ...it seems like nanoseconds ago\nRequest from "
+		"\"(%x %x %x) %i continuing\" partial to \"%s\"\n\n",
+		session_peer->hash.h, session_peer->hash.m,
+		session_peer->hash.l, session_peer->seq, url);
+
+	/* Search all_sessions for url. */
+	if ((desc_here = find_url(url)) == NULL) {
+		__builtin_printf("Node \"%s\" currently non-existant.  "
+			"Disconnect sequence...\n", url);
+		/* ... */
+		return -1;
+	}
+	desc_here->level |= VRT_MASK_SESSION_INBOUND | VRT_MASK_SESSION_CALLED;
+
+	__builtin_printf("Node \"%s\" found\n attempting to provide "
+		"continuity...\n", desc_here->oneliner);
+	diag_ls_all_sessions(1);
+
+	/* note: Disconnect sequence should also tend to desc_here. */
+	if (!(desc_here->level & VRT_MASK_SESSION_ENABLE)) {
+		__builtin_printf("Node \"%s\" currently unreachable.  "
+			"Disconnect sequence...\n", url);
+		/* ... */
+		return -1;
+	} else if (!(session_nodemask & VRT_MASK_ACCEPT_VRTLOGIN)) {
+		__builtin_printf("Node(s) currently unreachable.  Disconnect "
+			"sequence...\n");
+		/* ... */
+		return -1;
+	} else if (session_nodemask & VRT_MASK_OVERLOADED) {
+		__builtin_printf("Node \"%s\" currently at maximum "
+			"complextimate state.  Disconnect sequence...\n", url);
+		/* ... */
+		return -1;
+	}
+
+	/* Send latest description including desc_here->oneliner,
+	   desc_here->session, and desc_here->cmplxt, followed by
+	   desc_here->nodemap. */
+	/* ... */
+	desc_here->level |= VRT_MASK_SESSION_CONTINUITY;
+
+	__builtin_printf(" sending nodemap to \"%s\"...\n\n oops: vrtater cant "
+		"send nodemap.  Most significant components of\n session.c "
+		"still missing.  Well, lets say someone had written those\n\n",			url);
+	/* ... */
+
+	/* Add phase-a parts for desc_peer. */
+	if ((desc_peer = add_session_desc(session_peer, &(desc_here->session), session_thru, VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_CONTINUITY, NULL, NULL, &cmplxt_peer, NULL, NULL)) == NULL) {
+		__builtin_printf("answer_vrtlogin cant find desc_peer\n");
+		abort();
+	}
+	diag_ls_all_sessions(1);
+	__builtin_printf("\n nodemap sent.  Checking every so often...\n\n");
+
+	/* hacking notes:  At this point vrtlogin completion is determinate
+	   based on a configured lengthly timeout.  Person running vrtater on
+	   continuing then has ample time to decide (Some timing configured in
+	   ifnode**.c so far).  Further refrence to desc_peer->session are now
+	   assumed to be phase-b parts for desc_peer arriving, compounded with
+	   loginkey data.  This data always sent immediately before peer
+	   request for authentication login.  If the usepasswd level bit is
+	   unset in desc_here, automaticaly authenticate if possible.  After
+	   vrtlogin data passes preliminarily, call sync_vrtlogin therewith.
+	   A preferably GNU Free Software, or GNU freindly login lib mechanism,
+	   to be added at some point, would perhaps require uname and password.
+	   This would do well as default.  Another way that might be workable
+	   would be: retrieve a uname equaling contingentkey with a password.
+	   Follow by resetting uname to new contingentkey retaining password.
+	   Pondering...  Very non-standard...  Might be way far from secure...
+	   Hmm...  Considering eventuality that continuing nodes may share the
+	   same url continuously or initially assumes that all nodes behind
+	   url should be allowed to be connected simutaniously if a flexible
+	   session is accepted by continuing node attempting vrtlogin.  This
+	   means that the exchange of a list of n session_desc_t data should be
+	   supported so that block of sessions would then first all appear
+	   in all_sessions on the continuing, or in the sent nodemap dialog.
+	   These then would all be connected when accepting the flexible
+	   session.  session_desc_t therefore includes session_t thru, that
+	   specifies a node that peer session described eminates out of.
+	   For a flexible node, any sessions calling for a vrtlogin out of node
+	   at url after a continuing partial session exists there are then
+	   automatically thru continuing. */
+
+	return 0;
+}
+
+/* For phase-b of flexible partial with continuing nodes, having already
+   authenticated with password if added and having received (see: hacking note
+   above) phase-b vrtlogin data loginkey, holdkey, lastkey, contingentkey, and
+   tl_cmplxt for peer, try to syncronize session_peer with flexible node's
+   reputation list.  Allow for successive tries of this phase of vrtlogin at
+   the accepting stage with different data, by default renewing any timeout
+   then calling this.  If the vrtlogin completes here successfully, the session
+   description is already completed and a reputation for passed loginkeys will
+   either be added or updated.  Weather successfull or not keyuse_feedback is
+   called and when parts for sending data are added therein, a keyuse value
+   defined in loginkeys.h is sent to the continuing node reflecting contextual
+   loginkey data state on flexible.  Return keyuse value sent to continuing or
+   < 0 apon any error, meanwhile trying to maintain continuity where there is
+   no partial yet.  note: When removing flexible nodes it is assumed associated
+   session descriptions will be removed first through close_session. */
+int
+sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *loginkey, session_t *lastkey, session_t *contingentkey, session_t *holdkey, unsigned int tl_cmplxt, char *url)
+{
+	session_desc_t *desc_here, *desc_peer;
+	ptlrepute_t *repute_here, *unique_repute_here;
+	int keyuse, rval = -1;
+
+	/* Likely passed in as args. */
+	if ((desc_here = find_url(url)) == NULL) {
+		__builtin_printf("sync_vrtlogin cant find_url\n");
+		abort();
+	}
+	if ((desc_peer = find_session(session_peer)) == NULL) {
+		__builtin_printf("sync_vrtlogin cant find_session\n");
+		abort();
+	}
+
+	/* For simulation, create an already active partial reputation in
+	   desc_here->ptlrepute for vrtlogin of avatar555, enabling a
+	   continuing session.  note: url is always NULL for repute in a
+	   flexible partial. */
+	session_t continuelastkey = { { 0, 0, 0xb0de }, 8 };
+	session_t continuecontingentkey = { { 0, 0, 0xface }, 8 };
+	session_t continueholdkey = { { 0, 0, 0xface }, 555 };
+	repute_here = add_ptlrepute(desc_here->ptlrepute, &continuelastkey, &continueholdkey, NULL);
+	cp_mapname(&continuecontingentkey, &(repute_here->contingentkey));
+
+	__builtin_printf(" authenticated vrtlogin.\n partial to \"%s\" "
+		"requested\n continuing (%x %x %x) nport to \"%s\" arrival\n",
+		url, session_peer->hash.h, session_peer->hash.m,
+		session_peer->hash.l, desc_here->oneliner);
+
+	/* For received cmplxt that is assumed to exclude the nodemap sent,
+	   test if login_cmplxt_max is exceeded here. */
+	if (login_cmplxt_max < tl_cmplxt) {
+		__builtin_printf("Sending message...\n Continuing session "
+			"maintained on \"%s\"\n requires lower complexitmate "
+			"to log in.  session then retains continuity...\n",
+			url);
+		return -1;
+	}
+#ifdef DIAG_FLEXIBLE_SESSION
+	if ((unique_repute_here = find_lastkey(desc_here->ptlrepute, &continuelastkey)) == NULL) {
+		__builtin_printf("sync_vrtlogin cant find_lastkey\n");
+		abort();
+	}
+
+	__builtin_printf(" continuing loginkey data transfered\n\tloginkey "
+		"(%x %x %x) %i\n\tlastkey (%x %x %x) %i\n\tcontingentkey "
+		"(%x %x %x) %i\n\tholdkey (%x %x %x) %i\n\tholdbkp (%x %x %x) "
+		"%i\n", loginkey->hash.h, loginkey->hash.m, loginkey->hash.l,
+		loginkey->seq, lastkey->hash.h, lastkey->hash.m,
+		lastkey->hash.l, lastkey->seq, contingentkey->hash.h,
+		contingentkey->hash.m, contingentkey->hash.l,
+		contingentkey->seq, holdkey->hash.h, holdkey->hash.m,
+		holdkey->hash.l, holdkey->seq,
+		unique_repute_here->holdbkp.hash.h,
+		unique_repute_here->holdbkp.hash.m,
+		unique_repute_here->holdbkp.hash.l,
+		unique_repute_here->holdbkp.seq);
+#endif /* DIAG_FLEXIBLE_SESSION */
+
+	/* Syncronize loginkey reputation data using repute_peer vs. ptlrepute
+	   list for flexible.  There will either be a reputation already,
+	   or a new one will be added.  holdmap reference stack will be pushed
+	   if holdkey is not of zero_mapname and found to be unique in
+	   ptlrepute.  */
+	keyuse = sync_loginkeys(NULL, desc_here->ptlrepute, NULL, loginkey, holdkey, lastkey, contingentkey, VRT_LOGIN_PRECONTEXT);
+
+	/* Send a keyuse value to continuing node so that loginkey data can be
+	   syncronized there. */
+	if ((rval = keyuse_feedback(desc_peer, loginkey, keyuse)) != 0) {
+		__builtin_printf(" sync_loginkeys returns %i  keyuse_feedback "
+			"returns %i\n",
+			keyuse, rval); /* diag */
+		subtract_session_desc(desc_peer);
+		return rval;
+	} else {
+
+#ifdef DIAG_FLEXIBLE_SESSION
+		__builtin_printf(" sync_loginkeys returns %i  keyuse_feedback "
+			"returns %i\n", keyuse, rval);
+		if ((unique_repute_here = find_lastkey(desc_here->ptlrepute, loginkey)) == NULL) {
+			__builtin_printf("sync_vrtlogin cant find_lastkey\n");
+			abort();
+		}
+
+		__builtin_printf(" flexible loginkey data after sync\n"
+			"\tlastkey (%x %x %x) %i\n"
+			"\tcontingentkey (%x %x %x) %i\n"
+			"\tholdkey (%x %x %x) %i  active on flexible\n"
+			"\tholdbkp (%x %x %x) %i  active on flexible\n",
+			unique_repute_here->lastkey.hash.h,
+			unique_repute_here->lastkey.hash.m,
+			unique_repute_here->lastkey.hash.l,
+			unique_repute_here->lastkey.seq,
+			unique_repute_here->contingentkey.hash.h,
+			unique_repute_here->contingentkey.hash.m,
+			unique_repute_here->contingentkey.hash.l,
+			unique_repute_here->contingentkey.seq,
+			unique_repute_here->holdkey.hash.h,
+			unique_repute_here->holdkey.hash.m,
+			unique_repute_here->holdkey.hash.l,
+			unique_repute_here->holdkey.seq,
+			unique_repute_here->holdbkp.hash.h,
+			unique_repute_here->holdbkp.hash.m,
+			unique_repute_here->holdbkp.hash.l,
+			unique_repute_here->holdbkp.seq);
+		__builtin_printf(" flexible session (%x %x %x) now partial "
+			"with \"%s\".\n", desc_here->session.hash.h,
+			desc_here->session.hash.m, desc_here->session.hash.l,
+			desc_here->oneliner);
+#endif /* DIAG_FLEXIBLE_SESSION */
+
+		/* Add partial session.  Connect session sequence if any. */
+		/* ... */
+		desc_here->level &= ((VRT_MASK_SESSION_DETACHED ^ 0xffffffff));
+		desc_here->level &= ((VRT_MASK_SESSION_ENABLE ^ 0xffffffff));
+		desc_here->level &= ((VRT_MASK_SESSION_CALLED ^ 0xffffffff));
+		desc_here->level &= ((VRT_MASK_SESSION_CONTINUITY ^ 0xffffffff));
+		desc_here->level |= VRT_MASK_SESSION_PARTIAL;
+		desc_peer->level ^= (VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_CONTINUITY | VRT_MASK_SESSION_PARTIAL);
+		strcpy(desc_peer->oneliner, desc_here->oneliner);
+		desc_peer->cmplxt.tl_dialog = tl_cmplxt; /* cheating for now */
+		diag_ls_all_sessions(1);
+	}
+
+	return rval;
+}
+
+/* Send syncronization values described by keyuse to continuing node indicating
+   success or failure of sync.  Return 0 on success else keyuse, or < 0 on any
+   error. */
+int
+keyuse_feedback(session_desc_t *desc, session_t *loginkey, int keyuse)
+{
+	/* Messages to remote.  Forward keyuse value to peer and ... */
+	if (keyuse == VRT_LOGIN_RETRY) {
+		__builtin_printf("Sending keyuse message...\n Redundant "
+			"loginkey or holdkey.  Try again with something any "
+			"bit different.\n");
+		/* Send VRT_LOGIN_RETRY. ... */
+		return keyuse;
+	} else if (keyuse == VRT_LOGIN_NEWREPUTED) {
+		__builtin_printf("Sending keyuse message...\n New reputation "
+			"on (%x %x %x).\n", desc->peer.hash.h,
+			desc->peer.hash.m, desc->peer.hash.l);
+		/* Send VRT_LOGIN_NEWREPUTED. ... */
+	} else if (keyuse == VRT_LOGIN_LAST) {
+		__builtin_printf("Sending keyuse message...\n Continuing "
+			"session.\n");
+		/* Send VRT_LOGIN_LAST. ... */
+	} else if (keyuse == VRT_LOGIN_CONTINGENT) {
+		__builtin_printf("Sending keyuse message...\n Continuing "
+			"session.  note: !!contingentkey usage.\n");
+		/* Send VRT_LOGIN_CONTINGENT. ... */
+	} else if (keyuse == VRT_LOGIN_SYNCERR) {
+		__builtin_printf("Sending keyuse message...\n Oops! A highly "
+			"unlikely pair of exclusive errors has occured on one "
+			"or both\n node systems.  Recovery option (if added) "
+			"is required to continue session.\n See ifnode "
+			"interface for more.\n");
+		/* Send VRT_LOGIN_SYNCERR. ... */
+		return keyuse;
+	}
+
+#ifdef DIAG_FLEXIBLE_SESSION
+	/* Login succeeded. */
+	__builtin_printf(" successfull vrtlogin by (%x %x %x) %i on "
+		"(%x %x %x)\n", loginkey->hash.h, loginkey->hash.m,
+		loginkey->hash.l, loginkey->seq, desc->peer.hash.h,
+		desc->peer.hash.m, desc->peer.hash.l);
 #endif
 
 	return 0;
 }
 
-/* Send and receive .vrtater data while tending to any remote node sessions.
-   notes: Peers in a partial need to apply the correct options to the wrap
-   functions per inbound hmap.  This is automatically achieved by the wrap
-   functions with an options field at the top of the .vrtater, after the count
-   of bytes.  Wrap functions provide and receive .vrtater file's as a list of
-   int data. */
+/* Tend to remote node sessions.  Called once per state increment.  This
+   function will likely call read_from_network or something.  A send_maps call
+   or freely chosen callname name might then follow. */
 void
 sync_sessions(void)
 {
 	;
 }
 
-/* Read to buffers from ip addr's associated with remote node sessions.
-   Organize inbound .vrtater data to be unwrapped per partial by successive
-   calls to receive_maps_from_peer_partial. */
+/* Read .vrtater, other data, associated with remote node sessions running on
+   puters on the internet, organizing int type .vrtater data implied to be
+   unwrapped for each seperate session in successive calls to receive_map. */
 void
 read_from_network(void)
 {
@@ -453,76 +610,88 @@ read_from_network(void)
 }
 
 /* Send to each node connected to session, counta hmaps in seta both referenced
-   thru sel.  notes: Outbound hmaps are referenced per call for given session
-   assumed to have VRT_MASK_SESSION_PARTIAL true in all_sessions description.
-   These happen to include only non-node-orgin hmaps with relevant changes.
-   These then become delivered for each url implied.  Values perhaps determined
-   in sync_sessions could be returned here and parsed by caller for reflecting
-   latency or disconnect for given remote session allowing caller to
-   conditionally close session. */
+   thru sel.  note: A set of outbound hmaps within session are referenced per
+   call, partial session description having it's level bit true all_sessions.
+   These happen to include only non node-orgin hmaps with relevant changes.
+   These then become delivered for each url implied.  Return values perhaps
+   determined in sync_sessions describing latency or disconnect for given
+   session allowing caller to conditionally call close_session. */
 int
-buffer_maps_to_peer_partial(session_t *session, select_t *sel)
+send_maps(session_t *session, select_t *sel)
 {
 	hmapf_t **map;
 	int i;
 
 	map = sel->seta;
-	__builtin_printf(" session.c: pretending to buffer partial %x "
-		"for transmit to another node,\n  buffering...\n", *session);
+	__builtin_printf(" session.c: pretending to syncronize hmaps within "
+		"partial (%x %x %x),\n  sending...\n",
+		session->hash.h, session->hash.m, session->hash.l);
 	for (i = 0; i < sel->counta; i++, map++)
-		__builtin_printf("  map %x\n", ((*map)->name));
+		__builtin_printf("  map (%x %x %x) %i\n", (*map)->name.hash.h,
+		(*map)->name.hash.m, (*map)->name.hash.l, (*map)->name.seq);
 
 	return 0;
 }
 
-/* Per each singular .vrtater data parcel received and connected to a called
-   or calling session thus represented by a node partial, hmapunwrapf
-   parcel, returning NULL when there are zero available for session, otherwise
-   returning counta hmap references in seta both referenced thru sel.  note:
-   hmapwrapf wraps from selection buffer a, while hmapunwrapf unwraps to b. */
-hmapf_t *
-receive_map_from_peer_partial(session_t *session, select_t *sel)
+/* By this or another name chosen, and per each singular .vrtater data parcel
+   received and connected to session then returned, hmapunwrapf parcel,
+   returning NULL when there are zero sessions with .vrtater data available,
+   otherwise returning counta hmap references in seta both referenced thru sel.
+   note: hmapwrapf wraps from selectf_a, while hmapunwrapf unwraps to b. */
+session_t *
+receive_map(select_t *sel)
 {
-	hmapf_t *selected, *map = NULL;
+	session_t *session;
+
+	return session;
+}
+
+/* For now here for testing in progress */
+hmapf_t *
+diag_receive_nodemap(session_t *session, select_t *sel)
+{
+	hmapf_t *map = NULL;
 	int buf_len, *int_buf, **buf = &int_buf;
 
-	/* read .vrtater data then refrenced by int_buf from ... */
+	/* Normally read .vrtater data then refrenced by int_buf from ... */
 	/* ... */
 
-#ifdef DIAG_CONTINUING_SESSION
-	/* Need a .vrtater to simulate receiving so for diagnostic, wrap
-	   an hmap from selection buffer a, simulating received data that
-	   is then referenced in int_buf. */
+	/* For diagnostic, call hmapwrap to create some int data.  int_buf
+	   then becomes allocated and contains the data.  First the hmap to be
+	   wrapped is referenced in selectf_a.  note: 2nd arg is opt's mask. */
 	map = p_hmapf(0);
 	*(sel->seta) = map;
-	buf_len = hmapwrapf(sel, 0, NULL, buf); /* buf passed, int_buf set */
-	/* int_buf is now allocated by hmapwrapf */
-	/* For test change the session name of the map so that it does
-	   not conflict thus unwrapping seperately as a new map.  This
-	   is required until the swap_hmaps function is written. */
-#endif
+	buf_len = hmapwrapf(sel, 0, NULL, buf);
 
-	/* Using argued session, receive map(s).  sel->countb holds hmap count
-	   received. */
+	/* Now that int data is available call hmapunwrap to place it in
+	   vohspace.  Afterwards sel->countb holds a map count of 1 for now.
+	   The mapname of hmap is changed for now to avoid a conflict, however
+	   soon hmapunwrap will update any map of same mapname. */
 	if (hmapunwrapf(sel, session, NULL, (int *) int_buf) < 0)
 		__builtin_fprintf(stderr, "Error: .vrtater data received did "
 			"not hmapunwrapf as expected.");
 	else
-		__builtin_printf("%i hmaps unwrapped from node %x\n",
-			sel->countb, (int) *session);
+		__builtin_printf("%i hmaps unwrapped for node (%x %x %x)\n",
+			sel->countb, session->hash.h, session->hash.m,
+			session->hash.l);
 
-#ifdef DIAG_CONTINUING_SESSION
+	/* For diagnostic, hmapwrap allocated int_buf.  This way of allocating
+	   is still under review, as malloc really should  be called where data
+	   is introduced rethinking it... yet caller would then need to
+	   calculate the correct filesize.   Perhaps calling first for that.
+	   Hmm...  That should work... See next commit for more... */
+	free(int_buf); /* for now free after hmapwrap allocates for caller. */
+
+	/* Adjust map for diagnostic, !!not working for some reason but... */
 	map = *(sel->setb);
 	map->vpos.z -= 5.; /* adjust map for visibility (very tiny map) */
-	free(int_buf); /* !!always free after hmapwrap wrap's .vrtater data. */
-#endif
 
 	return *(sel->setb);
 }
 
 /* Return reference to session description matching session or NULL if none. */
 session_desc_t *
-find_in_all_sessions(session_t *session)
+find_session(session_t *session)
 {
 	session_desc_t *current, *passed;
 
@@ -530,7 +699,7 @@ find_in_all_sessions(session_t *session)
 	passed = all_sessions->last;
 	while (1) {
 		if (current != NULL) {
-			if (current->session == *session)
+			if (match_session(&(current->session), session))
 				return current;
 			passed = current;
 			current = current->precursor;
@@ -539,8 +708,30 @@ find_in_all_sessions(session_t *session)
 	}
 }
 
-/* Create linked list construct for all_sessions returning reference to an
-   empty list of session descriptions residing therein. */
+/* Return reference to session description matching url or NULL if none. */
+session_desc_t *
+find_url(char *url)
+{
+	session_desc_t *current, *passed;
+
+	current = all_sessions->last;
+	passed = all_sessions->last;
+	while (1) {
+		if (current != NULL) {
+			if (current->url) {
+				if (!(strcmp(current->url, url))) {
+					if (!(current->level & VRT_MASK_SESSION_UNLINKED))
+					return current;
+				}
+			}
+			passed = current;
+			current = current->precursor;
+		} else
+			return NULL;
+	}
+}
+
+/* Create linked list construct for all_sessions. */
 void
 mk_session_desc_list(void)
 {
@@ -565,20 +756,36 @@ rm_session_desc_list(void)
 	free(all_sessions);
 }
 
-/* Add an element reference and provided session description details to the
-   linked list construct all_sessions.  Return reference to element listed. */
+/* Add a session description reference to all_sessions providing session
+   description details peer, thru (if forwarding present), level describing
+   connection state, oneliner describing session or session's peer, cmplxt
+   describing size of data transfered during vrtlogin (might be used thereafter
+   to maintain tl_cmplxt for session), and nodemap describing node
+   volumetrically.  ptlrepute reference supplied will be non NULL if
+   description is of a flexible node, allowing for calls to sync_loginkeys in
+   filescope.  Reference to url is added only where description is of a
+   continuing session eminating, not for a continuing session description in
+   all_sessions on a flexible, those having no implied node in node_orgin.
+   Return reference. */
 session_desc_t *
-add_session_desc(session_t *session, session_t *peer, session_t *from, btoggles_t *level, char *oneliner, complextimate_t *complexity)
+add_session_desc(session_t *session, session_t *peer, session_t *thru, btoggles_t level, char *url, char *oneliner, complextimate_t *cmplxt, hmapf_t *nodemap, ptlrepute_list_t *ptlrepute)
 {
 	session_desc_t *listed = NULL;
 
-	if (find_in_all_sessions(session)) {
-		__builtin_printf("Error: Can not create session "
-			"description as session %x already exists\n",
-			(int) *session);
+	if (find_session(session)) {
+		__builtin_printf("Error: Can not create session description "
+			"as session (%x %x %x) already exists\n",
+			session->hash.h, session->hash.m, session->hash.l);
 		return NULL;
 	}
-
+	if (url) {
+		if (find_url(url)) {
+			__builtin_printf("Error: Can not create session "
+			"description as url %s is already taken in "
+			"all_sessions\n", url);
+			return NULL;
+		}
+	}
 	if ((listed = (session_desc_t *) malloc(sizeof(session_desc_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for all_sessions entry\n",
@@ -590,15 +797,28 @@ add_session_desc(session_t *session, session_t *peer, session_t *from, btoggles_
 	all_sessions->count++;
 
 	/* Description. */
-	listed->session = *session;
-	listed->peer = *peer;
-	listed->from = *from;
-	listed->level = *level;
+	cp_session(session, &(listed->session));
+	cp_session(peer, &(listed->peer));
+	cp_session(thru, &(listed->thru));
+	listed->level = level;
+	if (url) {
+		if ((listed->url = (char *) malloc(strlen(url))) == NULL) {
+			__builtin_fprintf(stderr, "vrtater:%s:%d: "
+				"Error: Could not malloc for all_sessions "
+				"list member url\n",
+				__FILE__, __LINE__);
+			abort();
+		}
+		strcpy(listed->url, url);
+	} else
+		listed->url = NULL;
 	if (oneliner)
 		strcpy(listed->oneliner, oneliner);
-	listed->complexity.hmap_count = complexity->hmap_count;
-	listed->complexity.tl_vdata = complexity->tl_vdata;
-	listed->complexity.tl_dialog = complexity->tl_dialog;
+	listed->nodemap = nodemap;
+	listed->ptlrepute = ptlrepute;
+	listed->cmplxt.hmap_count = cmplxt->hmap_count;
+	listed->cmplxt.tl_vdata = cmplxt->tl_vdata;
+	listed->cmplxt.tl_dialog = cmplxt->tl_dialog;
 
 	if (oneliner)
 		__builtin_printf(" session description added for "
@@ -619,15 +839,16 @@ subtract_session_desc(session_desc_t *desc)
 	passed = all_sessions->last;
 	while (1) {
 		if (current != NULL) {
-			if (current->session == desc->session)
+			if (match_session(&(current->session), &(desc->session)))
 				break;
 			passed = current;
 			current = current->precursor;
 		} else
 			return;
 	}
-	__builtin_printf(" removing session description %x from all_sessions\n",
-		(int) current->session);
+	__builtin_printf(" removing session description (%x %x %x)\n",
+		current->session.hash.h, current->session.hash.m,
+		current->session.hash.l);
 	if (current == passed) {
 		if (!current->precursor)
 			all_sessions->last = NULL;
@@ -635,6 +856,8 @@ subtract_session_desc(session_desc_t *desc)
 			all_sessions->last = current->precursor;
 	} else
 		passed->precursor = current->precursor;
+	if (current->url)
+		free(current->url);
 	free(current);
 	all_sessions->count--;
 }
@@ -650,7 +873,7 @@ close_session(session_desc_t *desc)
 	return 0;
 }
 
-/* Remove all element refrences of all_sessions.  Return 0 on closed. */
+/* Return 0 after closing all connected sessions. */
 int
 close_all_sessions(void)
 {
@@ -660,12 +883,16 @@ close_all_sessions(void)
 	return 0;
 }
 
-
-/* Called when program exits or otherwise, this should leave everything in an
-   initial state yet be incapable of sending nor receiving until call_session
-   is called or answer_accept is equal to 1.  Caller will create a new session
-   description list before either above case.  Return 0 on success else
-   non-zero. */
+/* Called when program exits or otherwise, this should leave the program code
+   herein in an initial state with all connections dropped.  When this function
+   is called, caller will then always create a new session description list.
+   init_sessions may follow therafter.  When call_session is called, or when
+   VRT_MASK_ACCEPT_VRTLOGIN bit becomes true, calls to sync_session will
+   always become periodic per state increment.  This is the same sequence used
+   when the program is first run.  node-orgin and possibly some defined
+   flexible nodes that are not yet enabled will be in the session_desc_list.
+   Non-zero could be returned for now if a peer node seems broken, otherwise
+   returning 0 indicates an initial state. */
 int
 reset_sessions(void)
 {
@@ -680,9 +907,11 @@ reset_sessions(void)
 /* Temporary diagnostic to list partial sessions to stdout.  If full is
    nonzero, describe each session as well. */
 void
-diag_ls_partial_sessions(int full)
+diag_ls_all_sessions(int full)
 {
 	session_desc_t *current, *passed;
+	char *tmp, other[] = "";
+	int i;
 
 	if (all_sessions->count == 0) {
 		__builtin_printf("--no partial sessions listed--\n");
@@ -691,29 +920,43 @@ diag_ls_partial_sessions(int full)
 
 	current = all_sessions->last;
 	passed = all_sessions->last;
-	while (1) {
+	for (i = 0 ; ;i++) {
 		if (current != NULL) {
-			__builtin_printf("%x ", (int) current->session);
-			__builtin_printf("%x ", (int) current->peer);
-			__builtin_printf("%x ", (int) current->from);
+			__builtin_printf("(%x %x %x) ", current->session.hash.h,
+				current->session.hash.m,
+				current->session.hash.l);
+			__builtin_printf("(%x %x %x) ", current->peer.hash.h,
+				current->peer.hash.m, current->peer.hash.l);
+			__builtin_printf("(%x %x %x) ", current->thru.hash.h,
+				current->thru.hash.m, current->thru.hash.l);
 			if (full) {
+				if (current->level & VRT_MASK_SESSION_DETACHED)
+					__builtin_printf("DETACHED ");
+				if (current->level & VRT_MASK_SESSION_ENABLE)
+					__builtin_printf("VOBSPACE ");
 				if (current->level & VRT_MASK_SESSION_CALLED)
 					__builtin_printf("CALLED ");
-				if (current->level & VRT_MASK_SESSION_CUED)
-					__builtin_printf("CUED ");
+				if (current->level & VRT_MASK_SESSION_CONTINUITY)
+					__builtin_printf("NODEMAP ");
+				if (current->level & VRT_MASK_SESSION_USEPASSWD)
+					__builtin_printf("AUTH ");
 				if (current->level & VRT_MASK_SESSION_PARTIAL)
 					__builtin_printf("PARTIAL ");
 				if (current->level & VRT_MASK_SESSION_INBOUND)
 					__builtin_printf("FLEXIBLE ");
-				else if ((current->level & VRT_MASK_SESSION_PARTIAL) && (!(current->level & VRT_MASK_SESSION_INBOUND)))
+				else if ((current->level & VRT_MASK_SESSION_PARTIAL))
 					__builtin_printf("CONTINUING ");
 				__builtin_printf("\"%s\" ", current->oneliner);
-				__builtin_printf("%i ", (sizeof(hmapf_t) * current->complexity.hmap_count) + current->complexity.tl_vdata + current->complexity.tl_dialog);
+				__builtin_printf("%i ", (sizeof(hmapf_t) * current->cmplxt.hmap_count) + current->cmplxt.tl_vdata + current->cmplxt.tl_dialog);
+
+				__builtin_printf("%s", tmp = current->url ? current->url : other);
 			}
 			__builtin_printf("\n");
 			passed = current;
 			current = current->precursor;
-		} else
+		} else {
+			__builtin_printf("--%i descriptions listed--\n", i);
 			return;
+		}
 	}
 }
