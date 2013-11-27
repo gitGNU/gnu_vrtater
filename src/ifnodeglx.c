@@ -58,7 +58,10 @@ float vrt_render_cyc;
 int diagtext = 0;
 hmapf_t *diagtext0; /* reference hmap to receive text entry */
 int dialogrecurrant = 0;
-char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and ,0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n[return] resumes directional inputs\n[del] erases any current dialog, including this\n";
+char diagtextmsg[] = "diagnostic hmap text entry mode\n[tab][space] and "
+	",0123456789=abcdefghijklmnopqrstuvwxyz are appended to dialog\n"
+	"[return] resumes directional inputs\n[del] erases any current dialog,"
+	"including this\n";
 
 /* Temporary diagnostics. */
 hmapf_t *ryg, *ryg1, *diag1, *diag2, *diag3, *diag4, *diag5, *diag6, *diag8;
@@ -915,8 +918,9 @@ diag_node_key_f(void)
 #endif
 
 	node = test_mk_flexible_node(seedfiles, maps, &cmplxt);
-	/* note: ptlrepute added as code in session.c calls sync_loginkeys. */
 
+	/* note: ptlrepute pointer is added to description as code in session.c
+	   calls sync_loginkeys for a flexible node. */
 	add_session_desc(&(node->session), &z, &z, 0, url, oneliner, &cmplxt, map, node->ptlrepute);
 #endif /* DIAG_FLEXIBLE_ENABLE */
 }

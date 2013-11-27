@@ -321,8 +321,8 @@ ptlrepute_t *
 add_ptlrepute(ptlrepute_list_t *list, session_t *keyname, session_t *holdkey, char *url)
 {
 	ptlrepute_t *listed = NULL;
-	int i, *a, *b = &(holdkey->hash.h);
 	session_t *key, z = { { 0, 0, 0 }, 0 };
+	int i;
 
 	if ((listed = (ptlrepute_t *) malloc(sizeof(ptlrepute_t))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
@@ -339,10 +339,7 @@ add_ptlrepute(ptlrepute_list_t *list, session_t *keyname, session_t *holdkey, ch
 	cp_mapname(keyname, &(listed->contingentkey));
 	cp_mapname(key = holdkey ? holdkey : &z, &(listed->holdkey));
 	cp_mapname(&z, &(listed->holdbkp));
-//	cp_mapname(holdkey, &(listed->holdkey));
-	a = &(listed->holdkey.hash.h);
-	for (i = 0; i < 4; i++)
-		*a++ = *b++;
+	cp_mapname(holdkey, &(listed->holdkey));
 
 	return listed;
 }

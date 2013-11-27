@@ -615,7 +615,8 @@ read_from_network(void)
    These happen to include only non node-orgin hmaps with relevant changes.
    These then become delivered for each url implied.  Return values perhaps
    determined in sync_sessions describing latency or disconnect for given
-   session allowing caller to conditionally call close_session. */
+   session allowing caller to conditionally call close_session.  A last call
+   with NULL reference will be added. */
 int
 send_maps(session_t *session, select_t *sel)
 {

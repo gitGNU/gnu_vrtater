@@ -15,7 +15,7 @@
 /* Diagnostics.  Used with keypress f, g, or h when in positional mode. */
 #define DIAG_DIALOG /* Proposed Free hmapwrapf Vertice Data Disclaimer */
 /* session.c diagnostics.  Simulate working session's + hopefully loginkeys. */
-#define DIAG_NODEKEYS /* for DIAG_CONTINUING and DIAG_FLEXIBLE diagnostics */
+#define DIAG_NODEKEYS /* for DIAG_CONTINUING and DIAG_FLEXIBLE diagnostic */
 #define DIAG_CONTINUING_ENABLE_OFF /* exclusive vs. DIAG_FLEXIBLE_ENABLE */
 #define DIAG_CONTINUING_SESSION /* parts of diagnostic  */
 #define DIAG_CONTINUING_OTHRHOLDKEY_OFF /* set holdkey already existing */
@@ -32,7 +32,7 @@
 #define DIAG_FLEXIBLE_NEWREPUTED_OFF /* both sync keys null */
 #define DIAG_FLEXIBLE_MAPKEY_REDUNDANT_OFF
 #define DIAG_FLEXIBLE_SETHOLDKEY_OFF
-#define DIAG_FLEXIBLE_HOLDKEY_REDUNDANT_OFF /* use with DIAG_FLEXIBLE_SETHOLDKEY */
+#define DIAG_FLEXIBLE_HOLDKEY_REDUNDANT_OFF /* if DIAG_FLEXIBLE_SETHOLDKEY */
 #define DIAG_FLEXIBLE_CMPLXT
 #define DIAG_RECEIVE_MAP_OFF
 /* Misc. diagnostics. */

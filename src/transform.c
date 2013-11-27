@@ -62,7 +62,7 @@ unjoin_hmap(select_t *sel)
 	return 0;
 }
 
-/* Merge hmaps in selectf_a together forming new hmap refrenced in selectf_b. */
+/* Merge hmaps in selectf_a together forming new map refrenced in selectf_b. */
 int
 extend_hmaps(select_t *sel)
 {
@@ -112,7 +112,7 @@ bifold_hmap_c(select_t *sel)
    spherical bounding volumes of radius envelope.vsz and mass of attribs.kg per
    any hmaps.  Representation of mass is proportional to volume.  scheduled:
    Support for type cylinder and cube bounding volumes.  Calculating for
-   triangles directly once within bounds.  Inside intersection and deformation. */
+   triangles directly once within bounds.  Inside intersection. */
 int
 intersection(select_t *sel)
 {
@@ -174,10 +174,12 @@ intersection(select_t *sel)
 				/* Position centroid b absolutely. */
 				sum_vf(&(mapb->vpos), rotate_vf(form_mag_vf(&centroidb), &(mapb->vaxi), mapb->ang_dpl, &centroidb), &centroidb);
 
-				/* Produce difference between absolute centroids a and b. */
+				/* Produce difference between absolute centroids
+				   a and b. */
 				dif_vf(&centroida, &centroidb, &dif);
 
-				/* Index closest triangles so far and approximate absolute contact point for a. */
+				/* Index closest triangles so far and
+				   approximate absolute contact point for a. */
 				if ((&dif)->m < tdist) {
 					tdist = (&dif)->m;
 					nearesta = idxtri_a;
@@ -194,7 +196,8 @@ intersection(select_t *sel)
 		sum_vf(&(mapb->vpos), rotate_vf(nearestb + 1, &(mapb->vaxi), mapb->ang_dpl, &alt_b), &alt_b);
 		sum_vf(&(mapb->vpos), rotate_vf(nearestb + 2, &(mapb->vaxi), mapb->ang_dpl, &alt_c), &alt_c);
 
-		/* Find in triangle b, absolute altitude displacements vs. triangle a absolute contact point. */
+		/* Find in triangle b, absolute altitude displacements vs.
+		   triangle a absolute contact point. */
 		dif_vf(&alt_a, &contact, &disp_a);
 		dif_vf(&alt_b, &contact, &disp_b);
 		dif_vf(&alt_c, &contact, &disp_c);
@@ -219,7 +222,8 @@ intersection(select_t *sel)
 				tele_magz_vf(&(mapa->vvel), (&disp_c)->m * plasmaconst, &tmp);
 				sum_vf(nearestb + 2, rotate_vf(&tmp, &(mapb->vaxi),-mapb->ang_dpl, &tmp), nearestb + 2);
 
-				/* Adjust any vertices previously attached to the key triangle. */
+				/* Adjust any vertices previously attached to
+				   the key triangle. */
 				for (i = 0, vmap = mapb->vmap; i < mapb->vmap_total; i++, vmap++) {
 					if ((vmap->x + threshold > (&keya)->x) && (vmap->x - threshold < (&keya)->x))
 						if ((vmap->y + threshold > (&keya)->y) && (vmap->y - threshold < (&keya)->y))
