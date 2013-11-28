@@ -45,7 +45,7 @@ unsigned int vrt_hmaps_max;
 hmapf_t *selectf_a;
 hmapf_t *selectf_b;
 
-void flow_over(btoggles_t *balance_criteria);
+void flow_over(int *balance_criteria);
 float estimate_radiusf(hmapf_t *);
 void wanderf(hmapf_t *hmap, float e, float m, float r);
 
@@ -578,7 +578,7 @@ proc_hmapf(hmapf_t *map, int lod, int sort_ratio)
 /* Given any overloading, release hmaps with balance_filter over
    balance_criteria.  Needs further implementation/considerations. */
 void
-flow_over(btoggles_t *balance_criteria)
+flow_over(int *balance_criteria)
 {
 	int i;
 	hmapf_t *map = &vohspace[0];

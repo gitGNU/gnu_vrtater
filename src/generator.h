@@ -6,7 +6,6 @@
 #ifndef VRT_GENERATOR_H
 #define VRT_GENERATOR_H
 
-#include "bittoggles.h"
 #include "vectors.h"
 #include "hmap.h"
 #include "partial.h"
@@ -19,8 +18,8 @@
    balance_criteria is still in the works, and may be proposed as
    some hybrid of bits vs. a quantity once needed. */
 struct genopts_s {
-	btoggles_t balance_criteria; /* balance_filter options */
-	btoggles_t vobspace_criteria; /* tested context options */
+	int balance_criteria; /* balance_filter options */
+	int vobspace_criteria; /* tested context options */
 	int why; /* dialog*.c issue */
 	int what; /* for why */
 	double when; /* for what */

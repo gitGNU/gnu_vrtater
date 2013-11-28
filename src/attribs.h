@@ -8,7 +8,6 @@
 
 #include "hmap.h"
 #include "vectors.h"
-#include "bittoggles.h"
 
 hmapf_t *vohspace;
 unsigned int attached_hmaps;  /* maintained by attach_hmapf, detach_hmapf */

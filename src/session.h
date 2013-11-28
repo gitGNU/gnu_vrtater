@@ -13,7 +13,7 @@ struct session_desc_s {
 	session_t session;
 	session_t peer;
 	session_t thru; /* session is passing thru here before any redirect */
-	btoggles_t level;
+	int level;
 	char *url; /* set for a continuing */
 	char oneliner[80];
 	hmapf_t *nodemap; /* for flexible partial_t, copy of nodemap */
@@ -48,7 +48,7 @@ struct session_desc_list_s {
 };
 typedef struct session_desc_list_s session_desc_list_t;
 
-btoggles_t session_nodemask;
+int session_nodemask;
 enum { /* bits for session_nodemask */
 	VRT_ORDINAL_ACCEPT_VRTLOGIN, /* all nodes */
 #define VRT_MASK_ACCEPT_VRTLOGIN (1 << VRT_ORDINAL_ACCEPT_VRTLOGIN)
@@ -73,7 +73,7 @@ session_t *receive_map(select_t *sel);
 session_desc_t *find_session(session_t *);
 session_desc_t *find_url(char *oneliner);
 void mk_session_desc_list(void);
-session_desc_t *add_session_desc(session_t *, session_t *peer, session_t *thru, btoggles_t level, char *url, char *oneliner, complextimate_t *, hmapf_t *nodemap, struct ptlrepute_list *list);
+session_desc_t *add_session_desc(session_t *, session_t *peer, session_t *thru, int level, char *url, char *oneliner, complextimate_t *, hmapf_t *nodemap, struct ptlrepute_list *list);
 int close_session(session_desc_t *);
 int close_all_sessions(void);
 int reset_sessions(void);

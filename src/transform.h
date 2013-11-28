@@ -7,7 +7,6 @@
 #define VRT_TRANSFORM_H
 
 #include "hmap.h"
-#include "bittoggles.h"
 
 /* Options to hmap transform functions affecting ip network or filesystem. */
 enum {
@@ -37,7 +36,7 @@ int intersection(select_t *);
 int recycle(select_t *);
 int cp_hmapf(select_t *);
 int surface_inv_hmapf(select_t *);
-int hmapwrapf(select_t *, btoggles_t options, char *filename, int **output);
+int hmapwrapf(select_t *, int options, char *filename, int **output);
 int hmapunwrapf(select_t *, session_t *, char *filename, int *input);
 int alloc_dialog(hmapf_t *, int len);
 int add_dialog(hmapf_t *, char *s, int offset, int count);

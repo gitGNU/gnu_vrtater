@@ -475,7 +475,7 @@ surface_inv_hmapf(select_t *sel)
    session.c code may still proceed without these.  Return total of int type
    wrapped on success or a value less than 0 on any error. */
 int
-hmapwrapf(select_t *sel, btoggles_t options, char *filename, int **output)
+hmapwrapf(select_t *sel, int options, char *filename, int **output)
 {
 	int fd, bufsz = 0;
 	int i, j, enqueue = 1;
@@ -719,7 +719,7 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 	hmapf_t **map;
 	vf_t *rebuild;
 	session_t current;
-	btoggles_t options;
+	int options;
 	int fileszmax_fortesting = 0x7ffff; /* bogus yet safe guess for now */
 
 	if (filename) {
@@ -766,7 +766,7 @@ hmapunwrapf(select_t *sel, session_t *session, char *filename, int *input)
 	__builtin_printf("Unwrapping %i int size elements\n", (int) *pi++);
 
 	options = *pi++;
-	print_toggles("options ", (btoggles_t *) &options);
+	__builtin_printf("options %x\n", (int) &options);
 
 	/* Count b maps are unwrapped, then referenced thru set b. */
 	map = sel->setb;

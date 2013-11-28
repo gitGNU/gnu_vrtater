@@ -180,7 +180,7 @@ hmap_count(void)
    and node-orgin, this search may be rather suboptimal, as vrt_hmaps_max hmaps
    are always searched regardless of whether they are attached or not. */
 unsigned int
-search_vohspace(hmapf_t **listout, btoggles_t signs, btoggles_t modes)
+search_vohspace(hmapf_t **listout, int signs, int modes)
 {
 	int i, count = 0;
 	hmapf_t *p = &vohspace[0];

@@ -6,7 +6,6 @@
 #ifndef VRT_HMAP_H
 #define VRT_HMAP_H
 
-#include "bittoggles.h"
 #include "vectors.h"
 
 /* Proposed now 96 bit session_t session with adjunct sequence value.  An hmap
@@ -45,9 +44,9 @@ struct options_s {
 typedef struct options_s options_t;
 
 struct attribs_s {
-	btoggles_t sign;
-	btoggles_t mode;
-	btoggles_t balance_filter; /* vob dur-ability vs. balance_criteria */
+	int sign;
+	int mode;
+	int balance_filter; /* vob dur-ability vs. balance_criteria */
 	float kg; /* mass representation vs. SI units */
 	int kfactorm; /* 1 or 1000^exponent vs. mass */
 	int kfactord; /* 1 or 1000^exponent vs. distance */
@@ -179,7 +178,7 @@ struct hmapf_s {
 typedef struct hmapf_s hmapf_t;
 
 struct select_s {
-	btoggles_t specbits;
+	int specbits;
 	int counta; /* for 2 or more. counta + countb <= vrt_hmaps_max */
 	hmapf_t **seta; /* hmap set a, for read, transform, or replace */
 	int countb;
@@ -242,7 +241,7 @@ hmapf_t *hmapf(session_t *);
 hmapf_t *p_hmapf(int i); /* note: replacement will match on session name. */
 hmapf_t *mapref(session_t *session);
 unsigned int hmap_count(void);
-unsigned int search_vohspace(hmapf_t **, btoggles_t signs, btoggles_t modes);
+unsigned int search_vohspace(hmapf_t **, int signs, int modes);
 void diag_selection(select_t *sel); /* diagnostic */
 void set_lod_envelopef(float near_thresh, float perif_thresh, unsigned int sp_ratio, unsigned int sf_ratio);
 

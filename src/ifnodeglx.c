@@ -6,6 +6,7 @@
 #include <X11/X.h>
 #include <GL/glx.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <time.h>
@@ -814,7 +815,7 @@ diag_node_key_f(void)
 
 #ifdef DIAG_CONTINUING_ENABLE
 	/* vrtlogin to flexible node from continuing node. */
-	ptlrepute_t *repute;
+	struct ptlrepute *repute;
 	char url[] = "protocol://192.168.0.2/nothernode/"; /* refers to */
 	char oneliner[] = "nothernode";
 	hmapf_t *avatar555, *avatar555_hold, *flow_map = NULL;
@@ -828,7 +829,7 @@ diag_node_key_f(void)
 	int rval;
 
 	__builtin_printf("Simulated vrtlogin to flexible node\n");
-	partial_t *node = NULL;
+	struct partial *node = NULL;
 	if ((node = test_continuity(url, oneliner, NULL, sela, &cmplxt_here)) == NULL) {
 		__builtin_fprintf(stderr, "Error: Failed to provide "
 			"continuing node with continuity\n");
@@ -872,11 +873,11 @@ diag_node_key_f(void)
 	   loginkeys at url.  Since this is setup to be a continued session,
 	   find_loginkeys would normally be used for same.  Sync for this
 	   is provided in continue_node. */
-	repute = add_ptlrepute(node->ptlrepute, &lastkey, &holdkey, url);
+	repute = add_ptlrepute(node->reputed, &lastkey, &holdkey, url);
 	cp_mapname(&contingentkey, &(repute->contingentkey)); /* established */
 	cp_mapname(&holdkey, &(repute->holdkey)); /* with holdkey */
 	/* Continue. */
-	if ((rval = test_continue_partial(node, url, node->ptlrepute, repute, &(node->session), avatar555, flow_map, calc_cmplxt(&cmplxt_here))) != 0)
+	if ((rval = test_continue_partial(node, url, node->reputed, repute, &(node->session), avatar555, flow_map, calc_cmplxt(&cmplxt_here))) != 0)
 		; /* could not vrtlogin */
 #endif /* DIAG_CONTINUING_ENABLE */
 

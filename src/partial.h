@@ -55,7 +55,7 @@ struct partial {
 	ptlgrps_list_t *ptlgrps;
 	struct ptlrepute_list *reputed;
 	hmapf_t *nodemap; /* hmap describing the volume of given partial */
-	btoggles_t ptlbits;
+	int ptlbits;
 	struct partial *precursor;
 };
 

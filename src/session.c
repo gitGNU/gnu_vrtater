@@ -769,7 +769,7 @@ rm_session_desc_list(void)
    all_sessions on a flexible, those having no implied node in node_orgin.
    Return reference. */
 session_desc_t *
-add_session_desc(session_t *session, session_t *peer, session_t *thru, btoggles_t level, char *url, char *oneliner, complextimate_t *cmplxt, hmapf_t *nodemap, struct ptlrepute_list *reputed)
+add_session_desc(session_t *session, session_t *peer, session_t *thru, int level, char *url, char *oneliner, complextimate_t *cmplxt, hmapf_t *nodemap, struct ptlrepute_list *reputed)
 {
 	session_desc_t *listed = NULL;
 
