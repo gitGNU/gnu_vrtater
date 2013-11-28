@@ -49,16 +49,15 @@ struct ptlgrps_list_s {
 };
 typedef struct ptlgrps_list_s ptlgrps_list_t;
 
-struct partial_s {
+struct partial {
 	session_t session; /* maps from node-orgin are masked into session */
 	ptlmaps_list_t *ptlmaps;
 	ptlgrps_list_t *ptlgrps;
-	ptlrepute_list_t *ptlrepute;
+	struct ptlrepute_list *reputed;
 	hmapf_t *nodemap; /* hmap describing the volume of given partial */
 	btoggles_t ptlbits;
-	struct partial_s *precursor;
+	struct partial *precursor;
 };
-typedef struct partial_s partial_t;
 
 /* partial_t ptlbits. */
 enum {
@@ -70,17 +69,16 @@ enum {
 #define VRT_MASK_REQUIRE_PASSWD (1 << VRT_ORDINAL_REQUIRE_PASSWD)
 };
 
-struct partial_list_s {
-	partial_t *last;
+struct partial_list {
+	struct partial *last;
 	unsigned int count;
 };
-typedef struct partial_list_s partial_list_t;
 
-partial_list_t *partial_list;
+struct partial_list *partials; /* list of all partials */
 
-partial_t *find_partial(session_t *partial_session);
+struct partial *find_partial(session_t *session);
 int select_partial_set(ptlmaps_list_t *list, hmapf_t **maps);
-ptlmaps_list_t *mk_ptlmaps_list(session_t *partial_session);
+ptlmaps_list_t *mk_ptlmaps_list(session_t *session);
 void rm_ptlmaps_list(ptlmaps_list_t *);
 ptlmap_t *add_ptlmap(ptlmaps_list_t *, hmapf_t *);
 void subtract_ptlmap(ptlmaps_list_t *, hmapf_t *);
@@ -93,7 +91,7 @@ void subtract_ptlmbr(ptlmbrs_list_t *, ptlmbr_t *);
 
 ptlgrp_t *find_group(ptlgrps_list_t *list, session_t *grpmap_name);
 void sync_groups(ptlgrps_list_t *list, session_t *last, session_t *sign_in);
-ptlgrps_list_t *mk_ptlgrps_list(session_t *partial_session);
+ptlgrps_list_t *mk_ptlgrps_list(session_t *session);
 void rm_ptlgrps_list(ptlgrps_list_t *);
 ptlgrp_t *add_ptlgrp(ptlgrps_list_t *, session_t *groupmap_name);
 void subtract_ptlgrp(ptlgrps_list_t *, ptlgrp_t *);

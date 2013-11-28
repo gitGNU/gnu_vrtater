@@ -10,10 +10,10 @@
 
 /* Try to find the linked list element referencing keyname as lastkey in list.
    Return reference to element or NULL if not found. */
-ptlrepute_t *
-find_lastkey(ptlrepute_list_t *list, session_t *keyname)
+struct ptlrepute *
+find_lastkey(struct ptlrepute_list *list, session_t *keyname)
 {
-	ptlrepute_t *current, *passed;
+	struct ptlrepute *current, *passed;
 
 	current = list->last;
 	passed = list->last;
@@ -30,10 +30,10 @@ find_lastkey(ptlrepute_list_t *list, session_t *keyname)
 
 /* Try to find the linked list element referencing keyname as contingentkey in
    list.  Return reference to element or NULL if not found. */
-ptlrepute_t *
-find_contingentkey(ptlrepute_list_t *list, session_t *keyname)
+struct ptlrepute *
+find_contingentkey(struct ptlrepute_list *list, session_t *keyname)
 {
-	ptlrepute_t *current, *passed;
+	struct ptlrepute *current, *passed;
 
 	current = list->last;
 	passed = list->last;
@@ -51,10 +51,10 @@ find_contingentkey(ptlrepute_list_t *list, session_t *keyname)
 /* Try to find the linked list element referencing keyname as holdkey or
    holdbkp in list,  ignoring any zero_mapname sent vs. holdkeys and any row
    of zero_mapnames found in holdkeys.  Return reference to element or NULL. */
-ptlrepute_t *
-find_holdkey(ptlrepute_list_t *list, session_t *keyname)
+struct ptlrepute *
+find_holdkey(struct ptlrepute_list *list, session_t *keyname)
 {
-	ptlrepute_t *current, *passed;
+	struct ptlrepute *current, *passed;
 	session_t zero_mapname = { { 0, 0, 0}, 0 };
 
 	current = list->last;
@@ -73,10 +73,10 @@ find_holdkey(ptlrepute_list_t *list, session_t *keyname)
 /* Try to find next linked list element referencing a zero_mapname as both
    holdkey and holdbkp in list.  Return reference to element or NULL if not
    found.  note: Any other searches of list ignore a zero_mapname in hold. */
-ptlrepute_t *
-find_zero_mapname(ptlrepute_list_t *list)
+struct ptlrepute *
+find_zero_mapname(struct ptlrepute_list *list)
 {
-	ptlrepute_t *current, *passed;
+	struct ptlrepute *current, *passed;
 	session_t zero_mapname = { { 0, 0, 0}, 0 };
 
 	current = list->last;
@@ -122,9 +122,9 @@ find_zero_mapname(ptlrepute_list_t *list)
    the unlinked level bit in partial session description with function
    continue_repute.  In an unusual case this should help. */
 int
-sync_loginkeys(char *url, ptlrepute_list_t *list, ptlrepute_t *reputed, session_t *loginkey, session_t *holdkey, session_t *lastkey, session_t *contingentkey, int keyuse)
+sync_loginkeys(char *url, struct ptlrepute_list *list, struct ptlrepute *reputed, session_t *loginkey, session_t *holdkey, session_t *lastkey, session_t *contingentkey, int keyuse)
 {
-	ptlrepute_t *match = NULL;
+	struct ptlrepute *match = NULL;
 	int publicize = 0;
 
 	/* Determine if code in dialog*.c should to try to publicize any new
@@ -132,7 +132,7 @@ sync_loginkeys(char *url, ptlrepute_list_t *list, ptlrepute_t *reputed, session_
 	publicize = (holdkey->hash.h | holdkey->hash.m | holdkey->hash.l | holdkey->seq);
 
 #ifdef DIAG_NODEKEYS
-	ptlrepute_t *keys;
+	struct ptlrepute *keys;
 	if ((keys = find_lastkey(list, loginkey)))
 		printf("loginkey (%x %x %x) %i  found in lastkey column of "
 			"list\n", keys->lastkey.hash.h, keys->lastkey.hash.m,
@@ -286,13 +286,13 @@ flow_from_hold(session_t *key, session_t *holdkey, session_t *holdbkp)
 	cp_mapname(key, holdkey);
 }
 
-/* Create a linked list construct for partial_session returning reference to an
+/* Create a linked list construct for node session returning reference to an
    empty list of loginkey reputations residing therein. */
-ptlrepute_list_t *
-mk_ptlrepute_list(session_t *partial_session)
+struct ptlrepute_list *
+mk_ptlrepute_list(session_t *session)
 {
-	ptlrepute_list_t *list = NULL;
-	if ((list = (ptlrepute_list_t *) malloc(sizeof(ptlrepute_list_t))) == NULL) {
+	struct ptlrepute_list *list = NULL;
+	if ((list = (struct ptlrepute_list *) malloc(sizeof(struct ptlrepute_list))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for partial_reps_list\n",
 			__FILE__, __LINE__);
@@ -301,14 +301,14 @@ mk_ptlrepute_list(session_t *partial_session)
 	list->last = NULL;
 	list->count = 0;
 
-	list->reputed = partial_session;
+	list->session = session;
 
 	return list;
 }
 
 /* Remove list and all of it's elements and element references from memory. */
 void
-rm_ptlrepute_list(ptlrepute_list_t *list)
+rm_ptlrepute_list(struct ptlrepute_list *list)
 {
 	while (list->last != NULL)
 		subtract_ptlrepute(list, list->last);
@@ -317,14 +317,13 @@ rm_ptlrepute_list(ptlrepute_list_t *list)
 
 /* Add an element reference to partial repute in the linked list construct
    list.  Return reference to element listed. */
-ptlrepute_t *
-add_ptlrepute(ptlrepute_list_t *list, session_t *keyname, session_t *holdkey, char *url)
+struct ptlrepute *
+add_ptlrepute(struct ptlrepute_list *list, session_t *keyname, session_t *holdkey, char *url)
 {
-	ptlrepute_t *listed = NULL;
+	struct ptlrepute *listed = NULL;
 	session_t *key, z = { { 0, 0, 0 }, 0 };
-	int i;
 
-	if ((listed = (ptlrepute_t *) malloc(sizeof(ptlrepute_t))) == NULL) {
+	if ((listed = (struct ptlrepute *) malloc(sizeof(struct ptlrepute))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for partial_reps_list "
 			"entry\n", __FILE__, __LINE__);
@@ -347,17 +346,17 @@ add_ptlrepute(ptlrepute_list_t *list, session_t *keyname, session_t *holdkey, ch
 /* Subtract linked list element referenced by reputed.  note: This relies on
    keys in ptlrepute uniqueness assertion, see: sync_loginkeys. */
 void
-subtract_ptlrepute(ptlrepute_list_t *list, ptlrepute_t *reputed)
+subtract_ptlrepute(struct ptlrepute_list *list, struct ptlrepute *repute)
 {
-	ptlrepute_t *current, *passed;
+	struct ptlrepute *current, *passed;
 
 	current = list->last;
 	passed = list->last;
 	while (1) {
 		if (current != NULL) {
-			if (match_mapname(&(current->lastkey), &(reputed->lastkey)))
+			if (match_mapname(&(current->lastkey), &(repute->lastkey)))
 				break;
-			else if (match_mapname(&(current->contingentkey), &(reputed->contingentkey)))
+			else if (match_mapname(&(current->contingentkey), &(repute->contingentkey)))
 				break;
 			passed = current;
 			current = current->precursor;

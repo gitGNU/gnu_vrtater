@@ -87,9 +87,9 @@ void diag_node_key_h(void);
 void diag_message(void);
 
 /* Testing. */
-partial_t *test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, complextimate_t *cmplxt);
-int test_continue_partial(partial_t *node, char *url, ptlrepute_list_t *new, ptlrepute_t *repute, session_t *session_here, hmapf_t *keymap, hmapf_t *holdmap, unsigned int tl_cmplxt);
-partial_t *test_mk_flexible_node(char *seedfiles, hmapf_t **, complextimate_t *);
+struct partial *test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, complextimate_t *cmplxt);
+int test_continue_partial(struct partial *node, char *url, struct ptlrepute_list *new, struct ptlrepute *repute, session_t *session_here, hmapf_t *keymap, hmapf_t *holdmap, unsigned int tl_cmplxt);
+struct partial *test_mk_flexible_node(char *seedfiles, hmapf_t **, complextimate_t *);
 void test_detach_all_partials(void);
 void test_continue_repute(hmapf_t *);
 
@@ -882,7 +882,7 @@ diag_node_key_f(void)
 
 #ifdef DIAG_FLEXIBLE_ENABLE
 	/* Make a flexible node. */
-	partial_t *node = NULL;
+	struct partial *node = NULL;
 	char url[] = "protocol://192.168.0.2/nothernode/";
 	char oneliner[] = "nothernode"; /* 79 chars max */
 	session_t z = { { 0, 0, 0 }, 0 };
@@ -921,7 +921,7 @@ diag_node_key_f(void)
 
 	/* note: ptlrepute pointer is added to description as code in session.c
 	   calls sync_loginkeys for a flexible node. */
-	add_session_desc(&(node->session), &z, &z, 0, url, oneliner, &cmplxt, map, node->ptlrepute);
+	add_session_desc(&(node->session), &z, &z, 0, url, oneliner, &cmplxt, map, node->reputed);
 #endif /* DIAG_FLEXIBLE_ENABLE */
 }
 
@@ -934,7 +934,7 @@ diag_node_key_g(void)
 #ifdef DIAG_FLEXIBLE_ENABLE
 	__builtin_printf("\nSimulate received vrtlogin to \"nothernode\" "
 		"after generating flexible.\n");
-	partial_t *flexible;
+	struct partial *flexible;
 	char url[] = "protocol://192.168.0.2/nothernode/";
 	session_t session_peer = { { 0, 0, 0xc0de }, 0 };
 	session_t z = { { 0, 0, 0 }, 0 };
@@ -967,7 +967,7 @@ printf("session %x\n", desc_here->session.hash.l);
 	desc_here->cmplxt.tl_vdata = 288;
 	desc_here->cmplxt.tl_dialog = 314;
 	desc_here->nodemap = flexible->nodemap;
-	desc_here->ptlrepute = flexible->ptlrepute;
+	desc_here->reputed = flexible->reputed;
 	desc_here->level = VRT_MASK_SESSION_DETACHED | VRT_MASK_SESSION_ENABLE;
 
 	session_nodemask |= VRT_MASK_ACCEPT_VRTLOGIN; /* temporarily here */
@@ -1083,10 +1083,10 @@ diag_node_key_h(void)
    flexible session, mk_partial takes the session name of the first map
    referenced by maps.  For now mk_partial can only receive a non compounded
    hmap. */
-partial_t *
+struct partial *
 test_mk_flexible_node(char *seedfiles, hmapf_t **maps, complextimate_t *cmplxt)
 {
-	partial_t *node = NULL;
+	struct partial *node = NULL;
 	session_t session;
 
 	hash_session_name(&session, seedfiles);
@@ -1109,10 +1109,10 @@ test_continue_repute(hmapf_t *keymap)
 /* Diagnostic test: Call flexible node for nodemap and session details,
    allowing for cmplxt at url.  If successfull, continuing session receives
    continuity apon receiving nodemap. */
-partial_t *
+struct partial *
 test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, complextimate_t *cmplxt)
 {
-	partial_t *node = NULL;
+	struct partial *node = NULL;
 	session_t session;
 	char seedfiles[] = ""; /* directory containing maps for session */
 
@@ -1136,7 +1136,7 @@ test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, comp
    for node, and provided flexible will accept cmplxt.  note: hmap keymap has
    entered node desiring vrtlogin, cmplxt reflecting maps selected. */
 int
-test_continue_partial(partial_t *node, char *url, ptlrepute_list_t *list, ptlrepute_t *repute, session_t *session_here, hmapf_t *keymap, hmapf_t *holdmap, unsigned int tl_cmplxt)
+test_continue_partial(struct partial *node, char *url, struct ptlrepute_list *list, struct ptlrepute *repute, session_t *session_here, hmapf_t *keymap, hmapf_t *holdmap, unsigned int tl_cmplxt)
 {
 	session_t *flow_name, zero_session = { { 0, 0, 0 }, 0 };
 	int rval;
@@ -1159,10 +1159,10 @@ test_continue_partial(partial_t *node, char *url, ptlrepute_list_t *list, ptlrep
 void
 test_detach_all_partials(void)
 {
-	partial_t *current, *passed;
+	struct partial *current, *passed;
 
-	current = partial_list->last;
-	passed = partial_list->last;
+	current = partials->last;
+	passed = partials->last;
 	while (current != NULL) {
 		rm_partial(current);
 		passed = current;

@@ -8,7 +8,7 @@
 
 #include "hmap.h"
 
-struct ptlrepute_s {
+struct ptlrepute {
 	char *url; /* used by continuing node */
 	session_t lastkey; /* most recent */
 	session_t contingentkey; /* 2nd most recent */
@@ -16,16 +16,14 @@ struct ptlrepute_s {
 	session_t holdbkp; /* continuing, previous to last holdmap at url */
 	int vrtlogin; /* true where key is within flexible session */
 	char *passwd; /* optional for vrtlogin if supported, see: session.c */
-	struct ptlrepute_s *precursor;
+	struct ptlrepute *precursor;
 };
-typedef struct ptlrepute_s ptlrepute_t;
 
-struct ptlrepute_list_s {
-	session_t *reputed;
-	ptlrepute_t *last;
+struct ptlrepute_list {
+	session_t *session;
+	struct ptlrepute *last;
 	unsigned int count;
 };
-typedef struct ptlrepute_list_s ptlrepute_list_t;
 
 /* Keyuse values for sync_loginkeys. */
 enum {
@@ -37,16 +35,16 @@ enum {
 	VRT_LOGIN_PRECONTEXT
 };
 
-ptlrepute_t *find_lastkey(ptlrepute_list_t *list, session_t *keyname);
-ptlrepute_t *find_contingentkey(ptlrepute_list_t *list, session_t *keyname);
-ptlrepute_t *find_holdkey(ptlrepute_list_t *list, session_t *keyname);
-ptlrepute_t *find_zero_mapname(ptlrepute_list_t *list);
+struct ptlrepute *find_lastkey(struct ptlrepute_list *list, session_t *keyname);
+struct ptlrepute *find_contingentkey(struct ptlrepute_list *list, session_t *keyname);
+struct ptlrepute *find_holdkey(struct ptlrepute_list *list, session_t *keyname);
+struct ptlrepute *find_zero_mapname(struct ptlrepute_list *list);
 
-int sync_loginkeys(char *url, ptlrepute_list_t *, ptlrepute_t *, session_t *loginkey, session_t *holdkey, session_t *lastkey, session_t *contingentkey, int keyuse);
+int sync_loginkeys(char *url, struct ptlrepute_list *, struct ptlrepute *, session_t *loginkey, session_t *holdkey, session_t *lastkey, session_t *contingentkey, int keyuse);
 void flow_from_hold(session_t *key, session_t *holdkey, session_t *holdbkp);
-ptlrepute_list_t *mk_ptlrepute_list(session_t *partial_session);
-void rm_ptlrepute_list(ptlrepute_list_t *);
-ptlrepute_t *add_ptlrepute(ptlrepute_list_t *, session_t *keyname, session_t *holdkey, char *url);
-void subtract_ptlrepute(ptlrepute_list_t *, ptlrepute_t *);
+struct ptlrepute_list *mk_ptlrepute_list(session_t *session);
+void rm_ptlrepute_list(struct ptlrepute_list *);
+struct ptlrepute *add_ptlrepute(struct ptlrepute_list *, session_t *keyname, session_t *holdkey, char *url);
+void subtract_ptlrepute(struct ptlrepute_list *, struct ptlrepute *);
 
 #endif /* VRT_LOGINKEYS_H */

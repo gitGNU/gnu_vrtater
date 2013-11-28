@@ -8,17 +8,17 @@
 #include "partial.h"
 #include "global.h"
 
-/* Return partial reference vs. partial_session or NULL if not found. */
-partial_t *
-find_partial(session_t *partial_session)
+/* Return partial reference vs. session or NULL if not found. */
+struct partial *
+find_partial(session_t *session)
 {
-	partial_t *current, *passed;
+	struct partial *current, *passed;
 
-	current = partial_list->last;
-	passed = partial_list->last;
+	current = partials->last;
+	passed = partials->last;
 	while (1) {
 		if (current != NULL) {
-			if (match_mapname(&(current->session), partial_session))
+			if (match_mapname(&(current->session), session))
 				return current;
 			passed = current;
 			current = current->precursor;
@@ -44,10 +44,10 @@ select_partial_set(ptlmaps_list_t *list, hmapf_t **maps)
 	return i;
 }
 
-/* Create a linked list construct for partial_session returning reference to an
-   empty list of hmaps residing therein. */
+/* Create a linked list construct for session returning reference to an empty
+   list of hmaps residing therein. */
 ptlmaps_list_t *
-mk_ptlmaps_list(session_t *partial_session)
+mk_ptlmaps_list(session_t *session)
 {
 	ptlmaps_list_t *list = NULL;
 	if ((list = (ptlmaps_list_t *) malloc(sizeof(ptlmaps_list_t))) == NULL) {
@@ -59,7 +59,7 @@ mk_ptlmaps_list(session_t *partial_session)
 	list->last = NULL; /* first in list will have a NULL precursor */
 	list->count = 0;
 
-	list->session = partial_session;
+	list->session = session;
 
 	return list;
 }
@@ -156,8 +156,8 @@ find_member(ptlmbrs_list_t *list, session_t *sign_in)
 	}
 }
 
-/* Create a linked list construct for partial_session returning reference to an
-   empty list of members residing therein. */
+/* Create a linked list construct for group returning reference to an empty list
+   of members residing therein. */
 ptlmbrs_list_t *
 mk_ptlmbrs_list(ptlgrp_t *group)
 {
@@ -281,10 +281,10 @@ sync_groups(ptlgrps_list_t *list, session_t *last, session_t *new)
 	;
 }
 
-/* Create a linked list construct for partial_session returning reference to an
-   empty list of groups residing therein. */
+/* Create a linked list construct for session returning reference to an empty
+   list of groups residing therein. */
 ptlgrps_list_t *
-mk_ptlgrps_list(session_t *partial_session)
+mk_ptlgrps_list(session_t *session)
 {
 	ptlgrps_list_t *list = NULL;
 	if ((list = (ptlgrps_list_t *) malloc(sizeof(ptlgrps_list_t))) == NULL) {
@@ -296,7 +296,7 @@ mk_ptlgrps_list(session_t *partial_session)
 	list->last = NULL;
 	list->count = 0;
 
-	list->session = partial_session;
+	list->session = session;
 
 	return list;
 }

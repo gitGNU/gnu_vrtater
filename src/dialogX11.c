@@ -15,6 +15,7 @@
 
 void cfg_recycler(void);
 void cfg_balance(void);
+void log_keymap(session_t *keymap, session_t *holdmap, session_t *holdbkp);
 void diag_read_dialog_set(hmapf_t **, int);
 
 
@@ -24,6 +25,13 @@ refresh_dialog_interfaces(void)
 {
 	cfg_recycler();
 	cfg_balance();
+}
+
+/* holdkey and holdbkp are passed for each new keymap arriving */
+void
+log_keymap(session_t *keymap, session_t *holdmap, session_t *holdbkp)
+{
+	;
 }
 
 /* Given selection in selectf_a, present dialog for partial referenced.  Caller

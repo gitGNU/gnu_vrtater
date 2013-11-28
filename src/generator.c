@@ -200,29 +200,28 @@ regenerate_scene(vf_t *vpt)
 	/* usleep(33400); */ /* @rsfreq 1000 fps = aprox 27.8 to 28.6(+2.8%) */
 }
 
-/* Create a linked list construct for filescope partial_list returning
-   reference to an empty list of partials residing therein. */
+/* Create linked list construct to maintain all created nodes. */
 void
 mk_partial_list(void)
 {
-	partial_list = NULL;
-	if ((partial_list = (partial_list_t *) malloc(sizeof(partial_list_t))) == NULL) {
+	partials = NULL; /* partials declare is in partial.h */
+	if ((partials = (struct partial_list *) malloc(sizeof(struct partial_list))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc for partial_list\n",
+			"Error: Could not malloc for partial node list\n",
 			__FILE__, __LINE__);
 		abort();
 	}
-	partial_list->last = NULL;
-	partial_list->count = 0;
+	partials->last = NULL;
+	partials->count = 0;
 }
 
-/* Remove partial_list and all of it's element references. */
+/* Remove linked list construct and all created nodes therein. */
 void
 rm_partial_list(void)
 {
-	while (partial_list->last != NULL)
-		rm_partial(partial_list->last);
-	free(partial_list);
+	while (partials->last != NULL)
+		rm_partial(partials->last);
+	free(partials);
 }
 
 /* Generate a connection point to merge partial vobspace in a peer to peers
@@ -245,20 +244,20 @@ rm_partial_list(void)
    while on all continuing nodes, they maintained in the continuing yet
    cumulatively stored alongside node-orgin.  Also, for now any maps following
    nodemap are ignored for simplicity. */
-partial_t *
+struct partial *
 mk_partial(session_t *session, hmapf_t **maps, unsigned int count, complextimate_t *cmplxt)
 {
-	partial_t *listed = NULL;
+	struct partial *listed = NULL;
 
-	if ((listed = (partial_t *) malloc(sizeof(partial_t))) == NULL) {
+	if ((listed = (struct partial *) malloc(sizeof(struct partial))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc for partial_list entry\n",
+			"Error: Could not malloc for partials entry\n",
 			__FILE__, __LINE__);
 		abort();
 	}
-	listed->precursor = partial_list->last;
-	partial_list->last = listed;
-	partial_list->count++;
+	listed->precursor = partials->last;
+	partials->last = listed;
+	partials->count++;
 
 	listed->ptlbits = 0xffffffff;
 	if (session) {
@@ -268,7 +267,7 @@ mk_partial(session_t *session, hmapf_t **maps, unsigned int count, complextimate
 		set_nodename(&(listed->session), &((*maps)->name));
 		listed->ptlgrps = mk_ptlgrps_list(&(listed->session));
 	}
-	listed->ptlrepute = mk_ptlrepute_list(&(listed->session));
+	listed->reputed = mk_ptlrepute_list(&(listed->session));
 	listed->ptlmaps = mk_ptlmaps_list(&(listed->session));
 	listed->nodemap = *maps;
 	listed->nodemap->attribs.mode |= VRT_MASK_NODEMAP;
@@ -296,16 +295,16 @@ mk_partial(session_t *session, hmapf_t **maps, unsigned int count, complextimate
 /* Given a node-partial reference partial, send any hmaps collected therein to
    recycle.  Free any memory associated with the partial. */
 void
-rm_partial(partial_t *partial)
+rm_partial(struct partial *ptl)
 {
-	partial_t *current, *passed;
+	struct partial *current, *passed;
 	select_t sel = { 0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
-	current = partial_list->last;
-	passed = partial_list->last;
+	current = partials->last;
+	passed = partials->last;
 	while (1) {
 		if (current != NULL) {
-			if (match_mapname(&(current->session), &(partial->session)))
+			if (match_mapname(&(current->session), &(ptl->session)))
 				break;
 			passed = current;
 			current = current->precursor;
@@ -317,19 +316,19 @@ rm_partial(partial_t *partial)
 		current->session.hash.l);
 
 	/* Remove partial list, recycling maps therein. */
-	rm_ptlgrps_list(partial->ptlgrps);
-	rm_ptlrepute_list(partial->ptlrepute);
-	(&sel)->counta = select_partial_set(partial->ptlmaps, (&sel)->seta);
-	rm_ptlmaps_list(partial->ptlmaps);
+	rm_ptlgrps_list(ptl->ptlgrps);
+	rm_ptlrepute_list(ptl->reputed);
+	(&sel)->counta = select_partial_set(ptl->ptlmaps, (&sel)->seta);
+	rm_ptlmaps_list(ptl->ptlmaps);
 	if (current == passed) {
 		if (!current->precursor)
-			partial_list->last = NULL;
+			partials->last = NULL;
 		else
-			partial_list->last = current->precursor;
+			partials->last = current->precursor;
 	} else
 		passed->precursor = current->precursor;
 	free(current);
-	partial_list->count--;
+	partials->count--;
 	recycle(&sel);
 }
 
@@ -396,10 +395,10 @@ resize_node_orgin(int size, int keep_connected)
 void
 diag_ls_partials(void)
 {
-	partial_t *current, *passed;
+	struct partial *current, *passed;
 
-	current = partial_list->last;
-	passed = partial_list->last;
+	current = partials->last;
+	passed = partials->last;
 	if (current == NULL) {
 		__builtin_printf("--no partials listed--\n");
 		return;
@@ -413,13 +412,13 @@ diag_ls_partials(void)
 
 /* Temporary diagnostic to list hmaps partial returning count thereof. */
 int
-diag_hmaps_in_partial(partial_t *partial)
+diag_hmaps_in_partial(struct partial *ptl)
 {
 	select_t sel = { 0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
-	(&sel)->counta = select_partial_set(partial->ptlmaps, (&sel)->seta);
+	(&sel)->counta = select_partial_set(ptl->ptlmaps, (&sel)->seta);
 	diag_selection(&sel);
-	return partial->ptlmaps->count;
+	return ptl->ptlmaps->count;
 }
 
 /* Temporary diagnostic to run test on keypress f. (!if diag-text input on).*/
@@ -477,41 +476,41 @@ diag_generator_key_h(void)
 ptlgrp_t *
 test_add_group(session_t *groupmap_name)
 {
-	partial_t *partial;
-	session_t partial_session;
+	struct partial *ptl;
+	session_t session;
 
-	cp_session(&partial_session, groupmap_name);
-	if ((partial = find_partial(&partial_session)) == NULL) {
+	cp_session(groupmap_name, &session);
+	if ((ptl = find_partial(&session)) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: test_add_group\n",
 			__FILE__, __LINE__);
 		return NULL;
 	}
 	__builtin_printf(" adding group in partial (%x %x %x) vs. groupmap "
-		"(%x %x %x) %i\n", (&partial->session)->hash.h,
-		(&partial->session)->hash.m, (&partial->session)->hash.l,
+		"(%x %x %x) %i\n", (&ptl->session)->hash.h,
+		(&ptl->session)->hash.m, (&ptl->session)->hash.l,
 		groupmap_name->hash.h, groupmap_name->hash.m,
 		groupmap_name->hash.l, groupmap_name->seq);
 
-	return add_ptlgrp(partial->ptlgrps, groupmap_name);
+	return add_ptlgrp(ptl->ptlgrps, groupmap_name);
 }
 
 /* Diagnostic test: Add a member to locally hosted group. */
 ptlmbr_t *
 test_add_member(session_t *sign_in, session_t *groupmap_name)
 {
-	partial_t *partial;
-	session_t partial_session;
+	struct partial *ptl;
+	session_t session;
 	ptlgrp_t *group;
 
-	cp_session(&partial_session, groupmap_name);
-	if ((partial = find_partial(&partial_session)) == NULL) {
+	cp_session(&session, groupmap_name);
+	if ((ptl = find_partial(&session)) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: session non-existant in test_add_member\n",
 			__FILE__, __LINE__);
 		abort();
 	}
-	if ((group = find_group(partial->ptlgrps, groupmap_name)) == NULL) {
+	if ((group = find_group(ptl->ptlgrps, groupmap_name)) == NULL) {
 		__builtin_printf("Group with groupmap (%x %x %x) %i not "
 			"found\n", groupmap_name->hash.h,
 			groupmap_name->hash.m, groupmap_name->hash.l,
@@ -529,14 +528,14 @@ test_add_member(session_t *sign_in, session_t *groupmap_name)
 void
 test_select_partial_set(void)
 {
-	partial_t **partial;
+	struct partial **ptl;
 	select_t sel = {  0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
-	partial = (partial_t **) partial_list;
-	(&sel)->counta = select_partial_set((find_partial((&(*partial)->session))->ptlmaps), (&sel)->seta);
+	ptl = (struct partial **) partials;
+	(&sel)->counta = select_partial_set((find_partial((&(*ptl)->session))->ptlmaps), (&sel)->seta);
 	diag_selection(&sel);
-	partial++;
-	(&sel)->counta = select_partial_set((find_partial((&(*partial)->session))->ptlmaps), (&sel)->seta);
+	ptl++;
+	(&sel)->counta = select_partial_set((find_partial((&(*ptl)->session))->ptlmaps), (&sel)->seta);
 	diag_selection(&sel);
 }
 
@@ -546,7 +545,7 @@ void
 test_add_maps(unsigned int n, int mapstock, session_t *session, vf_t *portal, select_t *sel, complextimate_t *cmplxt)
 {
 	int i;
-	partial_t *node;
+	struct partial *node;
 	hmapf_t **map;
 	vf_t d = { 10., 0., 0., 10. }; /* ... */
 
@@ -599,11 +598,11 @@ test_add_maps(unsigned int n, int mapstock, session_t *session, vf_t *portal, se
 void
 test_send_partial_changes(void)
 {
-	partial_t *current, *passed;
+	struct partial *current, *passed;
 	select_t sel = { 0, 0, (hmapf_t **) selectf_a, 0, NULL };
 
-	current = partial_list->last;
-	passed = partial_list->last;
+	current = partials->last;
+	passed = partials->last;
 	while (current != NULL) {
 		(&sel)->counta = select_partial_set(current->ptlmaps, (&sel)->seta);
 		send_maps(&(current->session), &sel);

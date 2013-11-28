@@ -188,10 +188,10 @@ node_continuity(char *url, char *oneliner, session_t *session_here, session_t *s
    hmaps from a continuing node in a given partial.  It's mapname is used as
    loginkey. */
 int
-continue_node(char *url, ptlrepute_list_t *list, ptlrepute_t *repute, session_t *session_here, session_t *loginkey, session_t *holdkey, unsigned int tl_cmplxt)
+continue_node(char *url, struct ptlrepute_list *list, struct ptlrepute *repute, session_t *session_here, session_t *loginkey, session_t *holdkey, unsigned int tl_cmplxt)
 {
 	session_desc_t *desc = NULL;
-	ptlrepute_t *unique_repute;
+	struct ptlrepute *unique_repute;
 	int keyuse, rval = -1;
 
 	/* Looking at all_sessions, the nodemap, and any dialog therein, person
@@ -418,7 +418,7 @@ int
 sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *loginkey, session_t *lastkey, session_t *contingentkey, session_t *holdkey, unsigned int tl_cmplxt, char *url)
 {
 	session_desc_t *desc_here, *desc_peer;
-	ptlrepute_t *repute_here, *unique_repute_here;
+	struct ptlrepute *repute_here, *unique_repute_here;
 	int keyuse, rval = -1;
 
 	/* Likely passed in as args. */
@@ -438,7 +438,7 @@ sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *login
 	session_t continuelastkey = { { 0, 0, 0xb0de }, 8 };
 	session_t continuecontingentkey = { { 0, 0, 0xface }, 8 };
 	session_t continueholdkey = { { 0, 0, 0xface }, 555 };
-	repute_here = add_ptlrepute(desc_here->ptlrepute, &continuelastkey, &continueholdkey, NULL);
+	repute_here = add_ptlrepute(desc_here->reputed, &continuelastkey, &continueholdkey, NULL);
 	cp_mapname(&continuecontingentkey, &(repute_here->contingentkey));
 
 	__builtin_printf(" authenticated vrtlogin.\n partial to \"%s\" "
@@ -456,7 +456,7 @@ sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *login
 		return -1;
 	}
 #ifdef DIAG_FLEXIBLE_SESSION
-	if ((unique_repute_here = find_lastkey(desc_here->ptlrepute, &continuelastkey)) == NULL) {
+	if ((unique_repute_here = find_lastkey(desc_here->reputed, &continuelastkey)) == NULL) {
 		__builtin_printf("sync_vrtlogin cant find_lastkey\n");
 		abort();
 	}
@@ -481,7 +481,7 @@ sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *login
 	   or a new one will be added.  holdmap reference stack will be pushed
 	   if holdkey is not of zero_mapname and found to be unique in
 	   ptlrepute.  */
-	keyuse = sync_loginkeys(NULL, desc_here->ptlrepute, NULL, loginkey, holdkey, lastkey, contingentkey, VRT_LOGIN_PRECONTEXT);
+	keyuse = sync_loginkeys(NULL, desc_here->reputed, NULL, loginkey, holdkey, lastkey, contingentkey, VRT_LOGIN_PRECONTEXT);
 
 	/* Send a keyuse value to continuing node so that loginkey data can be
 	   syncronized there. */
@@ -496,7 +496,7 @@ sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *login
 #ifdef DIAG_FLEXIBLE_SESSION
 		__builtin_printf(" sync_loginkeys returns %i  keyuse_feedback "
 			"returns %i\n", keyuse, rval);
-		if ((unique_repute_here = find_lastkey(desc_here->ptlrepute, loginkey)) == NULL) {
+		if ((unique_repute_here = find_lastkey(desc_here->reputed, loginkey)) == NULL) {
 			__builtin_printf("sync_vrtlogin cant find_lastkey\n");
 			abort();
 		}
@@ -769,7 +769,7 @@ rm_session_desc_list(void)
    all_sessions on a flexible, those having no implied node in node_orgin.
    Return reference. */
 session_desc_t *
-add_session_desc(session_t *session, session_t *peer, session_t *thru, btoggles_t level, char *url, char *oneliner, complextimate_t *cmplxt, hmapf_t *nodemap, ptlrepute_list_t *ptlrepute)
+add_session_desc(session_t *session, session_t *peer, session_t *thru, btoggles_t level, char *url, char *oneliner, complextimate_t *cmplxt, hmapf_t *nodemap, struct ptlrepute_list *reputed)
 {
 	session_desc_t *listed = NULL;
 
@@ -816,7 +816,7 @@ add_session_desc(session_t *session, session_t *peer, session_t *thru, btoggles_
 	if (oneliner)
 		strcpy(listed->oneliner, oneliner);
 	listed->nodemap = nodemap;
-	listed->ptlrepute = ptlrepute;
+	listed->reputed = reputed;
 	listed->cmplxt.hmap_count = cmplxt->hmap_count;
 	listed->cmplxt.tl_vdata = cmplxt->tl_vdata;
 	listed->cmplxt.tl_dialog = cmplxt->tl_dialog;

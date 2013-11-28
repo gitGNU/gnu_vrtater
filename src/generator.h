@@ -13,16 +13,17 @@
 #include "session.h"
 #include "loginkeys.h"
 
-/* These generator options are all set by ifnode**.c, some through data
-   maintained in dialog.c.  balance_criteria is still in the works, and may be
-   proposed as some hybrid of bits vs. a quantity once needed.
-   vobspace_criteria bit defines are still in the works, are listed below. */
+/* These options are all set by ifnode**.c, some through data maintained in
+   dialog.c.  why and what are represented in vobspace_criteria.  when is
+   divisions of timer data.  These also effect flexible node dialog messages.
+   balance_criteria is still in the works, and may be proposed as
+   some hybrid of bits vs. a quantity once needed. */
 struct genopts_s {
 	btoggles_t balance_criteria; /* balance_filter options */
-	btoggles_t vobspace_criteria; /* context options */
-	int why; /* fail, ... */
-	int what; /* shutdown, ... */
-	double when; /* shutdown, ... */
+	btoggles_t vobspace_criteria; /* tested context options */
+	int why; /* dialog*.c issue */
+	int what; /* for why */
+	double when; /* for what */
 };
 typedef struct genopts_s genopts_t;
 
@@ -40,14 +41,14 @@ unsigned int calc_cmplxt(complextimate_t *cmplxt);
 void regenerate_scene(vf_t *);
 void mk_partial_list(void);
 void rm_partial_list(void);
-partial_t *mk_partial(session_t *, hmapf_t **, unsigned int count, complextimate_t *cmplxt);
-void rm_partial(partial_t *partial);
+struct partial *mk_partial(session_t *, hmapf_t **, unsigned int count, complextimate_t *cmplxt);
+void rm_partial(struct partial *);
 void close_vobspace(double time_till_closed);
 void close_node_orgin(void);
 int resize_node_orgin(int, int);
 /* Diagnostics. */
 void diag_ls_partials(void);
-int diag_hmaps_in_partial(partial_t *);
+int diag_hmaps_in_partial(struct partial *);
 void diag_generator_key_f(void);
 void diag_generator_key_g(void);
 void diag_generator_key_h(void);

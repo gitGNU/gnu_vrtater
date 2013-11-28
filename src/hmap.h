@@ -52,9 +52,8 @@ struct attribs_s {
 	int kfactorm; /* 1 or 1000^exponent vs. mass */
 	int kfactord; /* 1 or 1000^exponent vs. distance */
 };
-typedef struct attribs_s attribs_t;
 
-enum { /* attribs_t sign, tested at least once every state increment */
+enum { /* attribs_s sign, tested at least once every state increment */
 	VRT_ORDINAL_RECYCLE, /* send to recycler */
 #define VRT_MASK_RECYCLE (1 << VRT_ORDINAL_RECYCLE)
 	VRT_ORDINAL_BUFFER, /* stack in vobspace /w attribute indicator */
@@ -85,7 +84,7 @@ enum { /* attribs_t sign, tested at least once every state increment */
 #define VRT_MASK_KEYMAP (1 << VRT_ORDINAL_KEYMAP)
 };
 
-enum { /* attribs_t mode, tested in context based functions */
+enum { /* attribs_s mode, tested in context based functions */
 	VRT_ORDINAL_ATTACHED,
 #define VRT_MASK_ATTACHED (1 << VRT_ORDINAL_ATTACHED)
 	VRT_ORDINAL_BALANCE_FILTER,
@@ -128,9 +127,8 @@ struct envelope_s {
 	int geom;
 	vf_t vsz;
 };
-typedef struct envelope_s envelope_t;
 
-enum { /* envelope_t geom */
+enum { /* envelope_s geom */
 	VRT_BOUND_NONE,
 	VRT_BOUND_SPHERE,
 	VRT_BOUND_CYLINDER,
@@ -142,9 +140,8 @@ struct draw_s {
 	int geom; /* so-far, VRT_DRAWGEOM_TRIANGLES is supported */
 	/* add options as per stock/renderer support */
 };
-typedef struct draw_s draw_t;
 
-enum { /* draw_t geom.  note precedence follows n edges */
+enum { /* draw_s geom.  note precedence follows n edges */
 	VRT_DRAWGEOM_NONE,
 	VRT_DRAWGEOM_POINTS,
 	VRT_DRAWGEOM_LINES,
@@ -167,10 +164,10 @@ struct hmapf_s {
 	vf_t vpre; /* axis of mass distribution vs. vaxi precession */
 	float ang_spd; /* (r/s), angular speed about rotational axes */
 	float ang_dpl; /* (r), angular displacement about rotational axes */
-	attribs_t attribs; /* other data hmap carries */
+	struct attribs_s attribs; /* other data hmap carries */
 	options_t *options; /* optional data hmap keeps locally */
-	envelope_t envelope; /* bounding volume */
-	draw_t draw; /* format vs. stock/display support */
+	struct envelope_s envelope; /* bounding volume */
+	struct draw_s draw; /* format vs. stock/display support */
 	int vmap_total; /* total hmap vertices of vf_t */
 	vf_t *vmap;
 	int dialog_len; /* as per strlen(), does not count trailing '\0' */

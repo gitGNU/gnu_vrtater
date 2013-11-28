@@ -17,7 +17,7 @@ struct session_desc_s {
 	char *url; /* set for a continuing */
 	char oneliner[80];
 	hmapf_t *nodemap; /* for flexible partial_t, copy of nodemap */
-	ptlrepute_list_t *ptlrepute; /* for flexible, ptlrepute pointer copy */
+	struct ptlrepute_list *reputed; /* for flexible */
 	complextimate_t cmplxt; /* at arrival metaloc */
 	struct session_desc_s *precursor;
 };
@@ -64,7 +64,7 @@ int hash_session_name(session_t *, char *seedfiles);
 int read_hash(session_t *, char *seedfiles);
 void list_nodes(char *);
 int node_continuity(char *url, char *oneliner, session_t *session_here, session_t *session_thru, hmapf_t **maps);
-int continue_node(char *url, ptlrepute_list_t *new, ptlrepute_t *repute, session_t *session_here, session_t *loginkey, session_t *holdkey, unsigned int tl_cmplxt);
+int continue_node(char *url, struct ptlrepute_list *new, struct ptlrepute *repute, session_t *session_here, session_t *loginkey, session_t *holdkey, unsigned int tl_cmplxt);
 int answer_vrtlogin(session_t *session, session_t *thru, char *url); /* here for testing */ 
 int sync_vrtlogin(session_t *peer, session_t *thru, session_t *loginkey, session_t *lastkey, session_t *contingentkey, session_t *holdkey, unsigned int tl_cmplxt, char *url); /* here for testing */ 
 void sync_sessions(void);
@@ -73,7 +73,7 @@ session_t *receive_map(select_t *sel);
 session_desc_t *find_session(session_t *);
 session_desc_t *find_url(char *oneliner);
 void mk_session_desc_list(void);
-session_desc_t *add_session_desc(session_t *, session_t *peer, session_t *thru, btoggles_t level, char *url, char *oneliner, complextimate_t *, hmapf_t *nodemap, ptlrepute_list_t *list);
+session_desc_t *add_session_desc(session_t *, session_t *peer, session_t *thru, btoggles_t level, char *url, char *oneliner, complextimate_t *, hmapf_t *nodemap, struct ptlrepute_list *list);
 int close_session(session_desc_t *);
 int close_all_sessions(void);
 int reset_sessions(void);
