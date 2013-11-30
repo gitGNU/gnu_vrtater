@@ -26,7 +26,7 @@
 #include "partial.h"
 
 /* vrtater. */
-session_desc_t *orgin_desc;
+struct session_desc *orgin_desc;
 int runnode = 1;
 
 /* Displays. */
@@ -948,7 +948,7 @@ diag_peer_key_g(void)
 	char url[] = "protocol://192.168.0.2/nothernode/"; /* index */
 	session_t session_peer = { { 0, 0, 0xc0de }, 0 };
 	session_t null = { { 0, 0, 0 }, 0 };
-	session_desc_t *desc_here;
+	struct session_desc *desc_here;
 	complextimate_t cmplxt_here = { 0, 0, 0 };
 	hmapf_t *nother_hold;
 	vf_t portal, d = { 1., 0., 0., 1. };

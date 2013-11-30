@@ -35,7 +35,7 @@ enum {
 #define VRT_MASK_DASHF (1 << VRT_ORDINAL_DASHF)
 };
 
-session_desc_t *generate_node_orgin(void);
+struct session_desc *generate_node_orgin(void);
 unsigned int calc_cmplxt(complextimate_t *cmplxt);
 void regenerate_scene(vf_t *);
 void mk_partial_list(void);

@@ -58,10 +58,10 @@ init_selection_buffers(void)
 }
 
 /* Form the basis for hmap and further node interfacing. */
-session_desc_t *
+struct session_desc *
 generate_node_orgin(void)
 {
-	session_desc_t *orgin_desc;
+	struct session_desc *orgin_desc;
 	char filename[] = "/dev/zero";
 	session_t null = { { 0, 0, 0 }, 0 };
 
@@ -125,13 +125,13 @@ generate_vohspace(void)
 		if ((map = hmapf_icosahedron_c(&node_orgin, .01)) != NULL)
 			nportf(map, sum_vf(&d, &portal, &portal), 1);
 	for (i = 0; i < 2; i++)
-		if ((map = hmapf_cube_c(&node_orgin, 3, 3, 3)) != NULL)
+		if ((map = hmapf_cuboid_c(&node_orgin, 3, 3, 3)) != NULL)
 			nportf(map, sum_vf(&d, &portal, &portal), 1);
 	for (i = 0; i < 6; i++)
 		if ((map = hmapf_icosahedron_c(&node_orgin, 2)) != NULL)
 			nportf(map, sum_vf(&d, &portal, &portal), 1);
 	for (i = 0; i < 10; i++)
-		if ((map = hmapf_cube_c(&node_orgin, 100, 100, 100)) != NULL)
+		if ((map = hmapf_cuboid_c(&node_orgin, 100, 100, 100)) != NULL)
 			nportf(map, sum_vf(&d, &portal, &portal), 1);
 	for (i = 0; i < 1; i++)
 		if ((map = hmapf_cylinder_c(&node_orgin, 8, 25, 12, 0)) != NULL)

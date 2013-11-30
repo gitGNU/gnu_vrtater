@@ -19,7 +19,7 @@
 #define ISL2 0.474268887881 /* inside layer / 2 */
 #define ICOSAHEDRON_C_BOUND0 1
 
-/* cube_c cuboid. */
+/* cuboid_c. */
 #define QDR_SZ 0.57735026919 /* derived from opposite corners at distance 2 */
 #define CUBE_C_BOUND0 QDR_SZ
 
@@ -73,10 +73,10 @@ hmapf_icosahedron_c(session_t *session, float r)
 	return map;
 }
 
-/* Enscribe a cube_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
+/* Enscribe a cuboid_c VRT_DRAWGEOM_TRIANGLES hmap attached to session, with
    length l, width w, and height h.  Return NULL if vohspace full. */
 hmapf_t *
-hmapf_cube_c(session_t *session, float l, float w, float h)
+hmapf_cuboid_c(session_t *session, float l, float w, float h)
 {
 	int i, j;
 	vf_t av[3], *tri, *vmap, *pd, **ppd = &pd;

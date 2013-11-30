@@ -10,10 +10,10 @@
 #include "progscope.h"
 #include "transform.h"
 
-int keyuse_feedback(session_desc_t *, session_t *loginkey, int keyuse);
+int keyuse_feedback(struct session_desc *, session_t *loginkey, int keyuse);
 void read_from_network(void);
 void rm_session_desc_list(void);
-void subtract_session_desc(session_desc_t *desc);
+void subtract_session_desc(struct session_desc *desc);
 
 /* Called after node-orgin is set up.  all_sessions list construct is already
    present and contains node-orgin and any flexible nodes read from config. */
@@ -84,7 +84,7 @@ read_hash(session_t *session, char *seedfiles)
 int
 node_continuity(char *url, char *oneliner, session_t *session_here, session_t *session_thru, hmapf_t **maps)
 {
-	session_desc_t *desc_here = NULL;
+	struct session_desc *desc_here = NULL;
 	session_t null = { { 0, 0, 0 }, 0 };
 	session_t session_peer = { { 0, 0, 0 }, 0 };
 	complextimate_t cmplxt_peer, cmplxt_here = { 0, 0, 0 };
@@ -186,7 +186,7 @@ node_continuity(char *url, char *oneliner, session_t *session_here, session_t *s
 int
 continue_node(char *url, struct ptlrepute_list *list, struct ptlrepute *repute, session_t *session_here, session_t *loginkey, session_t *holdkey, unsigned int tl_cmplxt)
 {
-	session_desc_t *desc = NULL;
+	struct session_desc *desc = NULL;
 	struct ptlrepute *unique_repute;
 	int keyuse, rval = -1;
 
@@ -303,8 +303,8 @@ continue_node(char *url, struct ptlrepute_list *list, struct ptlrepute *repute, 
 int
 answer_vrtlogin(session_t *session_peer, session_t *session_thru, char *url)
 {
-	session_desc_t *desc_here = NULL;
-	session_desc_t *desc_peer = NULL;
+	struct session_desc *desc_here = NULL;
+	struct session_desc *desc_peer = NULL;
 	complextimate_t cmplxt_peer = { 0, 0, 0 }; /* unknown until sync */
 
 	/* Simulate receiving vrtlogin phase-a. */
@@ -382,11 +382,11 @@ answer_vrtlogin(session_t *session_peer, session_t *session_thru, char *url)
 	   same url continuously or initially assumes that all nodes behind
 	   url should be allowed to be connected simutaniously if a flexible
 	   session is accepted by continuing node attempting vrtlogin.  This
-	   means that the exchange of a list of n session_desc_t data should be
+	   means that the exchange of a list of n session_desc data should be
 	   supported so that block of sessions would then first all appear
 	   in all_sessions on the continuing, or in the sent nodemap dialog.
 	   These then would all be connected when accepting the flexible
-	   session.  session_desc_t therefore includes session_t thru, that
+	   session.  session_desc therefore includes session_t thru, that
 	   specifies a node that peer session described eminates out of.
 	   For a flexible node, any sessions calling for a vrtlogin out of node
 	   at url after a continuing partial session exists there are then
@@ -413,7 +413,7 @@ answer_vrtlogin(session_t *session_peer, session_t *session_thru, char *url)
 int
 sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *loginkey, session_t *lastkey, session_t *contingentkey, session_t *holdkey, unsigned int tl_cmplxt, char *url)
 {
-	session_desc_t *desc_here, *desc_peer;
+	struct session_desc *desc_here, *desc_peer;
 	struct ptlrepute *repute_here, *unique_repute_here;
 	int keyuse, rval = -1;
 
@@ -544,7 +544,7 @@ sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *login
    success or failure of sync.  Return 0 on success else keyuse, or < 0 on any
    error. */
 int
-keyuse_feedback(session_desc_t *desc, session_t *loginkey, int keyuse)
+keyuse_feedback(struct session_desc *desc, session_t *loginkey, int keyuse)
 {
 	/* Messages to remote.  Forward keyuse value to peer and ... */
 	if (keyuse == VRT_LOGIN_RETRY) {
@@ -687,10 +687,10 @@ diag_receive_nodemap(session_t *session, select_t *sel)
 }
 
 /* Return reference to session description matching session or NULL if none. */
-session_desc_t *
+struct session_desc *
 find_session(session_t *session)
 {
-	session_desc_t *current, *passed;
+	struct session_desc *current, *passed;
 
 	current = all_sessions->last;
 	passed = all_sessions->last;
@@ -706,10 +706,10 @@ find_session(session_t *session)
 }
 
 /* Return reference to session description matching url or NULL if none. */
-session_desc_t *
+struct session_desc *
 find_url(char *url)
 {
-	session_desc_t *current, *passed;
+	struct session_desc *current, *passed;
 
 	current = all_sessions->last;
 	passed = all_sessions->last;
@@ -733,7 +733,7 @@ void
 mk_session_desc_list(void)
 {
 	all_sessions = NULL;
-	if ((all_sessions = (session_desc_list_t *) malloc(sizeof(session_desc_list_t))) == NULL) {
+	if ((all_sessions = (struct session_desc_list *) malloc(sizeof(struct session_desc_list))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for all_sessions "
 			"list construct\n",
@@ -755,19 +755,20 @@ rm_session_desc_list(void)
 
 /* Add a session description reference to all_sessions providing session
    description details peer, thru (if forwarding present), level describing
-   connection state, oneliner describing session or session's peer, cmplxt
-   describing size of data transfered during vrtlogin (might be used thereafter
-   to maintain tl_cmplxt for session), and nodemap describing node
-   volumetrically.  ptlrepute reference supplied will be non NULL if
+   connection state, url if a flexible, oneliner describing session or session's
+   peer, cmplxt describing size of data transfered during vrtlogin (might be
+   used thereafter to maintain tl_cmplxt for session), and nodemap describing
+   node volumetrically.  ptlrepute reference supplied will be non NULL if
    description is of a flexible node, allowing for calls to sync_loginkeys in
-   filescope.  Reference to url is added only where description is of a
-   continuing session eminating, not for a continuing session description in
-   all_sessions on a flexible, those having no implied node in node_orgin.
-   Return reference. */
-session_desc_t *
+   filescope.  Return refrence.  note: To partial with one's own flexible should
+   be made possible using the menu for all_sessions, so only the onliner is
+   then added in that case for a continuing session description with no implied
+   node in node-orgin.  For now the flexible's session would be used for these
+   maps.  Later session with no implied node could be thru flexible session. */
+struct session_desc *
 add_session_desc(session_t *session, session_t *peer, session_t *thru, int level, char *url, char *oneliner, complextimate_t *cmplxt, hmapf_t *nodemap, struct ptlrepute_list *reputed)
 {
-	session_desc_t *listed = NULL;
+	struct session_desc *listed = NULL;
 
 	if (find_session(session)) {
 		__builtin_printf("Error: Can not create session description "
@@ -783,7 +784,7 @@ add_session_desc(session_t *session, session_t *peer, session_t *thru, int level
 			return NULL;
 		}
 	}
-	if ((listed = (session_desc_t *) malloc(sizeof(session_desc_t))) == NULL) {
+	if ((listed = (struct session_desc *) malloc(sizeof(struct session_desc))) == NULL) {
 		__builtin_fprintf(stderr, "vrtater:%s:%d: "
 			"Error: Could not malloc for all_sessions entry\n",
 			__FILE__, __LINE__);
@@ -828,9 +829,9 @@ add_session_desc(session_t *session, session_t *peer, session_t *thru, int level
 
 /* Subtract linked list element referenced by desc. */
 void
-subtract_session_desc(session_desc_t *desc)
+subtract_session_desc(struct session_desc *desc)
 {
-	session_desc_t *current, *passed;
+	struct session_desc *current, *passed;
 
 	current = all_sessions->last;
 	passed = all_sessions->last;
@@ -861,7 +862,7 @@ subtract_session_desc(session_desc_t *desc)
 
 /* Close session referenced by desc.  Return 0 on closed. */
 int
-close_session(session_desc_t *desc)
+close_session(struct session_desc *desc)
 {
 	/* Disconnect sequence. */
 	/* ... */
@@ -887,9 +888,9 @@ close_all_sessions(void)
    VRT_MASK_ACCEPT_VRTLOGIN bit becomes true, calls to sync_session will
    always become periodic per state increment.  This is the same sequence used
    when the program is first run.  node-orgin and possibly some defined
-   flexible nodes that are not yet enabled will be in the session_desc_list.
-   Non-zero could be returned for now if a peer node seems broken, otherwise
-   returning 0 indicates an initial state. */
+   flexible nodes that are not yet enabled will be in the session description
+   list.  Non-zero could be returned for now if a peer node seems broken,
+   otherwise returning 0 indicates an initial state. */
 int
 reset_sessions(void)
 {
@@ -906,7 +907,7 @@ reset_sessions(void)
 void
 diag_ls_all_sessions(int full)
 {
-	session_desc_t *current, *passed;
+	struct session_desc *current, *passed;
 	char *tmp, other[] = "";
 	int i;
 

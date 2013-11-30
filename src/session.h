@@ -9,7 +9,7 @@
 #include "hmap.h"
 #include "loginkeys.h"
 
-struct session_desc_s {
+struct session_desc {
 	session_t session;
 	session_t peer;
 	session_t thru; /* session is passing thru here before any redirect */
@@ -19,11 +19,10 @@ struct session_desc_s {
 	hmapf_t *nodemap; /* for flexible partial_t, copy of nodemap */
 	struct ptlrepute_list *reputed; /* for flexible */
 	complextimate_t cmplxt; /* at arrival metaloc */
-	struct session_desc_s *precursor;
+	struct session_desc *precursor;
 };
-typedef struct session_desc_s session_desc_t;
 
-enum { /* session_desc_t level */
+enum { /* session_desc level */
 	VRT_ORDINAL_SESSION_DETACHED,
 #define VRT_MASK_SESSION_DETACHED (1 << VRT_ORDINAL_SESSION_DETACHED)
 	VRT_ORDINAL_SESSION_INBOUND,
@@ -42,11 +41,10 @@ enum { /* session_desc_t level */
 #define VRT_MASK_SESSION_UNLINKED (1 << VRT_ORDINAL_SESSION_UNLINKED)
 };
 
-struct session_desc_list_s {
-	session_desc_t *last;
+struct session_desc_list {
+	struct session_desc *last;
 	unsigned int count;
 };
-typedef struct session_desc_list_s session_desc_list_t;
 
 int session_nodemask;
 enum { /* bits for session_nodemask */
@@ -56,7 +54,7 @@ enum { /* bits for session_nodemask */
 #define VRT_MASK_OVERLOADED (1 << VRT_ORDINAL_OVERLOADED)
 };
 
-session_desc_list_t *all_sessions;
+struct session_desc_list *all_sessions;
 int login_cmplxt_max;
 
 void init_sessions(void);
@@ -70,11 +68,11 @@ int sync_vrtlogin(session_t *peer, session_t *thru, session_t *loginkey, session
 void sync_sessions(void);
 int send_maps(session_t *, select_t *sel);
 session_t *receive_map(select_t *sel);
-session_desc_t *find_session(session_t *);
-session_desc_t *find_url(char *oneliner);
+struct session_desc *find_session(session_t *);
+struct session_desc *find_url(char *oneliner);
 void mk_session_desc_list(void);
-session_desc_t *add_session_desc(session_t *, session_t *peer, session_t *thru, int level, char *url, char *oneliner, complextimate_t *, hmapf_t *nodemap, struct ptlrepute_list *list);
-int close_session(session_desc_t *);
+struct session_desc *add_session_desc(session_t *, session_t *peer, session_t *thru, int level, char *url, char *oneliner, complextimate_t *, hmapf_t *nodemap, struct ptlrepute_list *list);
+int close_session(struct session_desc *);
 int close_all_sessions(void);
 int reset_sessions(void);
 /* Temporary diagnostics. */
