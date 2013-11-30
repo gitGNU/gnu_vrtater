@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "attribs.h"
-#include "global.h"
+#include "progscope.h"
 #include "transform.h"
 
 #ifdef VRT_RENDERER_GL

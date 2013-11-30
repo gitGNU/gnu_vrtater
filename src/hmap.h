@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_HMAP_H
-#define VRT_HMAP_H
+#ifndef HMAP_H
+#define HMAP_H
 
 #include "vectors.h"
 
@@ -245,4 +245,4 @@ unsigned int search_vohspace(hmapf_t **, int signs, int modes);
 void diag_selection(select_t *sel); /* diagnostic */
 void set_lod_envelopef(float near_thresh, float perif_thresh, unsigned int sp_ratio, unsigned int sf_ratio);
 
-#endif /* VRT_HMAP_H */
+#endif /* HMAP_H */

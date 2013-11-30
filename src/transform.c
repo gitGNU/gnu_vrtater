@@ -10,9 +10,9 @@
 #include <string.h>
 #include <ctype.h>
 #include "transform.h"
+#include "progscope.h"
 #include "vectors.h"
 #include "stock.h"
-#include "global.h"
 #include "rotation.h"
 
 float vrt_render_cyc; /* extern */
@@ -273,7 +273,7 @@ intersection(select_t *sel)
 		sum_vf(&vaccb, vvelb, vvelb);
 	}
 
-#ifdef DIAG_INTERSECTION
+#ifdef DIAG_INTERSECTION_0FF
 	if (mapb->index == 7) {
 		__builtin_printf("\n\nindex a: %i\n", mapa->index);
 		__builtin_printf("  vposa: x %f y %f z %f m %f\n",

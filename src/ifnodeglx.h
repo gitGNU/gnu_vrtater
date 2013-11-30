@@ -3,10 +3,10 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_IFNODEGLX_H
-#define VRT_IFNODEGLX_H
+#ifndef IFNODEGLX_H
+#define IFNODEGLX_H
 
-#include "global.h"
+#include "progscope.h"
 
 struct ifdpy_s {
 	int indexfov; /* hmap dpy_ is attached to. */
@@ -134,4 +134,4 @@ extern float vrt_render_cyc; /* extern for now */
 
 void peer(int argc, char **argv);
 
-#endif /* VRT_IFNODEGLX_H */
+#endif /* IFNODEGLX_H */

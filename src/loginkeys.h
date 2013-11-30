@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_LOGINKEYS_H
-#define VRT_LOGINKEYS_H
+#ifndef LOGINKEYS_H
+#define LOGINKEYS_H
 
 #include "hmap.h"
 
@@ -47,4 +47,4 @@ void rm_ptlrepute_list(struct ptlrepute_list *);
 struct ptlrepute *add_ptlrepute(struct ptlrepute_list *, session_t *keyname, session_t *holdkey, char *url);
 void subtract_ptlrepute(struct ptlrepute_list *, struct ptlrepute *);
 
-#endif /* VRT_LOGINKEYS_H */
+#endif /* LOGINKEYS_H */

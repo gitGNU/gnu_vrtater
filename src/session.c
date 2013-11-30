@@ -7,17 +7,13 @@
 #include <stdio.h>
 #include <string.h>
 #include "session.h"
-#include "global.h"
+#include "progscope.h"
 #include "transform.h"
 
 int keyuse_feedback(session_desc_t *, session_t *loginkey, int keyuse);
 void read_from_network(void);
 void rm_session_desc_list(void);
 void subtract_session_desc(session_desc_t *desc);
-
-#ifdef DIAG_FLEXIBLE_SESSION
-hmapf_t *diag_receive_nodemap(session_t *, select_t *);
-#endif
 
 /* Called after node-orgin is set up.  all_sessions list construct is already
    present and contains node-orgin and any flexible nodes read from config. */
@@ -89,7 +85,7 @@ int
 node_continuity(char *url, char *oneliner, session_t *session_here, session_t *session_thru, hmapf_t **maps)
 {
 	session_desc_t *desc_here = NULL;
-	session_t z = { { 0, 0, 0 }, 0 };
+	session_t null = { { 0, 0, 0 }, 0 };
 	session_t session_peer = { { 0, 0, 0 }, 0 };
 	complextimate_t cmplxt_peer, cmplxt_here = { 0, 0, 0 };
 	hmapf_t *nodemap;
@@ -136,7 +132,7 @@ node_continuity(char *url, char *oneliner, session_t *session_here, session_t *s
 	   in an unusual case, provided they are not logged in to node
 	   represented by updated. */
 	/* ... */
-	if ((desc_here = add_session_desc(session_here, &session_peer, &z, VRT_MASK_SESSION_CALLED, url, newoneliner, &cmplxt_here, NULL, NULL)) == NULL)
+	if ((desc_here = add_session_desc(session_here, &session_peer, &null, VRT_MASK_SESSION_CALLED, url, newoneliner, &cmplxt_here, NULL, NULL)) == NULL)
 		return -1;
 	diag_ls_all_sessions(1);
 

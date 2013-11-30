@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include "hmap.h"
-#include "global.h"
+#include "progscope.h"
 #include "attribs.h"
 
 /* External. */

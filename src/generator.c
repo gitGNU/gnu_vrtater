@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "generator.h"
-#include "global.h"
+#include "progscope.h"
 #include "transform.h"
 #include "attribs.h"
 #include "stock.h"
@@ -63,7 +63,7 @@ generate_node_orgin(void)
 {
 	session_desc_t *orgin_desc;
 	char filename[] = "/dev/zero";
-	session_t z = { { 0, 0, 0 }, 0 };
+	session_t null = { { 0, 0, 0 }, 0 };
 
 	init_selection_buffers();
 	init_vohspace();
@@ -74,7 +74,7 @@ generate_node_orgin(void)
 		(&node_orgin)->hash.l);
 	generate_orgin_cmplxt();
 	mk_session_desc_list();
-	orgin_desc = add_session_desc(&node_orgin, &z, &z, 0, NULL,
+	orgin_desc = add_session_desc(&node_orgin, &null, &null, 0, NULL,
 		"node-orgin", orgin_cmplxt, NULL, NULL);
 	mk_partial_list();
 	generate_vohspace();
@@ -177,17 +177,8 @@ regenerate_scene(vf_t *vpt)
 	if (!recurrant++) {
 		map = (hmapf_t **) selectf_a;
 		*map = p_hmapf(15);
-		char chars[] = "dialog:\n\nProposed \"Free hmapwrapf Vertice "
-			"Data Disclaimer\".\nThis hmap has no disclaimer "
-			"compatible with this one where vertices,\nno matter "
-			"how they are organized by hmapwrapf, are concerned.\n"
-			"Any vertice related disclaimer must remove this one "
-			"or else\nthis disclaimer will be incompatible.\n\n"
-			"Short Version carries bit VRT_MASK_FREEHAPMAP and, "
-			"if deemed best, a\nminimal reference preceeding "
-			"dialog.  The vertices of such hmaps\nbecome recycle "
-			"friendly, and bit VRT_MASK_FIXED_FORM may thus be\n"
-			"cleared at lesiure.\n";
+		char chars[] = "dialog: GNU Free Software vrtater pre-alpha "
+			"on Savannah...\n\n";
 		add_dialog(*map, chars, 0, 0);
 		(*map)->attribs.sign |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
 		select_t sel = { 0, 1, map, 0, NULL };
@@ -429,20 +420,10 @@ diag_generator_key_f(void)
 	test_send_partial_changes();
 #endif
 
-#ifdef DIAG_GROUPS
+#ifdef DIAG_GROUPS_0FF
 	test_add_group(&(welcome->name));
 	test_add_member(&(avatar555->name), &(welcome->name));
 	test_add_member(&(chartoon->name), &(welcome->name));
-#endif
-
-#ifdef DIAG_RECEIVE_MAP
-	hmapf_t *nodemap;
-	session_t session = {{ 0, 0, 0x1aff5000 }, 0 };
-	hmapf_t **a = (hmapf_t **) selectf_a;
-	hmapf_t **b = (hmapf_t **) selectf_b;
-	select_t receiver = { 0, 1, a, 0, b };
-
-	nodemap = receive_map_from_peer_partial(&session, &receiver);
 #endif
 }
 
@@ -457,7 +438,7 @@ diag_generator_key_g(void)
 #endif
 
 #ifdef DIAG_HMAPWRAP
-	test_hmapwrap_unwrap(diagtext1);
+	test_hmapwrap_unwrap(p_hmapf(18));
 #endif
 }
 

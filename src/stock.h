@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_STOCK_H
-#define VRT_STOCK_H
+#ifndef STOCK_H
+#define STOCK_H
 
 #include "vectors.h"
 #include "hmap.h"
@@ -20,4 +20,4 @@ hmapf_t *hmapf_cube_c(session_t *, float l, float w, float h);
 hmapf_t *hmapf_cylinder_c(session_t *session, float r, int e, float l, int t);
 hmapf_t *hmapf_icosahedron_c(session_t *, float r);
 
-#endif /* VRT_STOCK_H */
+#endif /* STOCK_H */

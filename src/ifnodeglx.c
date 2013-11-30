@@ -82,9 +82,9 @@ int maintain_reputation(session_t *);
 
 /* Temporary diagnostics. */
 void diag_char(char c);
-void diag_node_key_f(void);
-void diag_node_key_g(void);
-void diag_node_key_h(void);
+void diag_peer_key_f(void);
+void diag_peer_key_g(void);
+void diag_peer_key_h(void);
 void diag_message(void);
 
 /* Testing. */
@@ -460,7 +460,7 @@ peer(int argc, char **argv)
 					if (diagtext)
 						diag_char(VRT_KEYCODE_f);
 					else {
-						diag_node_key_f();
+						diag_peer_key_f();
 					}
 					break;
 
@@ -468,7 +468,7 @@ peer(int argc, char **argv)
 					if (diagtext)
 						diag_char(VRT_KEYCODE_g);
 					else {
-						diag_node_key_g();
+						diag_peer_key_g();
 					}
 					break;
 
@@ -476,7 +476,7 @@ peer(int argc, char **argv)
 					if (diagtext)
 						diag_char(VRT_KEYCODE_h);
 					else {
-						diag_node_key_h();
+						diag_peer_key_h();
 					}
 					break;
 
@@ -809,42 +809,41 @@ diag_char(char c)
 
 /* Temporary diagnostic to run test on keypress f. */
 void
-diag_node_key_f(void)
+diag_peer_key_f(void)
 {
 	diag_generator_key_f();
 
 #ifdef DIAG_CONTINUING_ENABLE
 	/* vrtlogin to flexible node from continuing node. */
 	struct ptlrepute *repute;
-	char url[] = "protocol://192.168.0.2/nothernode/"; /* refers to */
-	char oneliner[] = "nothernode";
+	char url_c[] = "protocol://192.168.0.2/nothernode/"; /* refers to */
+	char oneliner_c[] = "nothernode";
 	hmapf_t *avatar555, *avatar555_hold, *flow_map = NULL;
 	session_t lastkey = { { 0, 0, 0xb0de }, 8 };
 	session_t contingentkey = { { 0, 0, 0xface }, 8 };
 	session_t holdkey = { { 0, 0, 0 }, 0 };
-	session_t z = { { 0, 0, 0 }, 0 };
 	complextimate_t cmplxt_here = { 0, 0, 0 };
 	hmapf_t **sela = (hmapf_t **) selectf_a; /* returned nodemap ref. */
 	select_t sel = {  0, 0, (hmapf_t **) selectf_a, 0, NULL };
 	int rval;
 
 	__builtin_printf("Simulated vrtlogin to flexible node\n");
-	struct partial *node = NULL;
-	if ((node = test_continuity(url, oneliner, NULL, sela, &cmplxt_here)) == NULL) {
+	struct partial *node_c = NULL;
+	if ((node_c = test_continuity(url_c, oneliner_c, NULL, sela, &cmplxt_here)) == NULL) {
 		__builtin_fprintf(stderr, "Error: Failed to provide "
 			"continuing node with continuity\n");
 		return;
 	}
 
 	/* Now that continuity exists, enter continuing with selectf_a maps. */
-	test_add_maps(5, 0, &(node->session), &(node->nodemap->vpos), &sel, &cmplxt_here);
+	test_add_maps(5, 0, &(node_c->session), &(node_c->nodemap->vpos), &sel, &cmplxt_here);
 
 	/* For testing avatar555 volunteers. */
 	avatar555 = p_hmapf(23);
-	cp_session(&(node->session), &(avatar555->name));
+	cp_session(&(node_c->session), &(avatar555->name));
 	avatar555->attribs.sign |= VRT_MASK_KEYMAP;
 	avatar555_hold = p_hmapf(24);
-	cp_session(&(node->session), &(avatar555_hold->name));
+	cp_session(&(node_c->session), &(avatar555_hold->name));
 	avatar555_hold->attribs.sign |= VRT_MASK_HOLD;
 
 #ifdef DIAG_CONTINUING_OTHRHOLDKEY
@@ -873,20 +872,20 @@ diag_node_key_f(void)
 	   loginkeys at url.  Since this is setup to be a continued session,
 	   find_loginkeys would normally be used for same.  Sync for this
 	   is provided in continue_node. */
-	repute = add_ptlrepute(node->reputed, &lastkey, &holdkey, url);
+	repute = add_ptlrepute(node_c->reputed, &lastkey, &holdkey, url_c);
 	cp_mapname(&contingentkey, &(repute->contingentkey)); /* established */
 	cp_mapname(&holdkey, &(repute->holdkey)); /* with holdkey */
 	/* Continue. */
-	if ((rval = test_continue_partial(node, url, node->reputed, repute, &(node->session), avatar555, flow_map, calc_cmplxt(&cmplxt_here))) != 0)
+	if ((rval = test_continue_partial(node_c, url_c, node_c->reputed, repute, &(node_c->session), avatar555, flow_map, calc_cmplxt(&cmplxt_here))) != 0)
 		; /* could not vrtlogin */
 #endif /* DIAG_CONTINUING_ENABLE */
 
 #ifdef DIAG_FLEXIBLE_ENABLE
 	/* Make a flexible node. */
-	struct partial *node = NULL;
-	char url[] = "protocol://192.168.0.2/nothernode/";
-	char oneliner[] = "nothernode"; /* 79 chars max */
-	session_t z = { { 0, 0, 0 }, 0 };
+	struct partial *node_f = NULL;
+	char url_f[] = "protocol://192.168.0.2/nothernode/"; /* write index */
+	char oneliner_f[] = "nothernode"; /* 79 chars max */
+	session_t null = { { 0, 0, 0 }, 0 };
 	complextimate_t cmplxt = { 0, 0, 0 };
 	char seedfiles[] = "";
 	hmapf_t *map, **maps = (hmapf_t **) selectf_a;
@@ -918,17 +917,27 @@ diag_node_key_f(void)
 	surface_inv_hmapf(&t);
 #endif
 
-	node = test_mk_flexible_node(seedfiles, maps, &cmplxt);
+	node_f = test_mk_flexible_node(seedfiles, maps, &cmplxt);
 
 	/* note: ptlrepute pointer is added to description as code in session.c
 	   calls sync_loginkeys for a flexible node. */
-	add_session_desc(&(node->session), &z, &z, 0, url, oneliner, &cmplxt, map, node->reputed);
+	add_session_desc(&(node_f->session), &null, &null, 0, url_f, oneliner_f, &cmplxt, map, node_f->reputed);
 #endif /* DIAG_FLEXIBLE_ENABLE */
+
+#ifdef DIAG_RECEIVE_MAP
+	hmapf_t *nodemap;
+	session_t session = {{ 0, 0, 0x1aff5000 }, 0 };
+	hmapf_t **a = (hmapf_t **) selectf_a;
+	hmapf_t **b = (hmapf_t **) selectf_b;
+	select_t receiver = { 0, 1, a, 0, b };
+
+	nodemap = diag_receive_nodemap(&session, &receiver);
+#endif
 }
 
 /* Temporary diagnostic to run test on keypress g. */
 void
-diag_node_key_g(void)
+diag_peer_key_g(void)
 {
 	diag_generator_key_g();
 
@@ -936,9 +945,9 @@ diag_node_key_g(void)
 	__builtin_printf("\nSimulate received vrtlogin to \"nothernode\" "
 		"after generating flexible.\n");
 	struct partial *flexible;
-	char url[] = "protocol://192.168.0.2/nothernode/";
+	char url[] = "protocol://192.168.0.2/nothernode/"; /* index */
 	session_t session_peer = { { 0, 0, 0xc0de }, 0 };
-	session_t z = { { 0, 0, 0 }, 0 };
+	session_t null = { { 0, 0, 0 }, 0 };
 	session_desc_t *desc_here;
 	complextimate_t cmplxt_here = { 0, 0, 0 };
 	hmapf_t *nother_hold;
@@ -985,13 +994,13 @@ printf("session %x\n", desc_here->session.hash.l);
 	   already been set to true through ifnode**.c interface part.
 	   With received data, continuity may be retreived.  note:
 	   answer_vrtlogin would normally be called by code in session.c. */
-	answer_vrtlogin(&session_peer, &z, url); /* url here indexes desc */
+	answer_vrtlogin(&session_peer, &null, url); /* url here indexes desc */
 #endif /* DIAG_FLEXIBLE_ENABLE */
 }
 
 /* Temporary diagnostic to run test on keypress h. */
 void
-diag_node_key_h(void)
+diag_peer_key_h(void)
 {
 	diag_generator_key_h();
 
@@ -1001,7 +1010,7 @@ diag_node_key_h(void)
 	   flexible side here represented is assumed to have reputation for
 	   avatar555 whom is vrtlogging. */
 	complextimate_t cmplxt = { 1, 555, 3 }; /* avatar555's hmaps */
-	session_t z = { { 0, 0, 0 }, 0 };
+	session_t null = { { 0, 0, 0 }, 0 };
 	int rval;
 
 	/* Received before sync_vrtlogin is called. */
@@ -1067,7 +1076,7 @@ diag_node_key_h(void)
 		"meanwhile,\n login authentication has succeeded.\n",
 		(&session_peer)->hash.h, (&session_peer)->hash.m,
 		(&session_peer)->hash.l);
-	if ((rval = sync_vrtlogin(&session_peer, &z, &loginkey, &lastkey, &contingentkey, &holdkey, calc_cmplxt(&cmplxt), url)) < 0) {
+	if ((rval = sync_vrtlogin(&session_peer, &null, &loginkey, &lastkey, &contingentkey, &holdkey, calc_cmplxt(&cmplxt), url)) < 0) {
 		/* Contingency for errors. */
 		if (rval == -1)
 			__builtin_printf(" ...size of selected hapmaps "

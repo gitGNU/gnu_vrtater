@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_PARTIAL_H
-#define VRT_PARTIAL_H
+#ifndef PARTIAL_H
+#define PARTIAL_H
 
 #include "hmap.h"
 #include "loginkeys.h"
@@ -96,4 +96,4 @@ void rm_ptlgrps_list(ptlgrps_list_t *);
 ptlgrp_t *add_ptlgrp(ptlgrps_list_t *, session_t *groupmap_name);
 void subtract_ptlgrp(ptlgrps_list_t *, ptlgrp_t *);
 
-#endif /* VRT_PARTIAL_H */
+#endif /* PARTIAL_H */

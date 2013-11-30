@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_GENERATOR_H
-#define VRT_GENERATOR_H
+#ifndef GENERATOR_H
+#define GENERATOR_H
 
 #include "vectors.h"
 #include "hmap.h"
@@ -57,4 +57,4 @@ void generator_intersection(void);
 /* Tests. */
 void test_add_maps(unsigned int n, int mapstock, session_t *, vf_t *portal, select_t *, complextimate_t *);
 
-#endif /* VRT_GENERATOR_H */
+#endif /* GENERATOR_H */

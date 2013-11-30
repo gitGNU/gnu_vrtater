@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_SESSION_H
-#define VRT_SESSION_H
+#ifndef SESSION_H
+#define SESSION_H
 
 #include "hmap.h"
 #include "loginkeys.h"
@@ -77,7 +77,9 @@ session_desc_t *add_session_desc(session_t *, session_t *peer, session_t *thru, 
 int close_session(session_desc_t *);
 int close_all_sessions(void);
 int reset_sessions(void);
-/* Diagnostics. */
+/* Temporary diagnostics. */
 void diag_ls_all_sessions(int full);
+hmapf_t *diag_receive_nodemap(session_t *, select_t *);
 
-#endif /* VRT_SESSION_H */
+
+#endif /* SESSION_H */

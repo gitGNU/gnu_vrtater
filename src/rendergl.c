@@ -6,7 +6,7 @@
 #include <GL/gl.h>
 #include <stdio.h>
 #include "rendergl.h"
-#include "global.h"
+#include "progscope.h"
 #include "vectors.h"
 #include "rotation.h"
 

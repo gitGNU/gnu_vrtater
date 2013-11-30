@@ -27,6 +27,7 @@ entitled ``GNU Free Documentation License''.
 * vrtater: (vrtater)Invoking vrtater.
 * vrtater: (vrtater)Installing vrtater.
 * vrtater: (vrtater)Adding to vrtater.
+* vrtater: (vrtater)Pre-alpha bulletin board.
 * vrtater: (vrtater)Vector calls.
 * vrtater: (vrtater)Selection buffers.
 * vrtater: (vrtater)Transforms.
@@ -34,7 +35,7 @@ entitled ``GNU Free Documentation License''.
 @end direntry
 
 @titlepage
-@title vrtater, GNU GPL Peer to Peers VR Manual
+@title vrtater, GNU GFDL Peer to Peers VR Manual
 @subtitle for version @value{VERSION}, @value{UPDATED}
 @author Jimmy Green @email{green8@@sdf-eu.org}
 @page
@@ -46,9 +47,9 @@ entitled ``GNU Free Documentation License''.
 
 @ifnottex
 @node Top
-@top vrtater Peer to Peers VR
+@top vrtater Peer to Peers VR (pre-alpha)
 
-the software i couldent find,,, the software u might be looking for...
+Create or add to virtual worlds... Optionally connect them over The Internet.
 
 @center vrtater
 
@@ -71,51 +72,60 @@ required mechanism for interacting, through 'virtual objects'(vobs) /w
 haptic/other qualities.  Connecting vobspace nodes over the internet is
 currently the first priority.
 
-hmaps, the basic units of data for vrtater, are simplified vobs, writable as a
-.vrtater file containing one or a set of vobs based on defined type hmapf_t.
-hmaps and their founded geometry options are initially written as stock like
-basic forms, to then be transformed by modeling functions and drawn by rendering
-code.  Their generic nature is supported in all three phases.  hmaps are
-designed to provide haptic feedback, vob intersection feedback, and other
-qualities for vobs.
+hapmaps (hmaps), the basic units of data for vrtater, are simplified vobs,
+writable as a .vrtater file containing one or a set of hmaps based on defined
+type hmapf_t.  hmaps and their founded geometry options are initially written as
+stock like basic forms, to then be transformed by modeling functions and drawn
+by rendering code.  Their generic nature is supported in all three phases.
+hmaps are designed to provide haptic feedback, vob intersection feedback, and
+other qualities for vobs.
 
 Rendering code strives to enhance hmaps, while adding non hmap rendering as
 well.  Hardware may factor in to technique used.  hmaps will move around in
 vobspace based on initial conditions and input, and the renderer may use these
 hmaps to stoke non-hmap based drawing and animation. 
 
-vobs may be shared by logging into other nodes with them.  Each hmap authored by
-the person running vrtater will have name with high uniqueness that identifies
-it.  These names will be generated using unique data that is only available to
-the author.  This data combined with the appearance of an hmap of name on peer
-nodes given cronology, provides a workable authorship mechanism for the 3d works
-that hmaps represent.  These hmaps once shared may be copied, however their
-unique patterns will have appeared first on the network of vrtater nodes with
-the name given, and thus given author will have workable claim of authorship for
-bragging rights purposes.
+When the ip network code is added, hmaps may then be shared by logging into
+other nodes with them.  When hashing code is added, each hmap authored by the
+person running vrtater will have a hash name with high uniqueness that
+identifies it.  When these names are generated using unique data that is only
+available to the author, given name combined with node timestamp hmaps applied
+when appearing on peer nodes, provides a workable authorship mechanism for the
+3d works that hmaps represent.  These hmaps once shared may be copied, however
+their unique patterns will have appeared first on vrtater nodes connected with
+name given, then flowing to other nodes.  Given author will thus have a workable
+claim of authorship for bragging rights purposes.
 
-When re-connecting to any node, it may be possible to resume a previous session
-there, provided that the called node still has the previous session on hold.
-In this way a reputation may be cultivated continuously.
+When re-connecting to any node, one may resume a previous session there,
+provided that the node still has the previous session on hold.  In this way a
+reputation may be cultivated continuously and shared hmaps may be preserved on
+given node.
 
-Multiple nodes may connect simultaneously to a given node.  The place where the
-interaction occurs is called a node-partial.  One may host multiple
-node-partials that are called, and or connect to node-partials as a caller.  The
-node hosting a node-partial provides an hmap that defines the virtual spacial
-bound(nodemap) and optionally any hmaps therein.  When connecting to a
-node-partial, the person running vrtater may take hmaps they have with them into
-that partial, those then appearing/shared therein if enough empty vobspace
-exists at the destination.
+When the ip network code is added, multiple nodes will be able to connect
+simultaneously to a given node.  The place where the interaction occurs is the
+abstract notion of partial.  One may host reputations, groups, preserve held
+maps, and offer an hmap describing partial with more hmaps therein.  This
+is done by creating a flexible node.  Partial is always achieved by the first
+continuing node that becomes partial with a flexible node.  Thereafter more
+continuing nodes may join.  One may take as much .vrtater data with them when
+partial as the person running vrtater with the flexible node predetermines,
+while the flexible node has as limit determined by what they have for hardware.
 
-Alternately, the node-orgin, the place where one begins when running vrtater, is
-always present once the program is run.  It is similar to a node-partial except
-that you are the only one in there, and hmaps therein never appear on other
-nodes.  One may create or reuse as many hmaps therein as will fit in memory, and
-then optionally take those to node-partials as desired.  All calling and
-called node-partials appear somewhere in your node-orgin at your discretion.
-These appear as nodemaps.  Within these exists partial vobspace if connected.
+The hmap describing partial that the flexible node provides, defines the virtual
+spacial bound, a nodemap, and optionally any hmaps therein.  The volumetric
+representation of hmaps becoming partial is also of issue where, enough empty
+vobspace must exist at the arrival location for all hmaps accompanying.
 
-The capability for interaction of vobs in a node partial will be as fully as
+Alternately, node-orgin, the place where one begins when running vrtater, is
+always present once the program is run.  It is similar to a node capable of
+becoming partial except that you are the only one in there, and hmaps therein
+never appear on other nodes.  One may create or reuse as many hmaps therein as
+will fit in memory, and then optionally take those to partial as desired.  All
+your created flexible nodes as well as nodes you are continuing appear somewhere
+in your node-orgin at your discretion. These appear as nodemaps.  Within these
+exists partial vobspace if connected.
+
+The capability for interaction of vobs in given partial will be as fully as
 possible based on dialog and configuration maintained in the node that they
 originate out of.  For example, each person running vrtater see's what their
 own node presents, for their vobs, and for vobs eminating out of other nodes.
@@ -123,12 +133,11 @@ The renderer code tries it's best to present inbound vobs as they describe
 themselv's, however, the person running vrtater has the final say.
 
 Dialog may be carried by any given hmap, and may be used for communication
-between people running vrtater and interacting in node-partial.  Other
-information affecting only hmaps may also be carried therein, for example,
-description of how the hmap would like to appear.  A dialog interface, combined
-with a node interface will provide access to all selected transforms for hmaps
-available, movement stimulus for hmaps, renderer configuration, interfacing of
-nodes(calling and answering), and more...
+between people running vrtater and interacting in partial.  Other information
+affecting only hmaps may also be carried therein, for example, description of
+how the hmap would like to appear.  A dialog interface, combined with a node
+interface will provide access to all selected transforms for hmaps available,
+movement stimulus for hmaps, renderer configuration,  nodes partial, and more...
 
 Interfacing to system bus IO devices, is soon to commence.  The ip network code,
 hashing of session names, rendering features and dialog interface, are all now
@@ -145,6 +154,7 @@ README, provided with the source, list's other references for what is going on.
 * Invoking vrtater::
 * Installing vrtater:: 
 * Adding to vrtater::
+* Pre-alpha bulletin board::
 * Vector functions::
 * Selection buffers::
 * Transforms::
@@ -252,6 +262,24 @@ See INSTALL for source distribution install and compile details.
 Email patches or maintainer status requests to: @email{green8@@sdf-eu.org}.
 Maintainer status on Savannah is required to push to the repository.  Current
 maintainers will evaluate any patches or requests to add to vrtater directly.
+
+@node Pre-alpha bulletin board
+@chapter Pre-alpha bulletin board
+
+@pindex vrtater
+@cindex Pre-alpha bulletin board
+
+Proposed Free hmapwrapf Vertice Data Disclaimer.
+
+This hmap has no disclaimer compatible with this one where vertices,
+no matter how they are organized by hmapwrapf, are concerned.
+Any vertice related disclaimer must remove this one or else
+this disclaimer will be incompatible.
+
+Short Version carries bit VRT_MASK_FREEHAPMAP and, if deemed best, a
+minimal reference preceeding dialog.  The vertices of such hmaps
+become recycle friendly, and bit VRT_MASK_FIXED_FORM may thus be
+cleared at lesiure.
 
 @node Vector functions
 @chapter Vector functions

@@ -6,7 +6,7 @@
 #include <X11/X.h>
 #include <string.h>
 #include "dialogX11.h"
-#include "global.h"
+#include "progscope.h"
 #include "transform.h"
 
 #ifdef VRT_RENDERER_GL

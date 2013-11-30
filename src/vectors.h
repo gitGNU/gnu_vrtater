@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_VECTORS_H
-#define VRT_VECTORS_H
+#ifndef VECTORS_H
+#define VECTORS_H
 
 struct vf_s {
 	float x;
@@ -34,4 +34,4 @@ float mult_mf(vf_t *, vf_t *);
 vf_t * div_vf(vf_t *, vf_t *, vf_t *);
 float div_mf(vf_t *, vf_t *);
 
-#endif /* VRT_VECTORS_H */
+#endif /* VECTORS_H */

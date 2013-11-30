@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_DIALOGX11_H
-#define VRT_DIALOGX11_H
+#ifndef DIALOGX11_H
+#define DIALOGX11_H
 
 #include "hmap.h"
 
@@ -12,4 +12,4 @@ void refresh_dialog_interfaces(void);
 void node_partial_dialog(select_t *, session_t *partial);
 int *node_orgin_dialog(select_t *);
 
-#endif /* VRT_DIALOGX11_H */
+#endif /* DIALOGX11_H */

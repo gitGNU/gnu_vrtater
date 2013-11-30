@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_ATTRIBS_H
-#define VRT_ATTRIBS_H
+#ifndef ATTRIBS_H
+#define ATTRIBS_H
 
 #include "hmap.h"
 #include "vectors.h"
@@ -26,4 +26,4 @@ void sort_proc_hmaps(vf_t *viewpoint);
 void proc_hmapf(hmapf_t *, int lodval, int sort_ratio);
 void nportf(hmapf_t *, vf_t *, int wander);
 
-#endif /* VRT_ATTRIBS_H */
+#endif /* ATTRIBS_H */

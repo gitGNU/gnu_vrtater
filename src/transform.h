@@ -3,8 +3,8 @@
    license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 */
 
-#ifndef VRT_TRANSFORM_H
-#define VRT_TRANSFORM_H
+#ifndef TRANSFORM_H
+#define TRANSFORM_H
 
 #include "hmap.h"
 
@@ -42,4 +42,4 @@ int alloc_dialog(hmapf_t *, int len);
 int add_dialog(hmapf_t *, char *s, int offset, int count);
 int write_dialog(hmapf_t *, char *s);
 
-#endif /* VRT_TRANSFORM_H */
+#endif /* TRANSFORM_H */

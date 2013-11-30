@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "loginkeys.h"
-#include "global.h"
+#include "progscope.h"
 
 /* Try to find the linked list element referencing keyname as lastkey in list.
    Return reference to element or NULL if not found. */

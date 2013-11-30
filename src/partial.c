@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "partial.h"
-#include "global.h"
+#include "progscope.h"
 
 /* Return partial reference vs. session or NULL if not found. */
 struct partial *
