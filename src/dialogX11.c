@@ -23,15 +23,15 @@ void diag_read_dialog_set(hmapf_t **, int);
 void
 refresh_dialog_interfaces(void)
 {
-	cfg_recycler();
-	cfg_balance();
+  cfg_recycler();
+  cfg_balance();
 }
 
 /* holdkey and holdbkp are passed for each new keymap arriving */
 void
 log_keymap(session_t *keymap, session_t *holdmap, session_t *holdbkp)
 {
-	;
+  ;
 }
 
 /* Given selection in selectf_a, present dialog for partial referenced.  Caller
@@ -63,12 +63,12 @@ log_keymap(session_t *keymap, session_t *holdmap, session_t *holdbkp)
 void
 node_partial_dialog(select_t *sel, session_t *partial)
 {
-	/* For now function as a pre-alpha version diagnostic and simply write
-	   first element of selectf_a to stdout. */
-	select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
-	diag_read_dialog_set((&totty)->seta, (&totty)->counta);
+  /* For now function as a pre-alpha version diagnostic and simply write
+     first element of selectf_a to stdout. */
+  select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
+  diag_read_dialog_set((&totty)->seta, (&totty)->counta);
 
-	; /* remote features eg: VRT_MASK_HOLD */
+  ; /* remote features eg: VRT_MASK_HOLD */
 }
 
 /* Given selection in selectf_a, display local dialog for one whom is runing
@@ -77,39 +77,39 @@ node_partial_dialog(select_t *sel, session_t *partial)
 int *
 node_orgin_dialog(select_t *sel)
 {
-	/* For now function as a pre-alpha version diagnostic and simply write
-	   first element of selectf_a to stdout. */
-	select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
-	diag_read_dialog_set((&totty)->seta, (&totty)->counta);
+  /* For now function as a pre-alpha version diagnostic and simply write
+     first element of selectf_a to stdout. */
+  select_t totty = { 0, 1, (hmapf_t **) selectf_a, 0, NULL };
+  diag_read_dialog_set((&totty)->seta, (&totty)->counta);
 
-	; /* local features */
+  ; /* local features */
 
-	return 0;
+  return 0;
 }
 
 void
 cfg_recycler(void)
 {
-	;
+  ;
 }
 
 void
 cfg_balance(void)
 {
-	;
+  ;
 }
 
 /* Diagnostic to send mapcount hmap dialog entries thru set to stdout. */
 void
 diag_read_dialog_set(hmapf_t **set, int mapcount)
 {
-	int i, j;
-	hmapf_t **map;
+  int i, j;
+  hmapf_t **map;
 
-	map = set;
-	for (i = 0; i < mapcount; i++, map++)
-		for (j = 0; j < (*map)->dialog_len; j++)
-			__builtin_printf("%s",
-				(char *) (*map)->dialog + (j * sizeof(int)));
-	__builtin_printf("\n");
+  map = set;
+  for (i = 0; i < mapcount; i++, map++)
+    for (j = 0; j < (*map)->dialog_len; j++)
+      __builtin_printf("%s",
+        (char *) (*map)->dialog + (j * sizeof(int)));
+  __builtin_printf("\n");
 }

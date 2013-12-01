@@ -18,20 +18,20 @@
    balance_criteria is still in the works, and may be proposed as
    some hybrid of bits vs. a quantity once needed. */
 struct genopts_s {
-	int balance_criteria; /* balance_filter options */
-	int vobspace_criteria; /* tested context options */
-	int why; /* dialog*.c issue */
-	int what; /* for why */
-	double when; /* for what */
+  int balance_criteria; /* balance_filter options */
+  int vobspace_criteria; /* tested context options */
+  int why; /* dialog*.c issue */
+  int what; /* for why */
+  double when; /* for what */
 };
 typedef struct genopts_s genopts_t;
 
 /* genopts_t vobspace_criteria.  Effective while held high, some of these
    where noted, will be cleared after use. */
 enum {
-	VRT_ORDINAL_SHUTDOWN,
+  VRT_ORDINAL_SHUTDOWN,
 #define VRT_MASK_SHUTDOWN (1 << VRT_ORDINAL_SHUTDOWN)
-	VRT_ORDINAL_DASHF
+  VRT_ORDINAL_DASHF
 #define VRT_MASK_DASHF (1 << VRT_ORDINAL_DASHF)
 };
 

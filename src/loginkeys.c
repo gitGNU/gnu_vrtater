@@ -13,19 +13,19 @@
 struct ptlrepute *
 find_lastkey(struct ptlrepute_list *list, session_t *keyname)
 {
-	struct ptlrepute *current, *passed;
+  struct ptlrepute *current, *passed;
 
-	current = list->last;
-	passed = list->last;
-	while (1) {
-		if (current != NULL) {
-			if (match_mapname(&(current->lastkey), keyname))
-				return current;
-			passed = current;
-			current = current->precursor;
-		} else
-			return NULL;
-	}
+  current = list->last;
+  passed = list->last;
+  while (1) {
+    if (current != NULL) {
+      if (match_mapname(&(current->lastkey), keyname))
+        return current;
+      passed = current;
+      current = current->precursor;
+    } else
+      return NULL;
+  }
 }
 
 /* Try to find the linked list element referencing keyname as contingentkey in
@@ -33,41 +33,40 @@ find_lastkey(struct ptlrepute_list *list, session_t *keyname)
 struct ptlrepute *
 find_contingentkey(struct ptlrepute_list *list, session_t *keyname)
 {
-	struct ptlrepute *current, *passed;
+  struct ptlrepute *current, *passed;
 
-	current = list->last;
-	passed = list->last;
-	while (1) {
-		if (current != NULL) {
-			if (match_mapname(&(current->contingentkey), keyname))
-				return current;
-			passed = current;
-			current = current->precursor;
-		} else
-			return NULL;
-	}
+  current = list->last;
+  passed = list->last;
+  while (1) {
+    if (current != NULL) {
+      if (match_mapname(&(current->contingentkey), keyname))
+        return current;
+      passed = current;
+      current = current->precursor;
+    } else
+      return NULL;
+  }
 }
 
-/* Try to find the linked list element referencing keyname as holdkey or
-   holdbkp in list,  ignoring any zero_mapname sent vs. holdkeys and any row
-   of zero_mapnames found in holdkeys.  Return reference to element or NULL. */
+/* Return reference to element where holdkey or holdbkp matches non null keyname
+   in list, else NULL. */
 struct ptlrepute *
 find_holdkey(struct ptlrepute_list *list, session_t *keyname)
 {
-	struct ptlrepute *current, *passed;
-	session_t zero_mapname = { { 0, 0, 0}, 0 };
+  struct ptlrepute *current, *passed;
+  session_t zero_mapname = { { 0, 0, 0}, 0 };
 
-	current = list->last;
-	passed = list->last;
-	while (1) {
-		if (current != NULL) {
-			if ((match_mapname(&(current->holdkey), keyname) || match_mapname(&(current->holdbkp), keyname)) && (!(match_mapname(&(current->holdkey), &zero_mapname) && match_mapname(&(current->holdbkp), &zero_mapname))) && (!(match_mapname(keyname, &zero_mapname))))
-				return current;
-			passed = current;
-			current = current->precursor;
-		} else
-			return NULL;
-	}
+  current = list->last;
+  passed = list->last;
+  while (1) {
+    if (current != NULL) {
+      if (!match_mapname(keyname, &zero_mapname) && (match_mapname(&(current->holdkey), keyname) || match_mapname(&(current->holdbkp), keyname)))
+        return current;
+      passed = current;
+      current = current->precursor;
+    } else
+    return NULL;
+  }
 }
 
 /* Try to find next linked list element referencing a zero_mapname as both
@@ -76,20 +75,20 @@ find_holdkey(struct ptlrepute_list *list, session_t *keyname)
 struct ptlrepute *
 find_zero_mapname(struct ptlrepute_list *list)
 {
-	struct ptlrepute *current, *passed;
-	session_t zero_mapname = { { 0, 0, 0}, 0 };
+  struct ptlrepute *current, *passed;
+  session_t zero_mapname = { { 0, 0, 0}, 0 };
 
-	current = list->last;
-	passed = list->last;
-	while (1) {
-		if (current != NULL) {
-			if (match_mapname(&(current->holdkey), &zero_mapname) && match_mapname(&(current->holdbkp), &zero_mapname))
-				return current;
-			passed = current;
-			current = current->precursor;
-		} else
-			return NULL;
-	}
+  current = list->last;
+  passed = list->last;
+  while (1) {
+    if (current != NULL) {
+      if (match_mapname(&(current->holdkey), &zero_mapname) && match_mapname(&(current->holdbkp), &zero_mapname))
+        return current;
+      passed = current;
+      current = current->precursor;
+    } else
+      return NULL;
+  }
 }
 
 /* Update ptlrepute loginkey reputations.  On a continuing node do so for
@@ -124,151 +123,151 @@ find_zero_mapname(struct ptlrepute_list *list)
 int
 sync_loginkeys(char *url, struct ptlrepute_list *list, struct ptlrepute *reputed, session_t *loginkey, session_t *holdkey, session_t *lastkey, session_t *contingentkey, int keyuse)
 {
-	struct ptlrepute *match = NULL;
-	int publicize = 0;
+  struct ptlrepute *match = NULL;
+  int publicize = 0;
 
-	/* Determine if code in dialog*.c should to try to publicize any new
-	   held maps with VRT_MASK_FLOW set. */
-	publicize = (holdkey->hash.h | holdkey->hash.m | holdkey->hash.l | holdkey->seq);
+  /* Determine if code in dialog*.c should to try to publicize any new
+     held maps with VRT_MASK_FLOW set. */
+  publicize = (holdkey->hash.h | holdkey->hash.m | holdkey->hash.l | holdkey->seq);
 
 #ifdef DIAG_NODEKEYS
-	struct ptlrepute *keys;
-	if ((keys = find_lastkey(list, loginkey)))
-		printf("loginkey (%x %x %x) %i  found in lastkey column of "
-			"list\n", keys->lastkey.hash.h, keys->lastkey.hash.m,
-			keys->lastkey.hash.l, keys->lastkey.seq);
-	if ((keys = find_contingentkey(list, loginkey)))
-		printf("loginkey (%x %x %x) %i -found in contingentkey column "
-			"of list-\n", keys->contingentkey.hash.h,
-			keys->contingentkey.hash.m, keys->contingentkey.hash.l,
-			keys->contingentkey.seq);
-	if ((keys = find_holdkey(list, holdkey)))
-		printf("holdkey's (%x %x %x) %i (%x %x %x) %i  found in "
-			"holdkey side of list\n",
-			keys->holdkey.hash.h, keys->holdkey.hash.m,
-			keys->holdkey.hash.l, keys->holdkey.seq,
-			keys->holdbkp.hash.h, keys->holdbkp.hash.m,
-			keys->holdbkp.hash.l, keys->holdbkp.seq);
-	if ((keys = find_zero_mapname(list)))
-		printf(" zero_mapname's (%x %x %x) %i (%x %x %x) %i  found in "
-			"holdkey side of list\n",
-			keys->holdkey.hash.h, keys->holdkey.hash.m,
-			keys->holdkey.hash.l, keys->holdkey.seq,
-			keys->holdbkp.hash.h, keys->holdbkp.hash.m,
-			keys->holdbkp.hash.l, keys->holdbkp.seq);
+  struct ptlrepute *keys;
+  if ((keys = find_lastkey(list, loginkey)))
+    printf("loginkey (%x %x %x) %i  found in lastkey column of "
+      "list\n", keys->lastkey.hash.h, keys->lastkey.hash.m,
+      keys->lastkey.hash.l, keys->lastkey.seq);
+  if ((keys = find_contingentkey(list, loginkey)))
+    printf("loginkey (%x %x %x) %i -found in contingentkey column "
+      "of list-\n", keys->contingentkey.hash.h,
+      keys->contingentkey.hash.m, keys->contingentkey.hash.l,
+      keys->contingentkey.seq);
+  if ((keys = find_holdkey(list, holdkey)))
+    printf("holdkey's (%x %x %x) %i (%x %x %x) %i  found in "
+      "holdkey side of list\n",
+      keys->holdkey.hash.h, keys->holdkey.hash.m,
+      keys->holdkey.hash.l, keys->holdkey.seq,
+      keys->holdbkp.hash.h, keys->holdbkp.hash.m,
+      keys->holdbkp.hash.l, keys->holdbkp.seq);
+  if ((keys = find_zero_mapname(list)))
+    printf(" zero_mapname's (%x %x %x) %i (%x %x %x) %i  found in "
+      "holdkey side of list\n",
+      keys->holdkey.hash.h, keys->holdkey.hash.m,
+      keys->holdkey.hash.l, keys->holdkey.seq,
+      keys->holdbkp.hash.h, keys->holdbkp.hash.m,
+      keys->holdbkp.hash.l, keys->holdbkp.seq);
 #endif /* DIAG_NODEKEYS */
 
 #ifdef DIAG_FLEXIBLE_HOLDKEY_REDUNDANT
-	__builtin_printf("note: for diagnostic preset holdkey to "
-		"\"(0 0 c0de) 555\" so that sync fail's\n");
-	if ((match = find_lastkey(list, lastkey)))
-		flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
+  __builtin_printf("note: for diagnostic preset holdkey to "
+    "\"(0 0 c0de) 555\" so that sync fail's\n");
+  if ((match = find_lastkey(list, lastkey)))
+    flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
 #endif
 
-	/* loginkey's and holdkey's are not written unless unique.  continuing
-	   node's begin with a new ptlrepute list so therein, all keys will be
-	   unique.  loginkey and holdkey lists are independant. */
-	if (find_lastkey(list, loginkey) || find_contingentkey(list, loginkey) || find_holdkey(list, holdkey)) {
-		return VRT_LOGIN_RETRY;
-	} else if (url) {
-		/* Syncronize reputations in continuing node apon logging a
-		   flexible.  Given a password, if any, reputation sync, has
-		   already suceeded or failed on flexible. Here, feedback value
-		   keyuse is tested and feedback context is returned. */
-		if (keyuse == VRT_LOGIN_LAST) {
-			__builtin_printf("Syncronizing with node %s\n", url);
-			reputed->url = url;
-			cp_mapname(&(reputed->lastkey), &(reputed->contingentkey));
-			cp_mapname(loginkey, &(reputed->lastkey));
-			if (publicize)
-				flow_from_hold(holdkey, &(reputed->holdkey), &(reputed->holdbkp));
-			__builtin_printf(" ...syncronized.  lastkey match.\n");
-		} else if (keyuse == VRT_LOGIN_CONTINGENT) {
-			/* An unknown lastkey exists either on continuing node
-			   or flexible node reputation list. A disk write may
-			   have failed while a vrtlogin partial to a flexible
-			   node succeeded. */
-			__builtin_printf("Syncronizing with node %s\n", url);
-			reputed->url = url;
-			cp_mapname(loginkey, &(reputed->lastkey));
-			if (publicize)
-				flow_from_hold(holdkey, &(reputed->holdkey), &(reputed->holdbkp));
-			__builtin_printf(" ...syncronized.  note: "
-				"lastkey !!mismatch.\n");
-		} else if (keyuse == VRT_LOGIN_NEWREPUTED) {
-			/* Start a new reputation. */
-			__builtin_printf("New reputation on node %s\n", url);
-			match = add_ptlrepute(list, loginkey, holdkey, url);
-			cp_mapname(loginkey, &(match->contingentkey));
-			zero_fullname(&(match->holdbkp));
-			if (publicize)
-				flow_from_hold(holdkey, &(reputed->holdkey), &(reputed->holdbkp));
-			__builtin_printf(" ...new reputation.\n");
-		} else if (keyuse == VRT_LOGIN_RETRY) {
-		__builtin_printf("Try again with something any bit "
-			"different.\n ...a vrtlogin key was redundant on "
-			"flexible.\n");
-		} else if (keyuse == VRT_LOGIN_SYNCERR) {
-			__builtin_printf("Error: Exclusive pair errors.  "
-				"Continuing requires recovery.  Option to\n"
-				"simplify this may have been added.  see: "
-				"ifnode interface for more.\n");
-			__builtin_printf(" ...holdkey recovery to continue.\n");
-		} else
-			__builtin_printf("Error: keyuse unrecognized.\n");
-	} else {
-		/* Syncronize reputations on a flexible node during a vrtlogin.
-		   Return feedback value keyuse, so that it can be sent to
-		   node logging in. */
-		if (!((lastkey->hash.h | lastkey->hash.m | lastkey->hash.l | lastkey->seq | contingentkey->hash.h | contingentkey->hash.m  | contingentkey->hash.l | contingentkey->seq))) {
-			/* Start new reputation. */
-			__builtin_printf("Adding new reputation for "
-				"(%x %x %x) %i\n", loginkey->hash.h,
-				loginkey->hash.m, loginkey->hash.l,
-				loginkey->seq);
-			match = add_ptlrepute(list, loginkey, holdkey, url);
-			cp_mapname(loginkey, &(match->contingentkey));
-			zero_fullname(&(match->holdbkp));
-			if (publicize)
-				flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
-			return VRT_LOGIN_NEWREPUTED;
-		} else if ((match = find_lastkey(list, lastkey))) {
-			/* Continue. */
-			__builtin_printf(" lastkey found in lastkey column of list\n"); /* diag */
-			cp_mapname(lastkey, &(match->contingentkey));
-			cp_mapname(loginkey, &(match->lastkey));
-			if (publicize)
-				flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
-			return VRT_LOGIN_LAST;
-		} else if ((match = find_lastkey(list, contingentkey))) {
-			/* Sync issue.  Key was never shifted locally.  Remote
-			   lastkey not in list.  list still references remote
-			   contingentkey as local lastkey. */
-			__builtin_printf(" contingentkey found in lastkey column of list\n"); /* diag */
-			cp_mapname(contingentkey, &(match->contingentkey));
-			cp_mapname(loginkey, &(match->lastkey));
-			if (publicize)
-				flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
-			return VRT_LOGIN_CONTINGENT;
-		} else if ((match = find_contingentkey(list, contingentkey))) {
-			/* Sync issue.  lastkey was never written successfully
-			   on one or both puters.  continuing lastkey is thus
-			   not in list.  list still references remote
-			   contingentkey as local contingentkey. */
-			__builtin_printf(" contingentkey found in contingentkey column of list\n"); /* diag */
-			cp_mapname(loginkey, &(match->lastkey));
-			if (publicize)
-				flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
-			return VRT_LOGIN_CONTINGENT;
-		} else {
-			/* Sync error.  contingentkey nor lastkey were found in
-			   list. */
-			__builtin_printf(" given keys did not match\n"); /* diag */
-			return VRT_LOGIN_SYNCERR;
-		}
-	}
+  /* loginkey's and holdkey's are not written unless unique.  continuing
+     node's begin with a new ptlrepute list so therein, all keys will be
+     unique.  loginkey and holdkey lists are independant. */
+  if (find_lastkey(list, loginkey) || find_contingentkey(list, loginkey) || find_holdkey(list, holdkey)) {
+    return VRT_LOGIN_RETRY;
+  } else if (url) {
+    /* Syncronize reputations in continuing node apon logging a
+       flexible.  Given a password, if any, reputation sync, has
+       already suceeded or failed on flexible. Here, feedback value
+       keyuse is tested and feedback context is returned. */
+    if (keyuse == VRT_LOGIN_LAST) {
+      __builtin_printf("Syncronizing with node %s\n", url);
+      reputed->url = url;
+      cp_mapname(&(reputed->lastkey), &(reputed->contingentkey));
+      cp_mapname(loginkey, &(reputed->lastkey));
+      if (publicize)
+        flow_from_hold(holdkey, &(reputed->holdkey), &(reputed->holdbkp));
+      __builtin_printf(" ...syncronized.  lastkey match.\n");
+    } else if (keyuse == VRT_LOGIN_CONTINGENT) {
+      /* An unknown lastkey exists either on continuing node
+         or flexible node reputation list. A disk write may
+         have failed while a vrtlogin partial to a flexible
+         node succeeded. */
+      __builtin_printf("Syncronizing with node %s\n", url);
+      reputed->url = url;
+      cp_mapname(loginkey, &(reputed->lastkey));
+      if (publicize)
+        flow_from_hold(holdkey, &(reputed->holdkey), &(reputed->holdbkp));
+      __builtin_printf(" ...syncronized.  note: "
+        "lastkey !!mismatch.\n");
+    } else if (keyuse == VRT_LOGIN_NEWREPUTED) {
+      /* Start a new reputation. */
+      __builtin_printf("New reputation on node %s\n", url);
+      match = add_ptlrepute(list, loginkey, holdkey, url);
+      cp_mapname(loginkey, &(match->contingentkey));
+      zero_fullname(&(match->holdbkp));
+      if (publicize)
+        flow_from_hold(holdkey, &(reputed->holdkey), &(reputed->holdbkp));
+      __builtin_printf(" ...new reputation.\n");
+    } else if (keyuse == VRT_LOGIN_RETRY) {
+    __builtin_printf("Try again with something any bit "
+      "different.\n ...a vrtlogin key was redundant on "
+      "flexible.\n");
+    } else if (keyuse == VRT_LOGIN_SYNCERR) {
+      __builtin_printf("Error: Exclusive pair errors.  "
+        "Continuing requires recovery.  Option to\n"
+        "simplify this may have been added.  see: "
+        "ifnode interface for more.\n");
+      __builtin_printf(" ...holdkey recovery to continue.\n");
+    } else
+      __builtin_printf("Error: keyuse unrecognized.\n");
+  } else {
+    /* Syncronize reputations on a flexible node during a vrtlogin.
+       Return feedback value keyuse, so that it can be sent to
+       node logging in. */
+    if (!(lastkey->hash.h | lastkey->hash.m | lastkey->hash.l | lastkey->seq | contingentkey->hash.h | contingentkey->hash.m  | contingentkey->hash.l | contingentkey->seq)) {
+      /* Start new reputation. */
+      __builtin_printf("Adding new reputation for "
+        "(%x %x %x) %i\n", loginkey->hash.h,
+        loginkey->hash.m, loginkey->hash.l,
+        loginkey->seq);
+      match = add_ptlrepute(list, loginkey, holdkey, url);
+      cp_mapname(loginkey, &(match->contingentkey));
+      zero_fullname(&(match->holdbkp));
+      if (publicize)
+        flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
+      return VRT_LOGIN_NEWREPUTED;
+    } else if ((match = find_lastkey(list, lastkey))) {
+      /* Continue. */
+      __builtin_printf(" lastkey in lastkey column of list\n"); /* diag */
+      cp_mapname(lastkey, &(match->contingentkey));
+      cp_mapname(loginkey, &(match->lastkey));
+      if (publicize)
+        flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
+      return VRT_LOGIN_LAST;
+    } else if ((match = find_lastkey(list, contingentkey))) {
+      /* Sync issue.  Key was never shifted locally.  Remote
+         lastkey not in list.  list still references remote
+         contingentkey as local lastkey. */
+      __builtin_printf(" contingentkey in lastkey column of list\n"); /* diag */
+      cp_mapname(contingentkey, &(match->contingentkey));
+      cp_mapname(loginkey, &(match->lastkey));
+      if (publicize)
+        flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
+      return VRT_LOGIN_CONTINGENT;
+    } else if ((match = find_contingentkey(list, contingentkey))) {
+      /* Sync issue.  lastkey was never written successfully
+         on one or both puters.  continuing lastkey is thus
+         not in list.  list still references remote
+         contingentkey as local contingentkey. */
+      __builtin_printf(" contingentkey in contingentkey column of list\n"); /* diag */
+      cp_mapname(loginkey, &(match->lastkey));
+      if (publicize)
+        flow_from_hold(holdkey, &(match->holdkey), &(match->holdbkp));
+      return VRT_LOGIN_CONTINGENT;
+    } else {
+      /* Sync error.  contingentkey nor lastkey were found in
+         list. */
+      __builtin_printf(" given keys did not match\n"); /* diag */
+      return VRT_LOGIN_SYNCERR;
+    }
+  }
 
-	return keyuse;
+  return keyuse;
 }
 
 /* Add map with mapname key to holdmaps as holdkey, shifting holdkey to holdbkp
@@ -281,9 +280,9 @@ sync_loginkeys(char *url, struct ptlrepute_list *list, struct ptlrepute *reputed
 void
 flow_from_hold(session_t *key, session_t *holdkey, session_t *holdbkp)
 {
-	__builtin_printf("Flow from holdmaps, moderated.\n");
-	cp_mapname(holdkey, holdbkp);
-	cp_mapname(key, holdkey);
+  __builtin_printf("Flow from holdmaps, moderated.\n");
+  cp_mapname(holdkey, holdbkp);
+  cp_mapname(key, holdkey);
 }
 
 /* Create a linked list construct for node session returning reference to an
@@ -291,28 +290,28 @@ flow_from_hold(session_t *key, session_t *holdkey, session_t *holdbkp)
 struct ptlrepute_list *
 mk_ptlrepute_list(session_t *session)
 {
-	struct ptlrepute_list *list = NULL;
-	if ((list = (struct ptlrepute_list *) malloc(sizeof(struct ptlrepute_list))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc for partial_reps_list\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-	list->last = NULL;
-	list->count = 0;
+  struct ptlrepute_list *list = NULL;
+  if ((list = (struct ptlrepute_list *) malloc(sizeof(struct ptlrepute_list))) == NULL) {
+    __builtin_fprintf(stderr, "vrtater:%s:%d: "
+      "Error: Could not malloc for partial_reps_list\n",
+      __FILE__, __LINE__);
+    abort();
+  }
+  list->last = NULL;
+  list->count = 0;
 
-	list->session = session;
+  list->session = session;
 
-	return list;
+  return list;
 }
 
 /* Remove list and all of it's elements and element references from memory. */
 void
 rm_ptlrepute_list(struct ptlrepute_list *list)
 {
-	while (list->last != NULL)
-		subtract_ptlrepute(list, list->last);
-	free(list);
+  while (list->last != NULL)
+    subtract_ptlrepute(list, list->last);
+  free(list);
 }
 
 /* Add an element reference to partial repute in the linked list construct
@@ -320,27 +319,27 @@ rm_ptlrepute_list(struct ptlrepute_list *list)
 struct ptlrepute *
 add_ptlrepute(struct ptlrepute_list *list, session_t *keyname, session_t *holdkey, char *url)
 {
-	struct ptlrepute *listed = NULL;
-	session_t *key, z = { { 0, 0, 0 }, 0 };
+  struct ptlrepute *listed = NULL;
+  session_t *key, z = { { 0, 0, 0 }, 0 };
 
-	if ((listed = (struct ptlrepute *) malloc(sizeof(struct ptlrepute))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc for partial_reps_list "
-			"entry\n", __FILE__, __LINE__);
-		abort();
-	}
-	listed->precursor = list->last;
-	list->last = listed;
-	list->count++;
+  if ((listed = (struct ptlrepute *) malloc(sizeof(struct ptlrepute))) == NULL) {
+    __builtin_fprintf(stderr, "vrtater:%s:%d: "
+      "Error: Could not malloc for partial_reps_list "
+      "entry\n", __FILE__, __LINE__);
+    abort();
+  }
+  listed->precursor = list->last;
+  list->last = listed;
+  list->count++;
 
-	listed->url = url;
-	cp_mapname(keyname, &(listed->lastkey));
-	cp_mapname(keyname, &(listed->contingentkey));
-	cp_mapname(key = holdkey ? holdkey : &z, &(listed->holdkey));
-	cp_mapname(&z, &(listed->holdbkp));
-	cp_mapname(holdkey, &(listed->holdkey));
+  listed->url = url;
+  cp_mapname(keyname, &(listed->lastkey));
+  cp_mapname(keyname, &(listed->contingentkey));
+  cp_mapname(key = holdkey ? holdkey : &z, &(listed->holdkey));
+  cp_mapname(&z, &(listed->holdbkp));
+  cp_mapname(holdkey, &(listed->holdkey));
 
-	return listed;
+  return listed;
 }
 
 /* Subtract linked list element referenced by reputed.  note: This relies on
@@ -348,31 +347,31 @@ add_ptlrepute(struct ptlrepute_list *list, session_t *keyname, session_t *holdke
 void
 subtract_ptlrepute(struct ptlrepute_list *list, struct ptlrepute *repute)
 {
-	struct ptlrepute *current, *passed;
+  struct ptlrepute *current, *passed;
 
-	current = list->last;
-	passed = list->last;
-	while (1) {
-		if (current != NULL) {
-			if (match_mapname(&(current->lastkey), &(repute->lastkey)))
-				break;
-			else if (match_mapname(&(current->contingentkey), &(repute->contingentkey)))
-				break;
-			passed = current;
-			current = current->precursor;
-		} else
-			return;
-	}
-	__builtin_printf("  repute (%x %x %x) %i dissolves in memory...\n",
-		current->lastkey.hash.h, current->lastkey.hash.m,
-		current->lastkey.hash.l, current->lastkey.seq);
-	if (current == passed) {
-		if (!current->precursor)
-			list->last = NULL;
-		else
-			list->last = current->precursor;
-	} else
-		passed->precursor = current->precursor;
-	free(current);
-	list->count--;
+  current = list->last;
+  passed = list->last;
+  while (1) {
+    if (current != NULL) {
+      if (match_mapname(&(current->lastkey), &(repute->lastkey)))
+        break;
+      else if (match_mapname(&(current->contingentkey), &(repute->contingentkey)))
+        break;
+      passed = current;
+      current = current->precursor;
+    } else
+      return;
+  }
+  __builtin_printf("  repute (%x %x %x) %i dissolves in memory...\n",
+    current->lastkey.hash.h, current->lastkey.hash.m,
+    current->lastkey.hash.l, current->lastkey.seq);
+  if (current == passed) {
+    if (!current->precursor)
+      list->last = NULL;
+    else
+      list->last = current->precursor;
+  } else
+    passed->precursor = current->precursor;
+  free(current);
+  list->count--;
 }

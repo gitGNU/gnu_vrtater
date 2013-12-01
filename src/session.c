@@ -20,7 +20,7 @@ void subtract_session_desc(struct session_desc *desc);
 void
 init_sessions(void)
 {
-	;
+  ;
 }
 
 /* Using seedfiles produce a 96 bit hash value, writing it to name->hash.h,
@@ -34,15 +34,15 @@ init_sessions(void)
 int
 hash_session_name(session_t *name, char *seedfiles)
 {
-	/* Simulate. */
-	name->hash.h = 0;
-	name->hash.m = 0;
-	name->hash.l = rand();
+  /* Simulate. */
+  name->hash.h = 0;
+  name->hash.m = 0;
+  name->hash.l = rand();
 
-	/* Write session name to seedfiles/uniqueness. */
-	/* ... */
+  /* Write session name to seedfiles/uniqueness. */
+  /* ... */
 
-	return 0;
+  return 0;
 }
 
 /* Read session name in seedfiles/uniqueness into session.  Return 0, else < 0
@@ -50,7 +50,7 @@ hash_session_name(session_t *name, char *seedfiles)
 int
 read_hash(session_t *session, char *seedfiles)
 {
-	return 0;
+  return 0;
 }
 
 /* For phase-a of continuing partial, send request to url for continuity in
@@ -84,87 +84,85 @@ read_hash(session_t *session, char *seedfiles)
 int
 node_continuity(char *url, char *oneliner, session_t *session_here, session_t *session_thru, hmapf_t **maps)
 {
-	struct session_desc *desc_here = NULL;
-	session_t null = { { 0, 0, 0 }, 0 };
-	session_t session_peer = { { 0, 0, 0 }, 0 };
-	complextimate_t cmplxt_peer, cmplxt_here = { 0, 0, 0 };
-	hmapf_t *nodemap;
-	hmapf_t **sela = (hmapf_t **) selectf_a;
-	hmapf_t **selb = (hmapf_t **) selectf_b;
-	select_t receiver = { 0, 1, sela, 0, selb };
+  struct session_desc *desc_here = NULL;
+  session_t null = { { 0, 0, 0 }, 0 };
+  session_t session_peer = { { 0, 0, 0 }, 0 };
+  complextimate_t cmplxt_peer, cmplxt_here = { 0, 0, 0 };
+  hmapf_t *nodemap;
+  hmapf_t **sela = (hmapf_t **) selectf_a;
+  hmapf_t **selb = (hmapf_t **) selectf_b;
+  select_t receiver = { 0, 1, sela, 0, selb };
 
-	*maps = NULL;
+  *maps = NULL;
 
-	__builtin_printf(" calling for continuity on flexible node (%x %x %x) "
-		"%s\n", (&session_peer)->hash.h, (&session_peer)->hash.m,
-		(&session_peer)->hash.l, url);
+  __builtin_printf(" calling for continuity on flexible node (%x %x %x) "
+    "%s\n", (&session_peer)->hash.h, (&session_peer)->hash.m,
+    (&session_peer)->hash.l, url);
 
-	/* Send data for continuity attempt.  Resume instructions following
-	   if continuity succeeds. */
-	/* ... */
+  /* Send data for continuity attempt.  Resume instructions following
+     if continuity succeeds. */
+  /* ... */
 
-	/* Simulating retreival of continuity, here is data that might be
-	   returned from flexible node nothernode.  This is then written to
-	   all_sessions as a session description, added or changed reflecting
-	   latest details.  all_sessions is accessable from a menu in the
-	   ifnode**.c interface part for reading arguments passed to
-	   continue_node. */
-	char newurl[] = ""; /* usually */
-	char newoneliner[] = "nothernode";
-	(&session_peer)->hash.l = 0xca11ed;
-	(&cmplxt_peer)->hmap_count = 8;
-	(&cmplxt_peer)->tl_vdata = 288;
-	(&cmplxt_peer)->tl_dialog = 314;
+  /* Simulating retreival of continuity, here is data that might be returned
+     from flexible node nothernode.  This is then written to all_sessions as a
+     session description, added or changed reflecting latest details.
+     all_sessions is accessable from a menu in the ifnode**.c interface part
+     for reading arguments passed to continue_node. */
+  char newurl[] = ""; /* usually */
+  char newoneliner[] = "nothernode";
+  (&session_peer)->hash.l = 0xca11ed;
+  (&cmplxt_peer)->hmap_count = 8;
+  (&cmplxt_peer)->tl_vdata = 288;
+  (&cmplxt_peer)->tl_dialog = 314;
 
-	__builtin_printf("  ...flexible node description data received.\n");
+  __builtin_printf("  ...flexible node description data received.\n");
 
-	/* Check if too complex. */
-	/* ... */
+  /* Check if too complex. */
+  /* ... */
 
-	/* For simulation desc_here needs to be created while normally it
-	   will already exist.  This type of all_sessions description exists
-	   as a continuing session with no implied node yet in node_orgin,
-	   either read from disk or created by continue_repute.  This is
-	   not the same as the description of a peer of a flexible, but
-	   similar.  For now forego updating descriptions.   Later, set
-	   unlinked level bit in an old description before adding updated one.
-	   Person running vrtater will be able to restore an old description
-	   in an unusual case, provided they are not logged in to node
-	   represented by updated. */
-	/* ... */
-	if ((desc_here = add_session_desc(session_here, &session_peer, &null, VRT_MASK_SESSION_CALLED, url, newoneliner, &cmplxt_here, NULL, NULL)) == NULL)
-		return -1;
-	diag_ls_all_sessions(1);
+  /* For simulation desc_here needs to be created while normally it will already
+     exist.  This type of all_sessions description exists as a continuing
+     session with no implied node yet in node_orgin, either read from disk or
+     created by continue_repute.  This is not the same as the description of a
+     peer of a flexible, but similar.  For now forego updating descriptions.
+     Later, set unlinked level bit in an old description before adding updated
+     one.  Person running vrtater will be able to restore an old description
+     in an unusual case, provided they are not logged in to node represented by
+     updated. */
+  /* ... */
+  if ((desc_here = add_session_desc(session_here, &session_peer, &null, VRT_MASK_SESSION_CALLED, url, newoneliner, &cmplxt_here, NULL, NULL)) == NULL)
+    return -1;
+  diag_ls_all_sessions(1);
 
-	/* Retreive nodemap now or in a later pass. */
-	__builtin_printf(" waiting for nodemap...\n\n");
-	/* ... */
+  /* Retreive nodemap now or in a later pass. */
+  __builtin_printf(" waiting for nodemap...\n\n");
+  /* ... */
 
-	/* Save state.  Continue checking resuming instructions following on
-	   nodemap per this session. */
-	/* ... */
+  /* Save state.  Continue checking resuming instructions following on
+     nodemap per this session. */
+  /* ... */
 
-	/* Simulate reception of continuity. */
-	nodemap = diag_receive_nodemap(session_here, &receiver);
-	__builtin_printf(" received .vrtater nodemap data from flexible node "
-		"with session (%x %x %x)\n", (&session_peer)->hash.h,
-		(&session_peer)->hash.m, (&session_peer)->hash.l);
-	cp_session(&session_peer, &(nodemap->name));
+  /* Simulate reception of continuity. */
+  nodemap = diag_receive_nodemap(session_here, &receiver);
+  __builtin_printf(" received .vrtater nodemap data from flexible node "
+    "with session (%x %x %x)\n", (&session_peer)->hash.h,
+    (&session_peer)->hash.m, (&session_peer)->hash.l);
+  cp_session(&session_peer, &(nodemap->name));
 
-	/* Set continuity. */
-	if (match_session(&(nodemap->name), &session_peer)) {
-		desc_here->level |= VRT_MASK_SESSION_CONTINUITY;
-		__builtin_printf(" continuity on flexible node at url %s\n",
-			url);
-		*maps = nodemap;
-		diag_ls_all_sessions(1);
-	} else {
-		__builtin_fprintf(stderr, "Error: nodemap vs session "
-			"mismatch.\n");
-		return -2;
-	}
+  /* Set continuity. */
+  if (match_session(&(nodemap->name), &session_peer)) {
+    desc_here->level |= VRT_MASK_SESSION_CONTINUITY;
+    __builtin_printf(" continuity on flexible node at url %s\n",
+      url);
+    *maps = nodemap;
+    diag_ls_all_sessions(1);
+  } else {
+    __builtin_fprintf(stderr, "Error: nodemap vs session "
+      "mismatch.\n");
+    return -2;
+  }
 
-	return 0;
+  return 0;
 }
 
 /* For phase-b of continuing partial, send syncronization key data in repute
@@ -186,103 +184,103 @@ node_continuity(char *url, char *oneliner, session_t *session_here, session_t *s
 int
 continue_node(char *url, struct ptlrepute_list *list, struct ptlrepute *repute, session_t *session_here, session_t *loginkey, session_t *holdkey, unsigned int tl_cmplxt)
 {
-	struct session_desc *desc = NULL;
-	struct ptlrepute *unique_repute;
-	int keyuse, rval = -1;
+  struct session_desc *desc = NULL;
+  struct ptlrepute *unique_repute;
+  int keyuse, rval = -1;
 
-	/* Looking at all_sessions, the nodemap, and any dialog therein, person
-	   running vrtater decides to accept session desc->peer indexed by
-	   session_here, as VRT_MASK_SESSION_CONTINUITY remains true. */
-	__builtin_printf(" person running vrtater decides to log node\n");
+  /* Looking at all_sessions, the nodemap, and any dialog therein, person
+     running vrtater decides to accept session desc->peer indexed by
+     session_here, as VRT_MASK_SESSION_CONTINUITY remains true. */
+  __builtin_printf(" person running vrtater decides to log node\n");
 
-	/* Likely passed in as arg. */
-	if ((desc = find_session(session_here)) == NULL) {
-		__builtin_printf("continue_node cant find_session\n");
-		abort();
-	}
-	if (!(desc->level & VRT_MASK_SESSION_CONTINUITY))
-		return -1;
+  /* Likely passed in as arg. */
+  if ((desc = find_session(session_here)) == NULL) {
+    __builtin_printf("continue_node cant find_session\n");
+    abort();
+  }
+  if (!(desc->level & VRT_MASK_SESSION_CONTINUITY))
+    return -1;
 
-	/* Send sync_vrtlogin keydata in repute to flexible. Implicit are url
-	   and session, to reference earlier exchange.  Inclusive are loginkey,
-	   holdkey, repute->lastkey, repute->contingentkey, and tl_cmplxt, . */
-	/* ... */
+  /* Send sync_vrtlogin keydata in repute to flexible. Implicit are url
+     and session, to reference earlier exchange.  Inclusive are loginkey,
+     holdkey, repute->lastkey, repute->contingentkey, and tl_cmplxt, . */
+  /* ... */
 
-	/* If password added, fork initiating password authentication with url
-	   that determines flexible node connection.  Resume instructions
-	   following if successfull and keyuse value is returned. */
-	/* ... */
+  /* If password added, fork initiating password authentication with url
+     that determines flexible node connection.  Resume instructions
+     following if successfull and keyuse value is returned. */
+  /* ... */
 #ifdef DIAG_CONTINUING_SESSION
-	__builtin_printf(" continuing loginkeys sent to flexible\n\tloginkey "
-		"(%x %x %x) %i\n\tlastkey (%x %x %x) %i  if error assume it's "
-		"on flexible side\n\tcontingentkey (%x %x %x) %i  if error "
-		"assume it's on flexible side\n\tholdkey (%x %x %x) %i  "
-		"update if not zero_mapname\n\tholdbkp (%x %x %x) %i  for now "
-		"zero_mapname during diagnostic\n", loginkey->hash.h,
-		loginkey->hash.m, loginkey->hash.l, loginkey->seq,
-		repute->lastkey.hash.h, repute->lastkey.hash.m,
-		repute->lastkey.hash.l, repute->lastkey.seq,
-		repute->contingentkey.hash.h, repute->contingentkey.hash.m,
-		repute->contingentkey.hash.l, repute->contingentkey.seq,
-		holdkey->hash.h, holdkey->hash.m, holdkey->hash.l,
-		holdkey->seq, repute->holdbkp.hash.h, repute->holdbkp.hash.m,
-		repute->holdbkp.hash.l, repute->holdbkp.seq);
+  __builtin_printf(" continuing loginkeys sent to flexible\n\tloginkey "
+    "(%x %x %x) %i\n\tlastkey (%x %x %x) %i  if error assume it's "
+    "on flexible side\n\tcontingentkey (%x %x %x) %i  if error "
+    "assume it's on flexible side\n\tholdkey (%x %x %x) %i  "
+    "update if not zero_mapname\n\tholdbkp (%x %x %x) %i  for now "
+    "zero_mapname during diagnostic\n", loginkey->hash.h,
+    loginkey->hash.m, loginkey->hash.l, loginkey->seq,
+    repute->lastkey.hash.h, repute->lastkey.hash.m,
+    repute->lastkey.hash.l, repute->lastkey.seq,
+    repute->contingentkey.hash.h, repute->contingentkey.hash.m,
+    repute->contingentkey.hash.l, repute->contingentkey.seq,
+    holdkey->hash.h, holdkey->hash.m, holdkey->hash.l,
+    holdkey->seq, repute->holdbkp.hash.h, repute->holdbkp.hash.m,
+    repute->holdbkp.hash.l, repute->holdbkp.seq);
 #endif /* DIAG_CONTINUING_SESSION */
 
-	/* Simulate a keyuse value fed back from flexible and related to this
-	   session arriving, describing how reputation data on flexible was or
-	   was not modified. */
-	keyuse = VRT_LOGIN_LAST; /* lastkey succeeded, usual case */
+  /* Simulate a keyuse value fed back from flexible and related to this
+     session arriving, describing how reputation data on flexible was or
+     was not modified. */
+  keyuse = VRT_LOGIN_LAST; /* lastkey succeeded, usual case */
 
 #ifdef DIAG_CONTINUING_FLEXIBLE_SENDS_RETRY
-	keyuse = VRT_LOGIN_RETRY; /* newly given login or holdkey redundant */
+  keyuse = VRT_LOGIN_RETRY; /* newly given login or holdkey redundant */
 #elif defined DIAG_CONTINUING_FLEXIBLE_SENDS_LASTKEYERR
-	keyuse = VRT_LOGIN_CONTINGENT; /* lastkey failed, contingent used */
+  keyuse = VRT_LOGIN_CONTINGENT; /* lastkey failed, contingent used */
 #elif defined DIAG_CONTINUING_FLEXIBLE_SENDS_BOTHKEYERR
-	keyuse = VRT_LOGIN_SYNCERR; /* both keys failed, recover */
+  keyuse = VRT_LOGIN_SYNCERR; /* both keys failed, recover */
 #elif defined DIAG_CONTINUING_FLEXIBLE_SENDS_NEWREPUTED
-	keyuse = VRT_LOGIN_NEWREPUTED; /* both sync keys zero_mapname */
+  keyuse = VRT_LOGIN_NEWREPUTED; /* both sync keys zero_mapname */
 #endif
 
-	/* Mapping keyuse determinacy, try to make session partial. */
-	if ((rval = sync_loginkeys(url, list, repute, loginkey, holdkey, &(repute->lastkey), &(repute->contingentkey), keyuse))) {
-		if ((rval == VRT_LOGIN_RETRY) || (rval == VRT_LOGIN_SYNCERR)) {
-			__builtin_printf("given keyuse %i sync_loginkeys "
-				"returns %i\n", keyuse, rval); /* diag */
-			return -2;
-		}
-	}
+  /* Mapping keyuse determinacy, try to make session partial. */
+  if ((rval = sync_loginkeys(url, list, repute, loginkey, holdkey, &(repute->lastkey), &(repute->contingentkey), keyuse))) {
+    if ((rval == VRT_LOGIN_RETRY) || (rval == VRT_LOGIN_SYNCERR)) {
+      __builtin_printf("given keyuse %i sync_loginkeys "
+        "returns %i\n", keyuse, rval); /* diag */
+      return -2;
+    }
+  }
 
 #ifdef DIAG_CONTINUING_SESSION
-	__builtin_printf(" keyuse given %i sync returned %i\n", keyuse, rval);
-	if ((unique_repute = find_lastkey(list, loginkey)) == NULL) {
-		__builtin_printf("continue_node cant find_lastkey\n");
-		abort();
-	}
-	__builtin_printf(" continuing loginkey data after sync\n\tlastkey "
-		"(%x %x %x) %i\n\tcontingentkey (%x %x %x) %i  "
-		"(key = ovrflo ? match : !!mismatch)\n"
-		"\tholdkey (%x %x %x) %i  empty previous or pushed down\n"
-		"\tholdbkp (%x %x %x) %i  pushed down if any\n",
-		unique_repute->lastkey.hash.h, unique_repute->lastkey.hash.m,
-		unique_repute->lastkey.hash.l, unique_repute->lastkey.seq,
-		unique_repute->contingentkey.hash.h,
-		unique_repute->contingentkey.hash.m,
-		unique_repute->contingentkey.hash.l,
-		unique_repute->contingentkey.seq,
-		unique_repute->holdkey.hash.h, unique_repute->holdkey.hash.m,
-		unique_repute->holdkey.hash.l, unique_repute->holdkey.seq,
-		repute->holdbkp.hash.h, unique_repute->holdbkp.hash.m,
-		unique_repute->holdbkp.hash.l, unique_repute->holdbkp.seq);
-	__builtin_printf(" continuing session (%x %x %x) now partial with "
-		"\"%s\".\n", desc->session.hash.h, desc->session.hash.m,
-		desc->session.hash.l, desc->oneliner);
+  __builtin_printf(" keyuse given %i sync returned %i\n", keyuse, rval);
+  if ((unique_repute = find_lastkey(list, loginkey)) == NULL) {
+    __builtin_printf("continue_node cant find_lastkey\n");
+    abort();
+  }
+  __builtin_printf(" continuing loginkey data after sync\n\tlastkey "
+    "(%x %x %x) %i\n\tcontingentkey (%x %x %x) %i  "
+    "(key = ovrflo ? match : !!mismatch)\n"
+    "\tholdkey (%x %x %x) %i  empty previous or pushed down\n"
+    "\tholdbkp (%x %x %x) %i  pushed down if any\n",
+    unique_repute->lastkey.hash.h, unique_repute->lastkey.hash.m,
+    unique_repute->lastkey.hash.l, unique_repute->lastkey.seq,
+    unique_repute->contingentkey.hash.h,
+    unique_repute->contingentkey.hash.m,
+    unique_repute->contingentkey.hash.l,
+    unique_repute->contingentkey.seq,
+    unique_repute->holdkey.hash.h, unique_repute->holdkey.hash.m,
+    unique_repute->holdkey.hash.l, unique_repute->holdkey.seq,
+    repute->holdbkp.hash.h, unique_repute->holdbkp.hash.m,
+    unique_repute->holdbkp.hash.l, unique_repute->holdbkp.seq);
+  __builtin_printf(" continuing session (%x %x %x) now partial with "
+    "\"%s\".\n", desc->session.hash.h, desc->session.hash.m,
+    desc->session.hash.l, desc->oneliner);
 #endif /* DIAG_CONTINUING_SESSION */
 
-	desc->level &= ((VRT_MASK_SESSION_CALLED ^ 0xffffffff));
-	desc->level |= VRT_MASK_SESSION_PARTIAL;
+  desc->level &= ((VRT_MASK_SESSION_CALLED ^ 0xffffffff));
+  desc->level |= VRT_MASK_SESSION_PARTIAL;
 
-	return 0;
+  return 0;
 }
 
 /* For phase-a of flexible partial with continuing nodes, having received
@@ -303,96 +301,96 @@ continue_node(char *url, struct ptlrepute_list *list, struct ptlrepute *repute, 
 int
 answer_vrtlogin(session_t *session_peer, session_t *session_thru, char *url)
 {
-	struct session_desc *desc_here = NULL;
-	struct session_desc *desc_peer = NULL;
-	complextimate_t cmplxt_peer = { 0, 0, 0 }; /* unknown until sync */
+  struct session_desc *desc_here = NULL;
+  struct session_desc *desc_peer = NULL;
+  complextimate_t cmplxt_peer = { 0, 0, 0 }; /* unknown until sync */
 
-	/* Simulate receiving vrtlogin phase-a. */
-	__builtin_printf("\n ...it seems like nanoseconds ago\nRequest from "
-		"\"(%x %x %x) %i continuing\" partial to \"%s\"\n\n",
-		session_peer->hash.h, session_peer->hash.m,
-		session_peer->hash.l, session_peer->seq, url);
+  /* Simulate receiving vrtlogin phase-a. */
+  __builtin_printf("\n ...it seems like nanoseconds ago\nRequest from "
+    "\"(%x %x %x) %i continuing\" partial to \"%s\"\n\n",
+    session_peer->hash.h, session_peer->hash.m,
+    session_peer->hash.l, session_peer->seq, url);
 
-	/* Search all_sessions for url. */
-	if ((desc_here = find_url(url)) == NULL) {
-		__builtin_printf("Node \"%s\" currently non-existant.  "
-			"Disconnect sequence...\n", url);
-		/* ... */
-		return -1;
-	}
-	desc_here->level |= VRT_MASK_SESSION_INBOUND | VRT_MASK_SESSION_CALLED;
+  /* Search all_sessions for url. */
+  if ((desc_here = find_url(url)) == NULL) {
+    __builtin_printf("Node \"%s\" currently non-existant.  "
+      "Disconnect sequence...\n", url);
+    /* ... */
+    return -1;
+  }
+  desc_here->level |= VRT_MASK_SESSION_INBOUND | VRT_MASK_SESSION_CALLED;
 
-	__builtin_printf("Node \"%s\" found\n attempting to provide "
-		"continuity...\n", desc_here->oneliner);
-	diag_ls_all_sessions(1);
+  __builtin_printf("Node \"%s\" found\n attempting to provide "
+    "continuity...\n", desc_here->oneliner);
+  diag_ls_all_sessions(1);
 
-	/* note: Disconnect sequence should also tend to desc_here. */
-	if (!(desc_here->level & VRT_MASK_SESSION_ENABLE)) {
-		__builtin_printf("Node \"%s\" currently unreachable.  "
-			"Disconnect sequence...\n", url);
-		/* ... */
-		return -1;
-	} else if (!(session_nodemask & VRT_MASK_ACCEPT_VRTLOGIN)) {
-		__builtin_printf("Node(s) currently unreachable.  Disconnect "
-			"sequence...\n");
-		/* ... */
-		return -1;
-	} else if (session_nodemask & VRT_MASK_OVERLOADED) {
-		__builtin_printf("Node \"%s\" currently at maximum "
-			"complextimate state.  Disconnect sequence...\n", url);
-		/* ... */
-		return -1;
-	}
+  /* note: Disconnect sequence should also tend to desc_here. */
+  if (!(desc_here->level & VRT_MASK_SESSION_ENABLE)) {
+    __builtin_printf("Node \"%s\" currently unreachable.  "
+      "Disconnect sequence...\n", url);
+    /* ... */
+    return -1;
+  } else if (!(session_nodemask & VRT_MASK_ACCEPT_VRTLOGIN)) {
+    __builtin_printf("Node(s) currently unreachable.  Disconnect "
+      "sequence...\n");
+    /* ... */
+    return -1;
+  } else if (session_nodemask & VRT_MASK_OVERLOADED) {
+    __builtin_printf("Node \"%s\" currently at maximum "
+      "complextimate state.  Disconnect sequence...\n", url);
+    /* ... */
+    return -1;
+  }
 
-	/* Send latest description including desc_here->oneliner,
-	   desc_here->session, and desc_here->cmplxt, followed by
-	   desc_here->nodemap. */
-	/* ... */
-	desc_here->level |= VRT_MASK_SESSION_CONTINUITY;
+  /* Send latest description including desc_here->oneliner,
+     desc_here->session, and desc_here->cmplxt, followed by
+     desc_here->nodemap. */
+  /* ... */
+  desc_here->level |= VRT_MASK_SESSION_CONTINUITY;
 
-	__builtin_printf(" sending nodemap to \"%s\"...\n\n oops: vrtater cant "
-		"send nodemap.  Most significant components of\n session.c "
-		"still missing.  Well, lets say someone had written those\n\n",			url);
-	/* ... */
+  __builtin_printf(" sending nodemap to \"%s\"...\n\n oops: vrtater cant "
+    "send nodemap.  Most significant components of\n session.c "
+    "still missing.  Well, lets say someone had written those\n\n",      url);
+  /* ... */
 
-	/* Add phase-a parts for desc_peer. */
-	if ((desc_peer = add_session_desc(session_peer, &(desc_here->session), session_thru, VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_CONTINUITY, NULL, NULL, &cmplxt_peer, NULL, NULL)) == NULL) {
-		__builtin_printf("answer_vrtlogin cant find desc_peer\n");
-		abort();
-	}
-	diag_ls_all_sessions(1);
-	__builtin_printf("\n nodemap sent.  Checking every so often...\n\n");
+  /* Add phase-a parts for desc_peer. */
+  if ((desc_peer = add_session_desc(session_peer, &(desc_here->session), session_thru, VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_CONTINUITY, NULL, NULL, &cmplxt_peer, NULL, NULL)) == NULL) {
+    __builtin_printf("answer_vrtlogin cant find desc_peer\n");
+    abort();
+  }
+  diag_ls_all_sessions(1);
+  __builtin_printf("\n nodemap sent.  Checking every so often...\n\n");
 
-	/* hacking notes:  At this point vrtlogin completion is determinate
-	   based on a configured lengthly timeout.  Person running vrtater on
-	   continuing then has ample time to decide (Some timing configured in
-	   ifnode**.c so far).  Further refrence to desc_peer->session are now
-	   assumed to be phase-b parts for desc_peer arriving, compounded with
-	   loginkey data.  This data always sent immediately before peer
-	   request for authentication login.  If the usepasswd level bit is
-	   unset in desc_here, automaticaly authenticate if possible.  After
-	   vrtlogin data passes preliminarily, call sync_vrtlogin therewith.
-	   A preferably GNU Free Software, or GNU freindly login lib mechanism,
-	   to be added at some point, would perhaps require uname and password.
-	   This would do well as default.  Another way that might be workable
-	   would be: retrieve a uname equaling contingentkey with a password.
-	   Follow by resetting uname to new contingentkey retaining password.
-	   Pondering...  Very non-standard...  Might be way far from secure...
-	   Hmm...  Considering eventuality that continuing nodes may share the
-	   same url continuously or initially assumes that all nodes behind
-	   url should be allowed to be connected simutaniously if a flexible
-	   session is accepted by continuing node attempting vrtlogin.  This
-	   means that the exchange of a list of n session_desc data should be
-	   supported so that block of sessions would then first all appear
-	   in all_sessions on the continuing, or in the sent nodemap dialog.
-	   These then would all be connected when accepting the flexible
-	   session.  session_desc therefore includes session_t thru, that
-	   specifies a node that peer session described eminates out of.
-	   For a flexible node, any sessions calling for a vrtlogin out of node
-	   at url after a continuing partial session exists there are then
-	   automatically thru continuing. */
+  /* hacking notes:  At this point vrtlogin completion is determinate
+     based on a configured lengthly timeout.  Person running vrtater on
+     continuing then has ample time to decide (Some timing configured in
+     ifnode**.c so far).  Further refrence to desc_peer->session are now
+     assumed to be phase-b parts for desc_peer arriving, compounded with
+     loginkey data.  This data always sent immediately before peer
+     request for authentication login.  If the usepasswd level bit is
+     unset in desc_here, automaticaly authenticate if possible.  After
+     vrtlogin data passes preliminarily, call sync_vrtlogin therewith.
+     A preferably GNU Free Software, or GNU freindly login lib mechanism,
+     to be added at some point, would perhaps require uname and password.
+     This would do well as default.  Another way that might be workable
+     would be: retrieve a uname equaling contingentkey with a password.
+     Follow by resetting uname to new contingentkey retaining password.
+     Pondering...  Very non-standard...  Might be way far from secure...
+     Hmm...  Considering eventuality that continuing nodes may share the
+     same url continuously or initially assumes that all nodes behind
+     url should be allowed to be connected simutaniously if a flexible
+     session is accepted by continuing node attempting vrtlogin.  This
+     means that the exchange of a list of n session_desc data should be
+     supported so that block of sessions would then first all appear
+     in all_sessions on the continuing, or in the sent nodemap dialog.
+     These then would all be connected when accepting the flexible
+     session.  session_desc therefore includes session_t thru, that
+     specifies a node that peer session described eminates out of.
+     For a flexible node, any sessions calling for a vrtlogin out of node
+     at url after a continuing partial session exists there are then
+     automatically thru continuing. */
 
-	return 0;
+  return 0;
 }
 
 /* For phase-b of flexible partial with continuing nodes, having already
@@ -413,131 +411,131 @@ answer_vrtlogin(session_t *session_peer, session_t *session_thru, char *url)
 int
 sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *loginkey, session_t *lastkey, session_t *contingentkey, session_t *holdkey, unsigned int tl_cmplxt, char *url)
 {
-	struct session_desc *desc_here, *desc_peer;
-	struct ptlrepute *repute_here, *unique_repute_here;
-	int keyuse, rval = -1;
+  struct session_desc *desc_here, *desc_peer;
+  struct ptlrepute *repute_here, *unique_repute_here;
+  int keyuse, rval = -1;
 
-	/* Likely passed in as args. */
-	if ((desc_here = find_url(url)) == NULL) {
-		__builtin_printf("sync_vrtlogin cant find_url\n");
-		abort();
-	}
-	if ((desc_peer = find_session(session_peer)) == NULL) {
-		__builtin_printf("sync_vrtlogin cant find_session\n");
-		abort();
-	}
+  /* Likely passed in as args. */
+  if ((desc_here = find_url(url)) == NULL) {
+    __builtin_printf("sync_vrtlogin cant find_url\n");
+    abort();
+  }
+  if ((desc_peer = find_session(session_peer)) == NULL) {
+    __builtin_printf("sync_vrtlogin cant find_session\n");
+    abort();
+  }
 
-	/* For simulation, create an already active partial reputation in
-	   desc_here->ptlrepute for vrtlogin of avatar555, enabling a
-	   continuing session.  note: url is always NULL for repute in a
-	   flexible partial. */
-	session_t continuelastkey = { { 0, 0, 0xb0de }, 8 };
-	session_t continuecontingentkey = { { 0, 0, 0xface }, 8 };
-	session_t continueholdkey = { { 0, 0, 0xface }, 555 };
-	repute_here = add_ptlrepute(desc_here->reputed, &continuelastkey, &continueholdkey, NULL);
-	cp_mapname(&continuecontingentkey, &(repute_here->contingentkey));
+  /* For simulation, create an already active partial reputation in
+     desc_here->ptlrepute for vrtlogin of avatar555, enabling a
+     continuing session.  note: url is always NULL for repute in a
+     flexible partial. */
+  session_t continuelastkey = { { 0, 0, 0xb0de }, 8 };
+  session_t continuecontingentkey = { { 0, 0, 0xface }, 8 };
+  session_t continueholdkey = { { 0, 0, 0xface }, 555 };
+  repute_here = add_ptlrepute(desc_here->reputed, &continuelastkey, &continueholdkey, NULL);
+  cp_mapname(&continuecontingentkey, &(repute_here->contingentkey));
 
-	__builtin_printf(" authenticated vrtlogin.\n partial to \"%s\" "
-		"requested\n continuing (%x %x %x) nport to \"%s\" arrival\n",
-		url, session_peer->hash.h, session_peer->hash.m,
-		session_peer->hash.l, desc_here->oneliner);
+  __builtin_printf(" authenticated vrtlogin.\n partial to \"%s\" "
+    "requested\n continuing (%x %x %x) nport to \"%s\" arrival\n",
+    url, session_peer->hash.h, session_peer->hash.m,
+    session_peer->hash.l, desc_here->oneliner);
 
-	/* For received cmplxt that is assumed to exclude the nodemap sent,
-	   test if login_cmplxt_max is exceeded here. */
-	if (login_cmplxt_max < tl_cmplxt) {
-		__builtin_printf("Sending message...\n Continuing session "
-			"maintained on \"%s\"\n requires lower complexitmate "
-			"to log in.  session then retains continuity...\n",
-			url);
-		return -1;
-	}
+  /* For received cmplxt that is assumed to exclude the nodemap sent,
+     test if login_cmplxt_max is exceeded here. */
+  if (login_cmplxt_max < tl_cmplxt) {
+    __builtin_printf("Sending message...\n Continuing session "
+      "maintained on \"%s\"\n requires lower complexitmate "
+      "to log in.  session then retains continuity...\n",
+      url);
+    return -1;
+  }
 #ifdef DIAG_FLEXIBLE_SESSION
-	if ((unique_repute_here = find_lastkey(desc_here->reputed, &continuelastkey)) == NULL) {
-		__builtin_printf("sync_vrtlogin cant find_lastkey\n");
-		abort();
-	}
+  if ((unique_repute_here = find_lastkey(desc_here->reputed, &continuelastkey)) == NULL) {
+    __builtin_printf("sync_vrtlogin cant find_lastkey\n");
+    abort();
+  }
 
-	__builtin_printf(" continuing loginkey data transfered\n\tloginkey "
-		"(%x %x %x) %i\n\tlastkey (%x %x %x) %i\n\tcontingentkey "
-		"(%x %x %x) %i\n\tholdkey (%x %x %x) %i\n\tholdbkp (%x %x %x) "
-		"%i\n", loginkey->hash.h, loginkey->hash.m, loginkey->hash.l,
-		loginkey->seq, lastkey->hash.h, lastkey->hash.m,
-		lastkey->hash.l, lastkey->seq, contingentkey->hash.h,
-		contingentkey->hash.m, contingentkey->hash.l,
-		contingentkey->seq, holdkey->hash.h, holdkey->hash.m,
-		holdkey->hash.l, holdkey->seq,
-		unique_repute_here->holdbkp.hash.h,
-		unique_repute_here->holdbkp.hash.m,
-		unique_repute_here->holdbkp.hash.l,
-		unique_repute_here->holdbkp.seq);
+  __builtin_printf(" continuing loginkey data transfered\n\tloginkey "
+    "(%x %x %x) %i\n\tlastkey (%x %x %x) %i\n\tcontingentkey "
+    "(%x %x %x) %i\n\tholdkey (%x %x %x) %i\n\tholdbkp (%x %x %x) "
+    "%i\n", loginkey->hash.h, loginkey->hash.m, loginkey->hash.l,
+    loginkey->seq, lastkey->hash.h, lastkey->hash.m,
+    lastkey->hash.l, lastkey->seq, contingentkey->hash.h,
+    contingentkey->hash.m, contingentkey->hash.l,
+    contingentkey->seq, holdkey->hash.h, holdkey->hash.m,
+    holdkey->hash.l, holdkey->seq,
+    unique_repute_here->holdbkp.hash.h,
+    unique_repute_here->holdbkp.hash.m,
+    unique_repute_here->holdbkp.hash.l,
+    unique_repute_here->holdbkp.seq);
 #endif /* DIAG_FLEXIBLE_SESSION */
 
-	/* Syncronize loginkey reputation data using repute_peer vs. ptlrepute
-	   list for flexible.  There will either be a reputation already,
-	   or a new one will be added.  holdmap reference stack will be pushed
-	   if holdkey is not of zero_mapname and found to be unique in
-	   ptlrepute.  */
-	keyuse = sync_loginkeys(NULL, desc_here->reputed, NULL, loginkey, holdkey, lastkey, contingentkey, VRT_LOGIN_PRECONTEXT);
+  /* Syncronize loginkey reputation data using repute_peer vs. ptlrepute
+     list for flexible.  There will either be a reputation already,
+     or a new one will be added.  holdmap reference stack will be pushed
+     if holdkey is not of zero_mapname and found to be unique in
+     ptlrepute.  */
+  keyuse = sync_loginkeys(NULL, desc_here->reputed, NULL, loginkey, holdkey, lastkey, contingentkey, VRT_LOGIN_PRECONTEXT);
 
-	/* Send a keyuse value to continuing node so that loginkey data can be
-	   syncronized there. */
-	if ((rval = keyuse_feedback(desc_peer, loginkey, keyuse)) != 0) {
-		__builtin_printf(" sync_loginkeys returns %i  keyuse_feedback "
-			"returns %i\n",
-			keyuse, rval); /* diag */
-		subtract_session_desc(desc_peer);
-		return rval;
-	} else {
+  /* Send a keyuse value to continuing node so that loginkey data can be
+     syncronized there. */
+  if ((rval = keyuse_feedback(desc_peer, loginkey, keyuse)) != 0) {
+    __builtin_printf(" sync_loginkeys returns %i  keyuse_feedback "
+      "returns %i\n",
+      keyuse, rval); /* diag */
+    subtract_session_desc(desc_peer);
+    return rval;
+  } else {
 
 #ifdef DIAG_FLEXIBLE_SESSION
-		__builtin_printf(" sync_loginkeys returns %i  keyuse_feedback "
-			"returns %i\n", keyuse, rval);
-		if ((unique_repute_here = find_lastkey(desc_here->reputed, loginkey)) == NULL) {
-			__builtin_printf("sync_vrtlogin cant find_lastkey\n");
-			abort();
-		}
+    __builtin_printf(" sync_loginkeys returns %i  keyuse_feedback "
+      "returns %i\n", keyuse, rval);
+    if ((unique_repute_here = find_lastkey(desc_here->reputed, loginkey)) == NULL) {
+      __builtin_printf("sync_vrtlogin cant find_lastkey\n");
+      abort();
+    }
 
-		__builtin_printf(" flexible loginkey data after sync\n"
-			"\tlastkey (%x %x %x) %i\n"
-			"\tcontingentkey (%x %x %x) %i\n"
-			"\tholdkey (%x %x %x) %i  active on flexible\n"
-			"\tholdbkp (%x %x %x) %i  active on flexible\n",
-			unique_repute_here->lastkey.hash.h,
-			unique_repute_here->lastkey.hash.m,
-			unique_repute_here->lastkey.hash.l,
-			unique_repute_here->lastkey.seq,
-			unique_repute_here->contingentkey.hash.h,
-			unique_repute_here->contingentkey.hash.m,
-			unique_repute_here->contingentkey.hash.l,
-			unique_repute_here->contingentkey.seq,
-			unique_repute_here->holdkey.hash.h,
-			unique_repute_here->holdkey.hash.m,
-			unique_repute_here->holdkey.hash.l,
-			unique_repute_here->holdkey.seq,
-			unique_repute_here->holdbkp.hash.h,
-			unique_repute_here->holdbkp.hash.m,
-			unique_repute_here->holdbkp.hash.l,
-			unique_repute_here->holdbkp.seq);
-		__builtin_printf(" flexible session (%x %x %x) now partial "
-			"with \"%s\".\n", desc_here->session.hash.h,
-			desc_here->session.hash.m, desc_here->session.hash.l,
-			desc_here->oneliner);
+    __builtin_printf(" flexible loginkey data after sync\n"
+      "\tlastkey (%x %x %x) %i\n"
+      "\tcontingentkey (%x %x %x) %i\n"
+      "\tholdkey (%x %x %x) %i  active on flexible\n"
+      "\tholdbkp (%x %x %x) %i  active on flexible\n",
+      unique_repute_here->lastkey.hash.h,
+      unique_repute_here->lastkey.hash.m,
+      unique_repute_here->lastkey.hash.l,
+      unique_repute_here->lastkey.seq,
+      unique_repute_here->contingentkey.hash.h,
+      unique_repute_here->contingentkey.hash.m,
+      unique_repute_here->contingentkey.hash.l,
+      unique_repute_here->contingentkey.seq,
+      unique_repute_here->holdkey.hash.h,
+      unique_repute_here->holdkey.hash.m,
+      unique_repute_here->holdkey.hash.l,
+      unique_repute_here->holdkey.seq,
+      unique_repute_here->holdbkp.hash.h,
+      unique_repute_here->holdbkp.hash.m,
+      unique_repute_here->holdbkp.hash.l,
+      unique_repute_here->holdbkp.seq);
+    __builtin_printf(" flexible session (%x %x %x) now partial "
+      "with \"%s\".\n", desc_here->session.hash.h,
+      desc_here->session.hash.m, desc_here->session.hash.l,
+      desc_here->oneliner);
 #endif /* DIAG_FLEXIBLE_SESSION */
 
-		/* Add partial session.  Connect session sequence if any. */
-		/* ... */
-		desc_here->level &= ((VRT_MASK_SESSION_DETACHED ^ 0xffffffff));
-		desc_here->level &= ((VRT_MASK_SESSION_ENABLE ^ 0xffffffff));
-		desc_here->level &= ((VRT_MASK_SESSION_CALLED ^ 0xffffffff));
-		desc_here->level &= ((VRT_MASK_SESSION_CONTINUITY ^ 0xffffffff));
-		desc_here->level |= VRT_MASK_SESSION_PARTIAL;
-		desc_peer->level ^= (VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_CONTINUITY | VRT_MASK_SESSION_PARTIAL);
-		strcpy(desc_peer->oneliner, desc_here->oneliner);
-		desc_peer->cmplxt.tl_dialog = tl_cmplxt; /* cheating for now */
-		diag_ls_all_sessions(1);
-	}
+    /* Add partial session.  Connect session sequence if any. */
+    /* ... */
+    desc_here->level &= ((VRT_MASK_SESSION_DETACHED ^ 0xffffffff));
+    desc_here->level &= ((VRT_MASK_SESSION_ENABLE ^ 0xffffffff));
+    desc_here->level &= ((VRT_MASK_SESSION_CALLED ^ 0xffffffff));
+    desc_here->level &= ((VRT_MASK_SESSION_CONTINUITY ^ 0xffffffff));
+    desc_here->level |= VRT_MASK_SESSION_PARTIAL;
+    desc_peer->level ^= (VRT_MASK_SESSION_CALLED | VRT_MASK_SESSION_CONTINUITY | VRT_MASK_SESSION_PARTIAL);
+    strcpy(desc_peer->oneliner, desc_here->oneliner);
+    desc_peer->cmplxt.tl_dialog = tl_cmplxt; /* cheating for now */
+    diag_ls_all_sessions(1);
+  }
 
-	return rval;
+  return rval;
 }
 
 /* Send syncronization values described by keyuse to continuing node indicating
@@ -546,45 +544,45 @@ sync_vrtlogin(session_t *session_peer, session_t *session_thru, session_t *login
 int
 keyuse_feedback(struct session_desc *desc, session_t *loginkey, int keyuse)
 {
-	/* Messages to remote.  Forward keyuse value to peer and ... */
-	if (keyuse == VRT_LOGIN_RETRY) {
-		__builtin_printf("Sending keyuse message...\n Redundant "
-			"loginkey or holdkey.  Try again with something any "
-			"bit different.\n");
-		/* Send VRT_LOGIN_RETRY. ... */
-		return keyuse;
-	} else if (keyuse == VRT_LOGIN_NEWREPUTED) {
-		__builtin_printf("Sending keyuse message...\n New reputation "
-			"on (%x %x %x).\n", desc->peer.hash.h,
-			desc->peer.hash.m, desc->peer.hash.l);
-		/* Send VRT_LOGIN_NEWREPUTED. ... */
-	} else if (keyuse == VRT_LOGIN_LAST) {
-		__builtin_printf("Sending keyuse message...\n Continuing "
-			"session.\n");
-		/* Send VRT_LOGIN_LAST. ... */
-	} else if (keyuse == VRT_LOGIN_CONTINGENT) {
-		__builtin_printf("Sending keyuse message...\n Continuing "
-			"session.  note: !!contingentkey usage.\n");
-		/* Send VRT_LOGIN_CONTINGENT. ... */
-	} else if (keyuse == VRT_LOGIN_SYNCERR) {
-		__builtin_printf("Sending keyuse message...\n Oops! A highly "
-			"unlikely pair of exclusive errors has occured on one "
-			"or both\n node systems.  Recovery option (if added) "
-			"is required to continue session.\n See ifnode "
-			"interface for more.\n");
-		/* Send VRT_LOGIN_SYNCERR. ... */
-		return keyuse;
-	}
+  /* Messages to remote.  Forward keyuse value to peer and ... */
+  if (keyuse == VRT_LOGIN_RETRY) {
+    __builtin_printf("Sending keyuse message...\n Redundant "
+      "loginkey or holdkey.  Try again with something any "
+      "bit different.\n");
+    /* Send VRT_LOGIN_RETRY. ... */
+    return keyuse;
+  } else if (keyuse == VRT_LOGIN_NEWREPUTED) {
+    __builtin_printf("Sending keyuse message...\n New reputation "
+      "on (%x %x %x).\n", desc->peer.hash.h,
+      desc->peer.hash.m, desc->peer.hash.l);
+    /* Send VRT_LOGIN_NEWREPUTED. ... */
+  } else if (keyuse == VRT_LOGIN_LAST) {
+    __builtin_printf("Sending keyuse message...\n Continuing "
+      "session.\n");
+    /* Send VRT_LOGIN_LAST. ... */
+  } else if (keyuse == VRT_LOGIN_CONTINGENT) {
+    __builtin_printf("Sending keyuse message...\n Continuing "
+      "session.  note: !!contingentkey usage.\n");
+    /* Send VRT_LOGIN_CONTINGENT. ... */
+  } else if (keyuse == VRT_LOGIN_SYNCERR) {
+    __builtin_printf("Sending keyuse message...\n Oops! A highly "
+      "unlikely pair of exclusive errors has occured on one "
+      "or both\n node systems.  Recovery option (if added) "
+      "is required to continue session.\n See ifnode "
+      "interface for more.\n");
+    /* Send VRT_LOGIN_SYNCERR. ... */
+    return keyuse;
+  }
 
 #ifdef DIAG_FLEXIBLE_SESSION
-	/* Login succeeded. */
-	__builtin_printf(" successfull vrtlogin by (%x %x %x) %i on "
-		"(%x %x %x)\n", loginkey->hash.h, loginkey->hash.m,
-		loginkey->hash.l, loginkey->seq, desc->peer.hash.h,
-		desc->peer.hash.m, desc->peer.hash.l);
+  /* Login succeeded. */
+  __builtin_printf(" successfull vrtlogin by (%x %x %x) %i on "
+    "(%x %x %x)\n", loginkey->hash.h, loginkey->hash.m,
+    loginkey->hash.l, loginkey->seq, desc->peer.hash.h,
+    desc->peer.hash.m, desc->peer.hash.l);
 #endif
 
-	return 0;
+  return 0;
 }
 
 /* Tend to remote node sessions.  Called once per state increment.  This
@@ -593,7 +591,7 @@ keyuse_feedback(struct session_desc *desc, session_t *loginkey, int keyuse)
 void
 sync_sessions(void)
 {
-	;
+  ;
 }
 
 /* Read .vrtater, other data, associated with remote node sessions running on
@@ -602,7 +600,7 @@ sync_sessions(void)
 void
 read_from_network(void)
 {
-	;
+  ;
 }
 
 /* Send to each node connected to session, counta hmaps in seta both referenced
@@ -616,18 +614,18 @@ read_from_network(void)
 int
 send_maps(session_t *session, select_t *sel)
 {
-	hmapf_t **map;
-	int i;
+  hmapf_t **map;
+  int i;
 
-	map = sel->seta;
-	__builtin_printf(" session.c: pretending to syncronize hmaps within "
-		"partial (%x %x %x),\n  sending...\n",
-		session->hash.h, session->hash.m, session->hash.l);
-	for (i = 0; i < sel->counta; i++, map++)
-		__builtin_printf("  map (%x %x %x) %i\n", (*map)->name.hash.h,
-		(*map)->name.hash.m, (*map)->name.hash.l, (*map)->name.seq);
+  map = sel->seta;
+  __builtin_printf(" session.c: pretending to syncronize hmaps within "
+    "partial (%x %x %x),\n  sending...\n",
+    session->hash.h, session->hash.m, session->hash.l);
+  for (i = 0; i < sel->counta; i++, map++)
+    __builtin_printf("  map (%x %x %x) %i\n", (*map)->name.hash.h,
+    (*map)->name.hash.m, (*map)->name.hash.l, (*map)->name.seq);
 
-	return 0;
+  return 0;
 }
 
 /* By this or another name chosen, and per each singular .vrtater data parcel
@@ -638,119 +636,119 @@ send_maps(session_t *session, select_t *sel)
 session_t *
 receive_map(select_t *sel)
 {
-	session_t *session;
+  session_t *session;
 
-	return session;
+  return session;
 }
 
 /* For now here for testing in progress */
 hmapf_t *
 diag_receive_nodemap(session_t *session, select_t *sel)
 {
-	hmapf_t *map = NULL;
-	int buf_len, *int_buf, **buf = &int_buf;
+  hmapf_t *map = NULL;
+  int buf_len, *int_buf, **buf = &int_buf;
 
-	/* Normally read .vrtater data then refrenced by int_buf from ... */
-	/* ... */
+  /* Normally read .vrtater data then refrenced by int_buf from ... */
+  /* ... */
 
-	/* For diagnostic, call hmapwrap to create some int data.  int_buf
-	   then becomes allocated and contains the data.  First the hmap to be
-	   wrapped is referenced in selectf_a.  note: 2nd arg is opt's mask. */
-	map = p_hmapf(0);
-	*(sel->seta) = map;
-	buf_len = hmapwrapf(sel, 0, NULL, buf);
+  /* For diagnostic, call hmapwrap to create some int data.  int_buf
+     then becomes allocated and contains the data.  First the hmap to be
+     wrapped is referenced in selectf_a.  note: 2nd arg is opt's mask. */
+  map = p_hmapf(0);
+  *(sel->seta) = map;
+  buf_len = hmapwrapf(sel, 0, NULL, buf);
 
-	/* Now that int data is available call hmapunwrap to place it in
-	   vohspace.  Afterwards sel->countb holds a map count of 1 for now.
-	   The mapname of hmap is changed for now to avoid a conflict, however
-	   soon hmapunwrap will update any map of same mapname. */
-	if (hmapunwrapf(sel, session, NULL, (int *) int_buf) < 0)
-		__builtin_fprintf(stderr, "Error: .vrtater data received did "
-			"not hmapunwrapf as expected.");
-	else
-		__builtin_printf("%i hmaps unwrapped for node (%x %x %x)\n",
-			sel->countb, session->hash.h, session->hash.m,
-			session->hash.l);
+  /* Now that int data is available call hmapunwrap to place it in
+     vohspace.  Afterwards sel->countb holds a map count of 1 for now.
+     The mapname of hmap is changed for now to avoid a conflict, however
+     soon hmapunwrap will update any map of same mapname. */
+  if (hmapunwrapf(sel, session, NULL, (int *) int_buf) < 0)
+    __builtin_fprintf(stderr, "Error: .vrtater data received did "
+      "not hmapunwrapf as expected.");
+  else
+    __builtin_printf("%i hmaps unwrapped for node (%x %x %x)\n",
+      sel->countb, session->hash.h, session->hash.m,
+      session->hash.l);
 
-	/* For diagnostic, hmapwrap allocated int_buf.  This way of allocating
-	   is still under review, as malloc really should  be called where data
-	   is introduced rethinking it... yet caller would then need to
-	   calculate the correct filesize.   Perhaps calling first for that.
-	   Hmm...  That should work... See next commit for more... */
-	free(int_buf); /* for now free after hmapwrap allocates for caller. */
+  /* For diagnostic, hmapwrap allocated int_buf.  This way of allocating
+     is still under review, as malloc really should  be called where data
+     is introduced rethinking it... yet caller would then need to
+     calculate the correct filesize.   Perhaps calling first for that.
+     Hmm...  That should work... See next commit for more... */
+  free(int_buf); /* for now free after hmapwrap allocates for caller. */
 
-	/* Adjust map for diagnostic, !!not working for some reason but... */
-	map = *(sel->setb);
-	map->vpos.z -= 5.; /* adjust map for visibility (very tiny map) */
+  /* Adjust map for diagnostic, !!not working for some reason but... */
+  map = *(sel->setb);
+  map->vpos.z -= 5.; /* adjust map for visibility (very tiny map) */
 
-	return *(sel->setb);
+  return *(sel->setb);
 }
 
 /* Return reference to session description matching session or NULL if none. */
 struct session_desc *
 find_session(session_t *session)
 {
-	struct session_desc *current, *passed;
+  struct session_desc *current, *passed;
 
-	current = all_sessions->last;
-	passed = all_sessions->last;
-	while (1) {
-		if (current != NULL) {
-			if (match_session(&(current->session), session))
-				return current;
-			passed = current;
-			current = current->precursor;
-		} else
-			return NULL;
-	}
+  current = all_sessions->last;
+  passed = all_sessions->last;
+  while (1) {
+    if (current != NULL) {
+      if (match_session(&(current->session), session))
+        return current;
+      passed = current;
+      current = current->precursor;
+    } else
+      return NULL;
+  }
 }
 
 /* Return reference to session description matching url or NULL if none. */
 struct session_desc *
 find_url(char *url)
 {
-	struct session_desc *current, *passed;
+  struct session_desc *current, *passed;
 
-	current = all_sessions->last;
-	passed = all_sessions->last;
-	while (1) {
-		if (current != NULL) {
-			if (current->url) {
-				if (!(strcmp(current->url, url))) {
-					if (!(current->level & VRT_MASK_SESSION_UNLINKED))
-					return current;
-				}
-			}
-			passed = current;
-			current = current->precursor;
-		} else
-			return NULL;
-	}
+  current = all_sessions->last;
+  passed = all_sessions->last;
+  while (1) {
+    if (current != NULL) {
+      if (current->url) {
+        if (!(strcmp(current->url, url))) {
+          if (!(current->level & VRT_MASK_SESSION_UNLINKED))
+          return current;
+        }
+      }
+      passed = current;
+      current = current->precursor;
+    } else
+      return NULL;
+  }
 }
 
 /* Create linked list construct for all_sessions. */
 void
 mk_session_desc_list(void)
 {
-	all_sessions = NULL;
-	if ((all_sessions = (struct session_desc_list *) malloc(sizeof(struct session_desc_list))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc for all_sessions "
-			"list construct\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-	all_sessions->last = NULL;
-	all_sessions->count = 0;
+  all_sessions = NULL;
+  if ((all_sessions = (struct session_desc_list *) malloc(sizeof(struct session_desc_list))) == NULL) {
+    __builtin_fprintf(stderr, "vrtater:%s:%d: "
+      "Error: Could not malloc for all_sessions "
+      "list construct\n",
+      __FILE__, __LINE__);
+    abort();
+  }
+  all_sessions->last = NULL;
+  all_sessions->count = 0;
 
-	__builtin_printf(" session description list added\n");
+  __builtin_printf(" session description list added\n");
 }
 
 /* Remove linked list wrapper struct all_sessions from memory. */
 void
 rm_session_desc_list(void)
 {
-	free(all_sessions);
+  free(all_sessions);
 }
 
 /* Add a session description reference to all_sessions providing session
@@ -768,117 +766,117 @@ rm_session_desc_list(void)
 struct session_desc *
 add_session_desc(session_t *session, session_t *peer, session_t *thru, int level, char *url, char *oneliner, complextimate_t *cmplxt, hmapf_t *nodemap, struct ptlrepute_list *reputed)
 {
-	struct session_desc *listed = NULL;
+  struct session_desc *listed = NULL;
 
-	if (find_session(session)) {
-		__builtin_printf("Error: Can not create session description "
-			"as session (%x %x %x) already exists\n",
-			session->hash.h, session->hash.m, session->hash.l);
-		return NULL;
-	}
-	if (url) {
-		if (find_url(url)) {
-			__builtin_printf("Error: Can not create session "
-			"description as url %s is already taken in "
-			"all_sessions\n", url);
-			return NULL;
-		}
-	}
-	if ((listed = (struct session_desc *) malloc(sizeof(struct session_desc))) == NULL) {
-		__builtin_fprintf(stderr, "vrtater:%s:%d: "
-			"Error: Could not malloc for all_sessions entry\n",
-			__FILE__, __LINE__);
-		abort();
-	}
-	listed->precursor = all_sessions->last;
-	all_sessions->last = listed;
-	all_sessions->count++;
+  if (find_session(session)) {
+    __builtin_printf("Error: Can not create session description "
+      "as session (%x %x %x) already exists\n",
+      session->hash.h, session->hash.m, session->hash.l);
+    return NULL;
+  }
+  if (url) {
+    if (find_url(url)) {
+      __builtin_printf("Error: Can not create session "
+      "description as url %s is already taken in "
+      "all_sessions\n", url);
+      return NULL;
+    }
+  }
+  if ((listed = (struct session_desc *) malloc(sizeof(struct session_desc))) == NULL) {
+    __builtin_fprintf(stderr, "vrtater:%s:%d: "
+      "Error: Could not malloc for all_sessions entry\n",
+      __FILE__, __LINE__);
+    abort();
+  }
+  listed->precursor = all_sessions->last;
+  all_sessions->last = listed;
+  all_sessions->count++;
 
-	/* Description. */
-	cp_session(session, &(listed->session));
-	cp_session(peer, &(listed->peer));
-	cp_session(thru, &(listed->thru));
-	listed->level = level;
-	if (url) {
-		if ((listed->url = (char *) malloc(strlen(url))) == NULL) {
-			__builtin_fprintf(stderr, "vrtater:%s:%d: "
-				"Error: Could not malloc for all_sessions "
-				"list member url\n",
-				__FILE__, __LINE__);
-			abort();
-		}
-		strcpy(listed->url, url);
-	} else
-		listed->url = NULL;
-	if (oneliner)
-		strcpy(listed->oneliner, oneliner);
-	listed->nodemap = nodemap;
-	listed->reputed = reputed;
-	listed->cmplxt.hmap_count = cmplxt->hmap_count;
-	listed->cmplxt.tl_vdata = cmplxt->tl_vdata;
-	listed->cmplxt.tl_dialog = cmplxt->tl_dialog;
+  /* Description. */
+  cp_session(session, &(listed->session));
+  cp_session(peer, &(listed->peer));
+  cp_session(thru, &(listed->thru));
+  listed->level = level;
+  if (url) {
+    if ((listed->url = (char *) malloc(strlen(url))) == NULL) {
+      __builtin_fprintf(stderr, "vrtater:%s:%d: "
+        "Error: Could not malloc for all_sessions "
+        "list member url\n",
+        __FILE__, __LINE__);
+      abort();
+    }
+    strcpy(listed->url, url);
+  } else
+    listed->url = NULL;
+  if (oneliner)
+    strcpy(listed->oneliner, oneliner);
+  listed->nodemap = nodemap;
+  listed->reputed = reputed;
+  listed->cmplxt.hmap_count = cmplxt->hmap_count;
+  listed->cmplxt.tl_vdata = cmplxt->tl_vdata;
+  listed->cmplxt.tl_dialog = cmplxt->tl_dialog;
 
-	if (oneliner)
-		__builtin_printf(" session description added for "
-			"\"%s\"\n", oneliner);
-	else
-		__builtin_printf(" session description added\n");
+  if (oneliner)
+    __builtin_printf(" session description added for "
+      "\"%s\"\n", oneliner);
+  else
+    __builtin_printf(" session description added\n");
 
-	return listed;
+  return listed;
 }
 
 /* Subtract linked list element referenced by desc. */
 void
 subtract_session_desc(struct session_desc *desc)
 {
-	struct session_desc *current, *passed;
+  struct session_desc *current, *passed;
 
-	current = all_sessions->last;
-	passed = all_sessions->last;
-	while (1) {
-		if (current != NULL) {
-			if (match_session(&(current->session), &(desc->session)))
-				break;
-			passed = current;
-			current = current->precursor;
-		} else
-			return;
-	}
-	__builtin_printf(" removing session description (%x %x %x)\n",
-		current->session.hash.h, current->session.hash.m,
-		current->session.hash.l);
-	if (current == passed) {
-		if (!current->precursor)
-			all_sessions->last = NULL;
-		else
-			all_sessions->last = current->precursor;
-	} else
-		passed->precursor = current->precursor;
-	if (current->url)
-		free(current->url);
-	free(current);
-	all_sessions->count--;
+  current = all_sessions->last;
+  passed = all_sessions->last;
+  while (1) {
+    if (current != NULL) {
+      if (match_session(&(current->session), &(desc->session)))
+        break;
+      passed = current;
+      current = current->precursor;
+    } else
+      return;
+  }
+  __builtin_printf(" removing session description (%x %x %x)\n",
+    current->session.hash.h, current->session.hash.m,
+    current->session.hash.l);
+  if (current == passed) {
+    if (!current->precursor)
+      all_sessions->last = NULL;
+    else
+      all_sessions->last = current->precursor;
+  } else
+    passed->precursor = current->precursor;
+  if (current->url)
+    free(current->url);
+  free(current);
+  all_sessions->count--;
 }
 
 /* Close session referenced by desc.  Return 0 on closed. */
 int
 close_session(struct session_desc *desc)
 {
-	/* Disconnect sequence. */
-	/* ... */
-	subtract_session_desc(desc);
+  /* Disconnect sequence. */
+  /* ... */
+  subtract_session_desc(desc);
 
-	return 0;
+  return 0;
 }
 
 /* Return 0 after closing all connected sessions. */
 int
 close_all_sessions(void)
 {
-	while (all_sessions->last != NULL)
-		close_session(all_sessions->last);
+  while (all_sessions->last != NULL)
+    close_session(all_sessions->last);
 
-	return 0;
+  return 0;
 }
 
 /* Called when program exits or otherwise, this should leave the program code
@@ -894,12 +892,12 @@ close_all_sessions(void)
 int
 reset_sessions(void)
 {
-	/* Reset sequence. */
-	/* ... */
-	close_all_sessions();
-	rm_session_desc_list();
+  /* Reset sequence. */
+  /* ... */
+  close_all_sessions();
+  rm_session_desc_list();
 
-	return 0;
+  return 0;
 }
 
 /* Temporary diagnostic to list partial sessions to stdout.  If full is
@@ -907,54 +905,54 @@ reset_sessions(void)
 void
 diag_ls_all_sessions(int full)
 {
-	struct session_desc *current, *passed;
-	char *tmp, other[] = "";
-	int i;
+  struct session_desc *current, *passed;
+  char *tmp, other[] = "";
+  int i;
 
-	if (all_sessions->count == 0) {
-		__builtin_printf("--no partial sessions listed--\n");
-		return;
-	}
+  if (all_sessions->count == 0) {
+    __builtin_printf("--no partial sessions listed--\n");
+    return;
+  }
 
-	current = all_sessions->last;
-	passed = all_sessions->last;
-	for (i = 0 ; ;i++) {
-		if (current != NULL) {
-			__builtin_printf("(%x %x %x) ", current->session.hash.h,
-				current->session.hash.m,
-				current->session.hash.l);
-			__builtin_printf("(%x %x %x) ", current->peer.hash.h,
-				current->peer.hash.m, current->peer.hash.l);
-			__builtin_printf("(%x %x %x) ", current->thru.hash.h,
-				current->thru.hash.m, current->thru.hash.l);
-			if (full) {
-				if (current->level & VRT_MASK_SESSION_DETACHED)
-					__builtin_printf("DETACHED ");
-				if (current->level & VRT_MASK_SESSION_ENABLE)
-					__builtin_printf("VOBSPACE ");
-				if (current->level & VRT_MASK_SESSION_CALLED)
-					__builtin_printf("CALLED ");
-				if (current->level & VRT_MASK_SESSION_CONTINUITY)
-					__builtin_printf("NODEMAP ");
-				if (current->level & VRT_MASK_SESSION_USEPASSWD)
-					__builtin_printf("AUTH ");
-				if (current->level & VRT_MASK_SESSION_PARTIAL)
-					__builtin_printf("PARTIAL ");
-				if (current->level & VRT_MASK_SESSION_INBOUND)
-					__builtin_printf("FLEXIBLE ");
-				else if ((current->level & VRT_MASK_SESSION_PARTIAL))
-					__builtin_printf("CONTINUING ");
-				__builtin_printf("\"%s\" ", current->oneliner);
-				__builtin_printf("%i ", (sizeof(hmapf_t) * current->cmplxt.hmap_count) + current->cmplxt.tl_vdata + current->cmplxt.tl_dialog);
+  current = all_sessions->last;
+  passed = all_sessions->last;
+  for (i = 0 ; ;i++) {
+    if (current != NULL) {
+      __builtin_printf("(%x %x %x) ", current->session.hash.h,
+        current->session.hash.m,
+        current->session.hash.l);
+      __builtin_printf("(%x %x %x) ", current->peer.hash.h,
+        current->peer.hash.m, current->peer.hash.l);
+      __builtin_printf("(%x %x %x) ", current->thru.hash.h,
+        current->thru.hash.m, current->thru.hash.l);
+      if (full) {
+        if (current->level & VRT_MASK_SESSION_DETACHED)
+          __builtin_printf("DETACHED ");
+        if (current->level & VRT_MASK_SESSION_ENABLE)
+          __builtin_printf("VOBSPACE ");
+        if (current->level & VRT_MASK_SESSION_CALLED)
+          __builtin_printf("CALLED ");
+        if (current->level & VRT_MASK_SESSION_CONTINUITY)
+          __builtin_printf("NODEMAP ");
+        if (current->level & VRT_MASK_SESSION_USEPASSWD)
+          __builtin_printf("AUTH ");
+        if (current->level & VRT_MASK_SESSION_PARTIAL)
+          __builtin_printf("PARTIAL ");
+        if (current->level & VRT_MASK_SESSION_INBOUND)
+          __builtin_printf("FLEXIBLE ");
+        else if ((current->level & VRT_MASK_SESSION_PARTIAL))
+          __builtin_printf("CONTINUING ");
+        __builtin_printf("\"%s\" ", current->oneliner);
+        __builtin_printf("%i ", (sizeof(hmapf_t) * current->cmplxt.hmap_count) + current->cmplxt.tl_vdata + current->cmplxt.tl_dialog);
 
-				__builtin_printf("%s", tmp = current->url ? current->url : other);
-			}
-			__builtin_printf("\n");
-			passed = current;
-			current = current->precursor;
-		} else {
-			__builtin_printf("--%i descriptions listed--\n", i);
-			return;
-		}
-	}
+        __builtin_printf("%s", tmp = current->url ? current->url : other);
+      }
+      __builtin_printf("\n");
+      passed = current;
+      current = current->precursor;
+    } else {
+      __builtin_printf("--%i descriptions listed--\n", i);
+      return;
+    }
+  }
 }

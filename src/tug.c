@@ -12,39 +12,39 @@
    using vrtater input as a recommendation or warning. */
 
 enum {
-	VRT_JOIN_HMAPS,
-	VRT_INTERSECTION
+  VRT_JOIN_HMAPS,
+  VRT_INTERSECTION
 };
 
 void call_join_hmaps();
 void call_intersection();
 
 void (*fparr[])() = {
-	&call_join_hmaps,
-	&call_intersection
+  &call_join_hmaps,
+  &call_intersection
 };
 
 /* Given pre selected hmaps, call function out of transform.c */
 void
 transform(int t)
 {
-	(*fparr[t])();
+  (*fparr[t])();
 }
 
 int
 init_tug_io(void)
 {
-	return 0;
+  return 0;
 }
 
 void
 call_join_hmaps(void)
 {
-	generator_join_hmaps();
+  generator_join_hmaps();
 }
 
 void
 call_intersection(void)
 {
-	generator_intersection();
+  generator_intersection();
 }

@@ -13,12 +13,12 @@
 vf_t
 *rotate_vf(vf_t *a, vf_t *axi, float dpl, vf_t *b)
 {
-	vf_t b2, b1, v_new, temp;
-	cprod_vf(a, axi, &b2);
-	cprod_vf(axi, &b2, &b1);
-	dif_vf(a, &b1, &v_new);
-	factor_vf(&b1, cos(dpl), &temp);
-	sum_vf(&v_new, &temp, &v_new);
-	factor_vf(&b2, sin(dpl), &temp);
-	return(sum_vf(&v_new, &temp, b));
+  vf_t b2, b1, v_new, temp;
+  cprod_vf(a, axi, &b2);
+  cprod_vf(axi, &b2, &b1);
+  dif_vf(a, &b1, &v_new);
+  factor_vf(&b1, cos(dpl), &temp);
+  sum_vf(&v_new, &temp, &v_new);
+  factor_vf(&b2, sin(dpl), &temp);
+  return(sum_vf(&v_new, &temp, b));
 }
