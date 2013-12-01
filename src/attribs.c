@@ -590,7 +590,6 @@ flow_over(int *balance_criteria)
   /* Then in positional round these are recycled. */
 }
 
-
 /* Conditionally place map at loc.  note: Still in progress.  Conditions are
    determinate where if seekpos calculation is successful, arrival becomes
    successful. */

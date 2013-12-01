@@ -27,6 +27,7 @@ entitled ``GNU Free Documentation License''.
 * vrtater: (vrtater)Invoking vrtater.
 * vrtater: (vrtater)Installing vrtater.
 * vrtater: (vrtater)Adding to vrtater.
+* vrtater: (vrtater)Hacking section.
 * vrtater: (vrtater)Pre-alpha bulletin board.
 * vrtater: (vrtater)Vector calls.
 * vrtater: (vrtater)Selection buffers.
@@ -154,6 +155,7 @@ README, provided with the source, list's other references for what is going on.
 * Invoking vrtater::
 * Installing vrtater:: 
 * Adding to vrtater::
+* Hacking section::
 * Pre-alpha bulletin board::
 * Vector functions::
 * Selection buffers::
@@ -262,6 +264,53 @@ See INSTALL for source distribution install and compile details.
 Email patches or maintainer status requests to: @email{green8@@sdf-eu.org}.
 Maintainer status on Savannah is required to push to the repository.  Current
 maintainers will evaluate any patches or requests to add to vrtater directly.
+
+@node Hacking section
+@chapter Hacking section
+
+@pindex vrtater
+@cindex Hacking section
+
+session description level bits.
+
+Preliminary, yet mostly resolved.  A flexible node has a description and may
+have adjunct calling node descriptions nearby in all_sessions.  A continuing
+node has only a single description related to itself.  Listed are the bitmask,
+proposed informational equivalent, and breif description.  Informational list's
+as per ifnode**.c determinate in interface part.
+
+VRT_MASK_SESSION_DETACHED ("DETACHED ")
+Informational vs. flexible node.  Not partial.
+
+VRT_MASK_SESSION_INBOUND ("FLEXIBLE ")
+Describes flexible node, not detached, enabled, called, and may be partial.
+
+VRT_MASK_SESSION_ENABLE ("VOBSPACE ")
+Describes flexible node ready for partial.
+
+VRT_MASK_SESSION_CALLED ("CALLED ")
+Request for partial underway with flexible node described weather calling
+or called.
+
+VRT_MASK_SESSION_CONTINUITY ("NODEMAP ")
+A continuing node is currently evaluating partial with flexible node described
+weather calling or called.
+
+VRT_MASK_SESSION_USEPASSWD ("AUTH ")
+This flexible requires password authentication when receiving call.
+
+VRT_MASK_SESSION_PARTIAL ("PARTIAL "(informational=inbound?"CONTINUING ":""))
+This node is partial.
+
+VRT_MASK_SESSION_NODELESS ("")
+This session description has no implied node in node-orgin.  It is callable and
+has one of three visual cue's, one where a continuing description with a
+flexible, another where a flexible description in data for continuing.
+
+VRT_MASK_SESSION_UNLINKED ("MOVED ")
+This session description refers to a depreciated url, and has no implied node
+in node-orgin.  It may still be called if a flexible node still resident and
+has one of three visual cue's.
 
 @node Pre-alpha bulletin board
 @chapter Pre-alpha bulletin board

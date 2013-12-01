@@ -938,6 +938,10 @@ diag_ls_all_sessions(int full)
           __builtin_printf("AUTH ");
         if (current->level & VRT_MASK_SESSION_PARTIAL)
           __builtin_printf("PARTIAL ");
+        if (current->level & VRT_MASK_SESSION_NODELESS)
+          __builtin_printf("- ");
+        if (current->level & VRT_MASK_SESSION_UNLINKED)
+          __builtin_printf("- MOVED ");
         if (current->level & VRT_MASK_SESSION_INBOUND)
           __builtin_printf("FLEXIBLE ");
         else if ((current->level & VRT_MASK_SESSION_PARTIAL))
