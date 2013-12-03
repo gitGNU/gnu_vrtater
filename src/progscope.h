@@ -44,7 +44,7 @@
 #define DIAG_INTERSECTION_OFF
 #define DIAG_HMAP_MESSAGES
 /* hapmap wrap/unwrap i/o diagnostics.  Use: exclusive to/from. */
-#define DIAG_HMAPWRAP
+#define DIAG_HMAPWRAP_OFF
 #define DIAG_STF_OFF /* single to file */
 #define DIAG_CTF /* compounded to file */
 #define DIAG_STB_OFF /* single to buffer */

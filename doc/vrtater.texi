@@ -68,18 +68,18 @@ or GNU 'freindly' libraries mandated.  Currently, interfacing through
 the rendering of vobs supported by @file{gl.h} and @file{glx.h} (see:
 @uref{http://mesa3d.org/}).
 
-Written in C, and still in pre-alpha state, vrtater already produces much of the
-required mechanism for interacting, through 'virtual objects'(vobs) /w
+Written in C, and still in pre-alpha state, vrtater already produces much of
+the required mechanism for interacting, through 'virtual objects'(vobs) /w
 haptic/other qualities.  Connecting vobspace nodes over the internet is
 currently the first priority.
 
 hapmaps (hmaps), the basic units of data for vrtater, are simplified vobs,
 writable as a .vrtater file containing one or a set of hmaps based on defined
-type hmapf_t.  hmaps and their founded geometry options are initially written as
-stock like basic forms, to then be transformed by modeling functions and drawn
-by rendering code.  Their generic nature is supported in all three phases.
-hmaps are designed to provide haptic feedback, vob intersection feedback, and
-other qualities for vobs.
+type hmapf_t.  hmaps and their founded geometry options are initially written
+as stock like basic forms, to then be transformed by modeling functions and
+drawn by rendering code.  Their generic nature is supported in all three
+phases.  hmaps are designed to provide haptic feedback, vob intersection
+feedback, and other qualities for vobs.
 
 Rendering code strives to enhance hmaps, while adding non hmap rendering as
 well.  Hardware may factor in to technique used.  hmaps will move around in
@@ -94,8 +94,8 @@ available to the author, given name combined with node timestamp hmaps applied
 when appearing on peer nodes, provides a workable authorship mechanism for the
 3d works that hmaps represent.  These hmaps once shared may be copied, however
 their unique patterns will have appeared first on vrtater nodes connected with
-name given, then flowing to other nodes.  Given author will thus have a workable
-claim of authorship for bragging rights purposes.
+name given, then flowing to other nodes.  Given author will thus have a
+workable claim of authorship for bragging rights purposes.
 
 When re-connecting to any node, one may resume a previous session there,
 provided that the node still has the previous session on hold.  In this way a
@@ -112,19 +112,20 @@ continuing nodes may join.  One may take as much .vrtater data with them when
 partial as the person running vrtater with the flexible node predetermines,
 while the flexible node has as limit determined by what they have for hardware.
 
-The hmap describing partial that the flexible node provides, defines the virtual
-spacial bound, a nodemap, and optionally any hmaps therein.  The volumetric
-representation of hmaps becoming partial is also of issue where, enough empty
-vobspace must exist at the arrival location for all hmaps accompanying.
+The hmap describing partial that the flexible node provides, defines the
+virtual spacial bound, a nodemap, and optionally any hmaps therein.  The
+volumetric representation of hmaps becoming partial is also of issue where,
+enough empty vobspace must exist at the arrival location for all hmaps
+accompanying.
 
 Alternately, node-orgin, the place where one begins when running vrtater, is
 always present once the program is run.  It is similar to a node capable of
 becoming partial except that you are the only one in there, and hmaps therein
 never appear on other nodes.  One may create or reuse as many hmaps therein as
 will fit in memory, and then optionally take those to partial as desired.  All
-your created flexible nodes as well as nodes you are continuing appear somewhere
-in your node-orgin at your discretion. These appear as nodemaps.  Within these
-exists partial vobspace if connected.
+your created flexible nodes as well as nodes you are continuing appear
+somewhere in your node-orgin at your discretion. These appear as nodemaps.
+Within these exists partial vobspace if connected.
 
 The capability for interaction of vobs in given partial will be as fully as
 possible based on dialog and configuration maintained in the node that they
@@ -138,12 +139,12 @@ between people running vrtater and interacting in partial.  Other information
 affecting only hmaps may also be carried therein, for example, description of
 how the hmap would like to appear.  A dialog interface, combined with a node
 interface will provide access to all selected transforms for hmaps available,
-movement stimulus for hmaps, renderer configuration,  nodes partial, and more...
+movement stimulus for hmaps, renderer configuration,  nodes partial, more...
 
-Interfacing to system bus IO devices, is soon to commence.  The ip network code,
-hashing of session names, rendering features and dialog interface, are all now
-calling out for any who would add those, before someone else does less so
-excellently.  Maintainer expertise is also in short supply.
+Interfacing to system bus IO devices, is soon to commence.  The ip network
+code, hashing of session names, rendering features and dialog interface, are
+all now calling out for any who would add those, before someone else does less
+so excellently.  Maintainer expertise is also in short supply.
 
 For more information on development of vrtater see: @value{DEVELOP}. The
 README, provided with the source, list's other references for what is going on.
@@ -510,24 +511,103 @@ For now see transform.c for more.
 @chapter Glossary
 
 @pindex vrtater
-@cindex Glossary of proposed vrtater source naming conventions
+@cindex Glossary of proposed vrtater name lexicon.
 
 @multitable @columnfractions 1 2 7
-@item
-@tab session number
-@tab Hashed number representing unique local or remote data.
+
 @item
 @tab hmap
 @tab File/data defining haptic/other VR representation
 @item
 @tab
-@tab qualities (also map(in context), haptic map, hapmap).
+@tab qualities (also map(in context), hapmap).  Formatted as
 @item
-@tab map[ ]name
-@tab hmap session number.
+@tab
+@tab a file a hapmap of name is given a .vrtater extension.
 @item
 @tab vohspace
-@tab hmap arrays active in running program.
+@tab hmap data and pointer memory active in running program.
+@item
+@tab session [number]
+@tab Hash of a usually unique session associated fileset.
+@item
+@tab mapname
+@tab hmap session number with appended sequence and related
+@item
+@tab
+@tab vohspace index.
+@item
+@tab composite [h]map
+@tab hmap file or it's data containing multiple hmaps.
+@item
+@tab trunk[ ]map
+@tab First map in composite hmap set with tree maps therein.
+@item
+@tab tree[ ]map
+@tab Other maps in composite hmap set following trunk map.
+@item
+@tab key[ ]map
+@tab First map in trunk[/tree] set.
+@item
+@tab key[ ]name
+@tab Session number of a keymap.
+@item
+@tab sign-in name
+@tab Session number per dialog group member matching keyname.
+@item
+@tab group[ ]map
+@tab Group hmap artifact.  First in groupset.  trunkmap.
+@item
+@tab group[ ]set
+@tab Set of trunkmaps.  groupmap [+ trunkmap set compounded].
+@item
+@tab loginkey
+@tab Avatar's keymap when vrtlogging flexible node.
+@item
+@tab lastkey
+@tab loginkey from last continued session.
+@item
+@tab contingentkey
+@tab lastkey from previous to last continued session.
+@item
+@tab holdkey
+@tab mapname of keymap with hold bit set containing maps to
+@item
+@tab
+@tab be held on flexible.  Written if selected on vrtlogging.
+@item
+@tab
+@tab Overwrites holdbkp if holdkey not popped on logout.
+@item
+@tab holdbkp
+@tab holdkey from a previous vrtlogin or copy of holdkey.
+@item
+@tab
+@tab Used as sign-in name for dialog groups.
+@item
+@tab zero_session
+@tab null session number with null sequence appended.
+@item
+@tab partial
+@tab Peer to peers shared vobspace.
+@item
+@tab [vrtater] node
+@tab flexible or continuing, node's may become partial.
+@item
+@tab nodemap
+@tab hmap sent by flexible node defining given partial
+@item
+@tab
+@tab volumetrically.
+@item
+@tab node-orgin
+@tab Insulated vobspace.  partial vobspace capable nodes
+@item
+@tab
+@tab are created or generated somewhere in the volumetric
+@item
+@tab
+@tab representation herein based on config.
 @item
 @tab vob[space]
 @tab Rendered VR representation.  vob (unitary thereto).
@@ -540,62 +620,7 @@ For now see transform.c for more.
 @item
 @tab vpt
 @tab Pointer to oa_fp(view point).
-@item
-@tab composite map
-@tab hmap file/data containing multiple hmaps (also
-@item
-@tab
-@tab composite hmap).
-@item
-@tab trunk[ ]map
-@tab First map in composite hmap set with tree maps therein.
-@item
-@tab tree[ ]map
-@tab Other maps in composite hmap set following trunk map.
-@item
-@tab key[ ]map
-@tab First map in trunk/[tree] set for avatar.
-@item
-@tab key[ ]name
-@tab Session number of a keymap (used vs. reputation).
-@item
-@tab sign-in name
-@tab Session number per group member matching keyname.
-@item
-@tab group[ ]map
-@tab Group hmap artifact.  First in groupset.  Non trunkmap.
-@item
-@tab group[ ]set
-@tab Set of trunkmaps.  groupmap [+ trunkmap set compounded].
-@item
-@tab node-orgin
-@tab Insulated vobspace.  Encompasses all partial nodes.
-@item
-@tab zero session
-@tab node-orgin session number.
-@item
-@tab partial
-@tab Peer to peers shared vobspace (also partial space,
-@item
-@tab
-@tab partial nodes, node-partial, node(s)).
-@item
-@tab partial session
-@tab partial session number (also partial_session, session).
-@item
-@tab node[ ]map
-@tab hmap sent by called node defining partial space volume.
 @end multitable
-To simplify, when speaking of node-orgin or a node-partial, a session
-number (a hash assigned by code in session.c plus an appended index),
-is refered to as a session, while when speaking of one or more hmaps,
-a session number is refered to as a name.  This distinguishes for
-example a group's session (the session number of the partial the group
-resides in) from a group's groupmap name (the groupmap hmap itself
-or the session number of the groupmap).  Any node itself uses an index
-of 0 after the session number hash part, while an hmap uses a positive
-whole number after the session number hash part of the node it is
-located in.
 
 
 @node GNU Free Documentation License

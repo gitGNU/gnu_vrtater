@@ -70,10 +70,9 @@ extend_hmaps(select_t *sel)
 }
 
 /* Given groupmap refrenced in selectf_a, add keymaps refrenced in selectf_b to
-   the dialog based group whose ptlgrp_t member map_name is equal to groupmap
-   name.  keymaps must have the same hash part in their session name as the
-   groupmap for this to succeed, also indicating that they are in the same
-   partial. */
+   the dialog based group whose ptlgrp member mapname is equal to groupmap
+   name.  note: keymaps must have the same hash part in their session name as
+   the groupmap for this to succeed or they are not in the same node. */
 int
 add_dialog_members(select_t *sel)
 {
@@ -485,7 +484,7 @@ hmapwrapf(select_t *sel, int options, char *filename, int **output)
   vf_t *v;
   ssize_t nwritten = 0;
   int fileszmax_fortesting = 0x7ffff; /* bogus yet safe guess for now */
-  int mapstruct = sizeof(hmapf_t) - sizeof(options_t *) - sizeof(vf_t *) - sizeof(int *) - (2 * sizeof(hmapf_t *)) - sizeof(drawlist_t *);
+  int mapstruct = sizeof(hmapf_t) - sizeof(struct params *) - sizeof(vf_t *) - sizeof(int *) - (2 * sizeof(hmapf_t *)) - sizeof(drawlist_t *);
 
   /* Allocate outbuf of bufsz bytes for file write or ip network send. */
   maps = sel->seta;

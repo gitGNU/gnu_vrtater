@@ -29,10 +29,10 @@ find_partial(session_t *session)
 
 /* Copy any refrences for partial in list to allocation referenced by maps. */
 int
-select_partial_set(ptlmaps_list_t *list, hmapf_t **maps)
+select_partial_set(struct ptlmap_list *list, hmapf_t **maps)
 {
   int i;
-  ptlmap_t *listed;
+  struct ptlmap *listed;
   hmapf_t **map;
 
   map = maps;
@@ -47,13 +47,13 @@ select_partial_set(ptlmaps_list_t *list, hmapf_t **maps)
 
 /* Create a linked list construct for session returning reference to an empty
    list of hmaps residing therein. */
-ptlmaps_list_t *
-mk_ptlmaps_list(session_t *session)
+struct ptlmap_list *
+mk_ptlmap_list(session_t *session)
 {
-  ptlmaps_list_t *list = NULL;
-  if ((list = (ptlmaps_list_t *) malloc(sizeof(ptlmaps_list_t))) == NULL) {
+  struct ptlmap_list *list = NULL;
+  if ((list = (struct ptlmap_list *) malloc(sizeof(struct ptlmap_list))) == NULL) {
     __builtin_fprintf(stderr, "vrtater:%s:%d: "
-      "Error: Could not malloc for partial_maps_list\n",
+      "Error: Could not malloc for ptlmap_list\n",
       __FILE__, __LINE__);
     abort();
   }
@@ -67,7 +67,7 @@ mk_ptlmaps_list(session_t *session)
 
 /* Remove list and all of it's element references. */
 void
-rm_ptlmaps_list(ptlmaps_list_t *list)
+rm_ptlmap_list(struct ptlmap_list *list)
 {
   while (list->last != NULL)
     subtract_ptlmap(list, list->last->map);
@@ -78,14 +78,14 @@ rm_ptlmaps_list(ptlmaps_list_t *list)
    list.  Set VRT_MASK_PARTIAL.  Also set VRT_MASK_PARTIAL_MODS informing code
    in session.c that this map should be sync'd with remote nodes.  Return
    reference to element listed. */
-ptlmap_t *
-add_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
+struct ptlmap *
+add_ptlmap(struct ptlmap_list *list, hmapf_t *map)
 {
-  ptlmap_t *listed = NULL;
+  struct ptlmap *listed = NULL;
 
-  if ((listed = (ptlmap_t *) malloc(sizeof(ptlmap_t))) == NULL) {
+  if ((listed = (struct ptlmap *) malloc(sizeof(struct ptlmap))) == NULL) {
     __builtin_fprintf(stderr, "vrtater:%s:%d: "
-      "Error: Could not malloc for partial_maps_list entry\n",
+      "Error: Could not malloc for ptlmap_list entry\n",
       __FILE__, __LINE__);
     abort();
   }
@@ -102,9 +102,9 @@ add_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
 /* Subtract linked list element referencing hmap map from list.  Unset
    VRT_MASK_PARTIAL.  */
 void
-subtract_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
+subtract_ptlmap(struct ptlmap_list *list, hmapf_t *map)
 {
-  ptlmap_t *current, *passed;
+  struct ptlmap *current, *passed;
 
   current = list->last; /* start at end */
   passed = list->last; /* keep a back reference */
@@ -129,12 +129,12 @@ subtract_ptlmap(ptlmaps_list_t *list, hmapf_t *map)
   list->count--;
 }
 
-/* Try to find the linked list element for sign_in in list.  Return reference to
-   element or NULL if not found. */
-ptlmbr_t *
-find_member(ptlmbrs_list_t *list, session_t *sign_in)
+/* Try to find the linked list element for sign_in in list.  Return reference
+   to element or NULL if not found. */
+struct modlg *
+find_member(struct modlg_list *list, session_t *sign_in)
 {
-  ptlmbr_t *current, *passed;
+  struct modlg *current, *passed;
 
   current = list->last;
   passed = list->last;
@@ -142,12 +142,9 @@ find_member(ptlmbrs_list_t *list, session_t *sign_in)
     if (current != NULL) {
       if (match_mapname(&(current->sign_in), sign_in))
       {
-        __builtin_printf("  member with sign-in "
-          "(%x %x %x) %i was found\n",
-          current->sign_in.hash.h,
-          current->sign_in.hash.m,
-          current->sign_in.hash.l,
-          current->sign_in.seq);
+        __builtin_printf("  member with sign-in (%x %x %x) %i was found\n",
+          current->sign_in.hash.h, current->sign_in.hash.m,
+          current->sign_in.hash.l, current->sign_in.seq);
         return current;
       }
       passed = current;
@@ -157,51 +154,50 @@ find_member(ptlmbrs_list_t *list, session_t *sign_in)
   }
 }
 
-/* Create a linked list construct for group returning reference to an empty list
-   of members residing therein. */
-ptlmbrs_list_t *
-mk_ptlmbrs_list(ptlgrp_t *group)
+/* Create a linked list construct for group returning reference to an empty
+   list of members residing therein. */
+struct modlg_list *
+mk_modlg_list(struct ptlgrp *group)
 {
-  ptlmbrs_list_t *list = NULL;
-  if ((list = (ptlmbrs_list_t *) malloc(sizeof(ptlmbrs_list_t))) == NULL) {
+  struct modlg_list *list = NULL;
+  if ((list = (struct modlg_list *) malloc(sizeof(struct modlg_list))) == NULL) {
     __builtin_fprintf(stderr, "vrtater:%s:%d: "
-      "Error: Could not malloc for partial_mbrs_list\n",
+      "Error: Could not malloc for modlg_list\n",
       __FILE__, __LINE__);
     abort();
   }
   list->last = NULL;
   list->count = 0;
 
-  group->members = list;
+  group->holdmaps = list;
 
   return list;
 }
 
 /* Remove list and all of it's elements and element references from memory. */
 void
-rm_ptlmbrs_list(ptlmbrs_list_t *list)
+rm_modlg_list(struct modlg_list *list)
 {
   while (list->last != NULL)
-    subtract_ptlmbr(list, list->last);
+    subtract_modlg(list, list->last);
   free(list);
 }
 
-/* Add an element reference to member in the linked list construct list.  Return
+/* Add an element reference to sign_in in linked list construct list.  Return
    reference to element listed. */
-ptlmbr_t *
-add_ptlmbr(ptlmbrs_list_t *list, session_t *sign_in)
+struct modlg *
+add_modlg(struct modlg_list *list, session_t *sign_in)
 {
-  ptlmbr_t *listed = NULL;
+  struct modlg *listed = NULL;
 
-  if ((listed = (ptlmbr_t *) malloc(sizeof(ptlmbr_t))) == NULL) {
+  if ((listed = (struct modlg *) malloc(sizeof(struct modlg))) == NULL) {
     __builtin_fprintf(stderr, "vrtater:%s:%d: "
-      "Error: Could not malloc for partial_mbrs_list entry\n",
+      "Error: Could not malloc for modlg_list entry\n",
       __FILE__, __LINE__);
     abort();
   }
   __builtin_printf("  member with sign_in (%x %x %x) %i added...\n",
-    sign_in->hash.h, sign_in->hash.m, sign_in->hash.l,
-    sign_in->seq);
+    sign_in->hash.h, sign_in->hash.m, sign_in->hash.l, sign_in->seq);
   listed->precursor = list->last;
   list->last = listed;
   list->count++;
@@ -213,9 +209,9 @@ add_ptlmbr(ptlmbrs_list_t *list, session_t *sign_in)
 
 /* Subtract linked list element referenced by member. */
 void
-subtract_ptlmbr(ptlmbrs_list_t *list, ptlmbr_t *member)
+subtract_modlg(struct modlg_list *list, struct modlg *member)
 {
-  ptlmbr_t *current, *passed;
+  struct modlg *current, *passed;
 
   current = list->last;
   passed = list->last;
@@ -242,24 +238,21 @@ subtract_ptlmbr(ptlmbrs_list_t *list, ptlmbr_t *member)
   list->count--;
 }
 
-/* Try to find the linked list element for group with grpmap_name in list.
+/* Try to find the linked list element for group groupmap with mapname in list.
    Return reference to element or NULL if not found. */
-ptlgrp_t *
-find_group(ptlgrps_list_t *list, session_t *grpmap_name)
+struct ptlgrp *
+find_group(struct ptlgrps_list *list, session_t *mapname)
 {
-  ptlgrp_t *current, *passed;
+  struct ptlgrp *current, *passed;
 
   current = list->last;
   passed = list->last;
   while (1) {
     if (current != NULL) {
-      if (match_mapname(&(current->map_name), grpmap_name)) {
-        __builtin_printf(" group with map (%x %x %x) "
-          "%i was added/found\n",
-          current->map_name.hash.h,
-          current->map_name.hash.m,
-          current->map_name.hash.l,
-          current->map_name.seq);
+      if (match_mapname(&(current->groupmap), mapname)) {
+        __builtin_printf(" group with map (%x %x %x) %i was added/found\n",
+          current->groupmap.hash.h, current->groupmap.hash.m,
+          current->groupmap.hash.l, current->groupmap.seq);
         return current;
       }
       passed = current;
@@ -277,20 +270,20 @@ find_group(ptlgrps_list_t *list, session_t *grpmap_name)
    become maintained with most recent keynames for keymaps.  This also applies
    to each entry from node_orgin into any partial. */
 void
-sync_groups(ptlgrps_list_t *list, session_t *last, session_t *new)
+sync_groups(struct ptlgrps_list *list, session_t *last, session_t *new)
 {
   ;
 }
 
 /* Create a linked list construct for session returning reference to an empty
    list of groups residing therein. */
-ptlgrps_list_t *
+struct ptlgrps_list *
 mk_ptlgrps_list(session_t *session)
 {
-  ptlgrps_list_t *list = NULL;
-  if ((list = (ptlgrps_list_t *) malloc(sizeof(ptlgrps_list_t))) == NULL) {
+  struct ptlgrps_list *list = NULL;
+  if ((list = (struct ptlgrps_list *) malloc(sizeof(struct ptlgrps_list))) == NULL) {
     __builtin_fprintf(stderr, "vrtater:%s:%d: "
-      "Error: Could not malloc for partial_grps_list\n",
+      "Error: Could not malloc for ptlgrps_list\n",
       __FILE__, __LINE__);
     abort();
   }
@@ -304,7 +297,7 @@ mk_ptlgrps_list(session_t *session)
 
 /* Remove list and all of it's elements and element references from memory. */
 void
-rm_ptlgrps_list(ptlgrps_list_t *list)
+rm_ptlgrps_list(struct ptlgrps_list *list)
 {
   if (list) {
     while (list->last != NULL) {
@@ -314,16 +307,16 @@ rm_ptlgrps_list(ptlgrps_list_t *list)
   }
 }
 
-/* Add an element reference to partial group in the linked list construct list.
-   Return reference to element listed. */
-ptlgrp_t *
-add_ptlgrp(ptlgrps_list_t *list, session_t *groupmap_name)
+/* Add an element reference to partial group groupmap with mapname in the
+   linked list construct list.  Return reference to element listed. */
+struct ptlgrp *
+add_ptlgrp(struct ptlgrps_list *list, session_t *mapname)
 {
-  ptlgrp_t *listed = NULL;
+  struct ptlgrp *listed = NULL;
 
-  if ((listed = (ptlgrp_t *) malloc(sizeof(ptlgrp_t))) == NULL) {
+  if ((listed = (struct ptlgrp *) malloc(sizeof(struct ptlgrp))) == NULL) {
     __builtin_fprintf(stderr, "vrtater:%s:%d: "
-      "Error: Could not malloc for partial_grps_list entry\n",
+      "Error: Could not malloc for ptlgrps_list entry\n",
       __FILE__, __LINE__);
     abort();
   }
@@ -331,41 +324,39 @@ add_ptlgrp(ptlgrps_list_t *list, session_t *groupmap_name)
   list->last = listed;
   list->count++;
 
-  cp_mapname(groupmap_name, &(listed->map_name));
-  listed->members = mk_ptlmbrs_list(listed);
+  cp_mapname(mapname, &(listed->groupmap));
+  listed->holdmaps = mk_modlg_list(listed);
   __builtin_printf("  group with groupmap (%x %x %x) %i added...\n",
-    groupmap_name->hash.h, groupmap_name->hash.m,
-    groupmap_name->hash.l, groupmap_name->seq);
+    mapname->hash.h, mapname->hash.m, mapname->hash.l, mapname->seq);
 
   return listed;
 }
 
 /* Subtract linked list element referenced by group. */
 void
-subtract_ptlgrp(ptlgrps_list_t *list, ptlgrp_t *group)
+subtract_ptlgrp(struct ptlgrps_list *list, struct ptlgrp *group)
 {
-  ptlgrp_t *current, *passed;
+  struct ptlgrp *current, *passed;
 
   __builtin_printf(" message for group with groupmap (%x %x %x) %i\n",
-    group->map_name.hash.h, group->map_name.hash.m,
-    group->map_name.hash.l, group->map_name.seq);
+    group->groupmap.hash.h, group->groupmap.hash.m,
+    group->groupmap.hash.l, group->groupmap.seq);
 
   current = list->last;
   passed = list->last;
   while (1) {
     if (current != NULL) {
-      if (match_mapname(&(current->map_name), &(group->map_name)))
+      if (match_mapname(&(current->groupmap), &(group->groupmap)))
         break;
       passed = current;
       current = current->precursor;
     } else
       return;
   }
-  rm_ptlmbrs_list(current->members);
+  rm_modlg_list(current->holdmaps);
   __builtin_printf("  group with groupmap (%x %x %x) %i abandon this "
-    "partial...\n", current->map_name.hash.h,
-    current->map_name.hash.m, current->map_name.hash.l,
-    current->map_name.seq);
+    "partial...\n", current->groupmap.hash.h, current->groupmap.hash.m,
+    current->groupmap.hash.l, current->groupmap.seq);
   if (current == passed) {
     if (!current->precursor)
       list->last = NULL;

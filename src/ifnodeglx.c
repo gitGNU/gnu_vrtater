@@ -88,9 +88,9 @@ void diag_peer_key_h(void);
 void diag_message(void);
 
 /* Testing. */
-struct partial *test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, complextimate_t *cmplxt);
+struct partial *test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, struct complextimate *cmplxt);
 int test_continue_partial(struct partial *node, char *url, struct ptlrepute_list *new, struct ptlrepute *repute, session_t *session_here, hmapf_t *keymap, hmapf_t *holdmap, unsigned int tl_cmplxt);
-struct partial *test_mk_flexible_node(char *seedfiles, hmapf_t **, complextimate_t *);
+struct partial *test_mk_flexible_node(char *seedfiles, hmapf_t **, struct complextimate *);
 void test_detach_all_partials(void);
 void test_continue_repute(hmapf_t *);
 
@@ -882,7 +882,7 @@ diag_peer_key_f(void)
   char url_f[] = "protocol://192.168.0.2/nothernode/"; /* write index */
   char oneliner_f[] = "nothernode"; /* 79 chars max */
   session_t null = { { 0, 0, 0 }, 0 };
-  complextimate_t cmplxt = { 0, 0, 0 };
+  struct complextimate cmplxt = { 0, 0, 0 };
   char seedfiles[] = "";
   hmapf_t *map, **maps = (hmapf_t **) selectf_a;
   select_t t = { 0, 1, maps, 0, NULL};
@@ -945,7 +945,7 @@ diag_peer_key_g(void)
   session_t session_peer = { { 0, 0, 0xc0de }, 0 };
   session_t null = { { 0, 0, 0 }, 0 };
   struct session_desc *desc_here;
-  complextimate_t cmplxt_here = { 0, 0, 0 };
+  struct complextimate cmplxt_here = { 0, 0, 0 };
   hmapf_t *nother_hold;
   vf_t portal, d = { 1., 0., 0., 1. };
   select_t sel = {  0, 0, (hmapf_t **) selectf_a, 0, NULL };
@@ -1003,7 +1003,7 @@ diag_peer_key_h(void)
   /* Simulate phase-b vrtlogin data received by code in session.c.  Imediately
      after data is sent a password may be requested.  note: flexible side here
      represented assumed to have reputation for avatar555 whom is vrtlogging. */
-  complextimate_t cmplxt = { 1, 555, 3 }; /* avatar555's hmaps */
+  struct complextimate cmplxt = { 1, 555, 3 }; /* avatar555's hmaps */
   session_t null = { { 0, 0, 0 }, 0 };
   int rval;
 
@@ -1087,7 +1087,7 @@ diag_peer_key_h(void)
    referenced by maps.  For now mk_partial can only receive a non compounded
    hmap. */
 struct partial *
-test_mk_flexible_node(char *seedfiles, hmapf_t **maps, complextimate_t *cmplxt)
+test_mk_flexible_node(char *seedfiles, hmapf_t **maps, struct complextimate *cmplxt)
 {
   struct partial *node = NULL;
   session_t session;
@@ -1113,7 +1113,7 @@ test_continue_repute(hmapf_t *keymap)
    allowing for cmplxt at url.  If successfull, continuing session receives
    continuity apon receiving nodemap. */
 struct partial *
-test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, complextimate_t *cmplxt)
+test_continuity(char *url, char *oneliner, session_t *thru, hmapf_t **maps, struct complextimate *cmplxt)
 {
   struct partial *node = NULL;
   session_t session;

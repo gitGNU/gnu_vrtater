@@ -87,7 +87,7 @@ node_continuity(char *url, char *oneliner, session_t *session_here, session_t *s
   struct session_desc *desc_here = NULL;
   session_t null = { { 0, 0, 0 }, 0 };
   session_t session_peer = { { 0, 0, 0 }, 0 };
-  complextimate_t cmplxt_peer, cmplxt_here = { 0, 0, 0 };
+  struct complextimate cmplxt_peer, cmplxt_here = { 0, 0, 0 };
   hmapf_t *nodemap;
   hmapf_t **sela = (hmapf_t **) selectf_a;
   hmapf_t **selb = (hmapf_t **) selectf_b;
@@ -303,7 +303,7 @@ answer_vrtlogin(session_t *session_peer, session_t *session_thru, char *url)
 {
   struct session_desc *desc_here = NULL;
   struct session_desc *desc_peer = NULL;
-  complextimate_t cmplxt_peer = { 0, 0, 0 }; /* unknown until sync */
+  struct complextimate cmplxt_peer = { 0, 0, 0 }; /* unknown until sync */
 
   /* Simulate receiving vrtlogin phase-a. */
   __builtin_printf("\n ...it seems like nanoseconds ago\nRequest from "
@@ -764,7 +764,7 @@ rm_session_desc_list(void)
    node in node-orgin.  For now the flexible's session would be used for these
    maps.  Later session with no implied node could be thru flexible session. */
 struct session_desc *
-add_session_desc(session_t *session, session_t *peer, session_t *thru, int level, char *url, char *oneliner, complextimate_t *cmplxt, hmapf_t *nodemap, struct ptlrepute_list *reputed)
+add_session_desc(session_t *session, session_t *peer, session_t *thru, int level, char *url, char *oneliner, struct complextimate *cmplxt, hmapf_t *nodemap, struct ptlrepute_list *reputed)
 {
   struct session_desc *listed = NULL;
 

@@ -2,7 +2,7 @@
 # Copyright (C) 2013 J. A. Green <green8@sdf-eu.org>
 # license: GNU GPL v3, see COPYING, otherwise see vrtater.c
 
-AC_INIT([vrtater], [0.3.65], [green8@sdf-eu.org])
+AC_INIT([vrtater], [0.5.3], [green8@sdf-eu.org])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_PROG_CC
 AC_CONFIG_HEADERS([config.h])

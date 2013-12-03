@@ -151,7 +151,7 @@ init_vohspace(void)
     p->attribs.kg = 0;
     p->attribs.kfactorm = 1;
     p->attribs.kfactord = 1;
-    p->options = NULL;
+    p->params = NULL;
     p->envelope.geom = VRT_BOUND_NONE;
     p->envelope.vsz.x = 0;
     p->envelope.vsz.z = 0;
@@ -255,7 +255,7 @@ detach_hmapf(hmapf_t *p)
     p->attribs.kg = 0;
     p->attribs.kfactorm = 1;
     p->attribs.kfactord = 1;
-    p->options = NULL;
+    p->params = NULL;
     p->envelope.geom = VRT_BOUND_NONE;
     p->envelope.vsz.x = 0;
     p->envelope.vsz.z = 0;

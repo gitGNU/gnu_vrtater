@@ -17,33 +17,31 @@
    partial.  Meanwhile the session_t loginkeys for syncronizing nodes remain
    highly unique, providing an authorship mechanism when hmaps are timestamped
    and flow out of partial flexible nodes. */
-struct hash_s {
+struct hashpart {
   int h;
   int m;
   int l;
 };
 
-struct session_s {
-  struct hash_s hash;
+struct nodekey {
+  struct hashpart hash;
   int seq;
 };
-typedef struct session_s session_t;
+typedef struct nodekey session_t;
 
-struct complextimate_s {
+struct complextimate {
   unsigned int hmap_count;
   unsigned int tl_vdata;
   unsigned int tl_dialog;
 };
-typedef struct complextimate_s complextimate_t;
 
-struct options_s {
+struct parameters {
   int hinged; /* type also therein */
   int elastic;
   int hardness;
 };
-typedef struct options_s options_t;
 
-struct attribs_s {
+struct attributes {
   int sign;
   int mode;
   int balance_filter; /* vob dur-ability vs. balance_criteria */
@@ -52,7 +50,7 @@ struct attribs_s {
   int kfactord; /* 1 or 1000^exponent vs. distance */
 };
 
-enum { /* attribs_s sign, tested at least once every state increment */
+enum { /* attributes sign, tested at least once every state increment */
   VRT_ORDINAL_RECYCLE, /* send to recycler */
 #define VRT_MASK_RECYCLE (1 << VRT_ORDINAL_RECYCLE)
   VRT_ORDINAL_BUFFER, /* stack in vobspace /w attribute indicator */
@@ -83,7 +81,7 @@ enum { /* attribs_s sign, tested at least once every state increment */
 #define VRT_MASK_KEYMAP (1 << VRT_ORDINAL_KEYMAP)
 };
 
-enum { /* attribs_s mode, tested in context based functions */
+enum { /* attributes mode, tested in context based functions */
   VRT_ORDINAL_ATTACHED,
 #define VRT_MASK_ATTACHED (1 << VRT_ORDINAL_ATTACHED)
   VRT_ORDINAL_BALANCE_FILTER,
@@ -118,16 +116,18 @@ enum { /* attribs_s mode, tested in context based functions */
 #define VRT_MASK_NODEMAP (1 << VRT_ORDINAL_NODEMAP)
   VRT_ORDINAL_GROUPMAP, /* for joining and maintaining groups */
 #define VRT_MASK_GROUPMAP (1 << VRT_ORDINAL_GROUPMAP)
-  VRT_ORDINAL_SYNC_VERTICES /* keep identical vertices together */
+  VRT_ORDINAL_SYNC_VERTICES, /* keep identical vertices together */
 #define VRT_MASK_SYNC_VERTICES (1 << VRT_ORDINAL_SYNC_VERTICES)
+  VRT_ORDINAL_POP /* if a keymap, pop holdkey when logging out */
+#define VRT_MASK_POP (1 << VRT_ORDINAL_POP)
 };
 
-struct envelope_s {
+struct bound {
   int geom;
   vf_t vsz;
 };
 
-enum { /* envelope_s geom */
+enum { /* bound geom */
   VRT_BOUND_NONE,
   VRT_BOUND_SPHERE,
   VRT_BOUND_CYLINDER,
@@ -135,12 +135,12 @@ enum { /* envelope_s geom */
   VRT_BOUND_CUBE
 };
 
-struct draw_s {
+struct drawing {
   int geom; /* so-far, VRT_DRAWGEOM_TRIANGLES is supported */
   /* add options as per stock/renderer support */
 };
 
-enum { /* draw_s geom.  note precedence follows n edges */
+enum { /* draw geom.  note precedence follows n edges */
   VRT_DRAWGEOM_NONE,
   VRT_DRAWGEOM_POINTS,
   VRT_DRAWGEOM_LINES,
@@ -163,10 +163,10 @@ struct hmapf_s {
   vf_t vpre; /* axis of mass distribution vs. vaxi precession */
   float ang_spd; /* (r/s), angular speed about rotational axes */
   float ang_dpl; /* (r), angular displacement about rotational axes */
-  struct attribs_s attribs; /* other data hmap carries */
-  options_t *options; /* optional data hmap keeps locally */
-  struct envelope_s envelope; /* bounding volume */
-  struct draw_s draw; /* format vs. stock/display support */
+  struct attributes attribs; /* other data hmap carries */
+  struct parameters *params; /* parameter data hmap keeps locally */
+  struct bound envelope; /* bounding volume */
+  struct drawing draw; /* format vs. stock/display support */
   int vmap_total; /* total hmap vertices of vf_t */
   vf_t *vmap;
   int dialog_len; /* as per strlen(), does not count trailing '\0' */

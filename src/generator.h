@@ -17,16 +17,15 @@
    divisions of timer data.  These also effect flexible node dialog messages.
    balance_criteria is still in the works, and may be proposed as
    some hybrid of bits vs. a quantity once needed. */
-struct genopts_s {
+struct genopts {
   int balance_criteria; /* balance_filter options */
   int vobspace_criteria; /* tested context options */
   int why; /* dialog*.c issue */
   int what; /* for why */
   double when; /* for what */
 };
-typedef struct genopts_s genopts_t;
 
-/* genopts_t vobspace_criteria.  Effective while held high, some of these
+/* genopts vobspace_criteria.  Effective while held high, some of these
    where noted, will be cleared after use. */
 enum {
   VRT_ORDINAL_SHUTDOWN,
@@ -36,11 +35,11 @@ enum {
 };
 
 struct session_desc *generate_node_orgin(void);
-unsigned int calc_cmplxt(complextimate_t *cmplxt);
+unsigned int calc_cmplxt(struct complextimate *cmplxt);
 void regenerate_scene(vf_t *);
 void mk_partial_list(void);
 void rm_partial_list(void);
-struct partial *mk_partial(session_t *, hmapf_t **, unsigned int count, complextimate_t *cmplxt);
+struct partial *mk_partial(session_t *, hmapf_t **, unsigned int count, struct complextimate *cmplxt);
 void rm_partial(struct partial *);
 void close_vobspace(double time_till_closed);
 void close_node_orgin(void);
@@ -55,6 +54,6 @@ void diag_generator_key_h(void);
 void generator_join_hmaps(void);
 void generator_intersection(void);
 /* Tests. */
-void test_add_maps(unsigned int n, int mapstock, session_t *, vf_t *portal, select_t *, complextimate_t *);
+void test_add_maps(unsigned int n, int mapstock, session_t *, vf_t *portal, select_t *, struct complextimate *);
 
 #endif /* GENERATOR_H */

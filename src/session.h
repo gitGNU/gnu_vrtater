@@ -18,7 +18,7 @@ struct session_desc {
 	char oneliner[80];
 	hmapf_t *nodemap; /* for flexible partial_t, copy of nodemap */
 	struct ptlrepute_list *reputed; /* for flexible */
-	complextimate_t cmplxt; /* at arrival metaloc */
+	struct complextimate cmplxt; /* at arrival metaloc */
 	struct session_desc *precursor;
 };
 
@@ -73,7 +73,7 @@ session_t *receive_map(select_t *sel);
 struct session_desc *find_session(session_t *);
 struct session_desc *find_url(char *oneliner);
 void mk_session_desc_list(void);
-struct session_desc *add_session_desc(session_t *, session_t *peer, session_t *thru, int level, char *url, char *oneliner, complextimate_t *, hmapf_t *nodemap, struct ptlrepute_list *list);
+struct session_desc *add_session_desc(session_t *, session_t *peer, session_t *thru, int level, char *url, char *oneliner, struct complextimate *, hmapf_t *nodemap, struct ptlrepute_list *list);
 int close_session(struct session_desc *);
 int close_all_sessions(void);
 int reset_sessions(void);

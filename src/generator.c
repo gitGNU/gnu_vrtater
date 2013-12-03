@@ -22,7 +22,7 @@
 
 unsigned int vrt_hmaps_max; /* extern */
 session_t node_orgin = { { 0, 0, 0 }, 0 };
-complextimate_t *orgin_cmplxt;
+struct complextimate *orgin_cmplxt;
 
 void init_selection_buffers(void);
 void generate_orgin_cmplxt(void);
@@ -30,8 +30,8 @@ void generate_vohspace(void);
 void callback_close_vobspace(void);
 
 /* Tests. */
-ptlgrp_t *test_add_group(session_t *);
-ptlmbr_t *test_add_member(session_t *, session_t *);
+struct ptlgrp *test_add_group(session_t *);
+struct modlg *test_add_member(session_t *, session_t *);
 void test_select_partial_set(void);
 void test_send_partial_changes(void);
 void test_cphmap(hmapf_t *, hmapf_t *);
@@ -90,7 +90,7 @@ generate_node_orgin(void)
 void
 generate_orgin_cmplxt(void)
 {
-  if ((orgin_cmplxt = (complextimate_t *) malloc(sizeof(complextimate_t))) == NULL) {
+  if ((orgin_cmplxt = (struct complextimate *) malloc(sizeof(struct complextimate))) == NULL) {
     __builtin_fprintf(stderr,  "vrtater:%s:%d: "
       "Error: Could not malloc for orgin_complextimate\n",
       __FILE__, __LINE__);
@@ -103,7 +103,7 @@ generate_orgin_cmplxt(void)
 
 /* Return total size of all hmaps in cmplxt using sizeof returns as a basis. */
 unsigned int
-calc_cmplxt(complextimate_t *cmplxt)
+calc_cmplxt(struct complextimate *cmplxt)
 {
   return sizeof(hmapf_t) * cmplxt->hmap_count + sizeof(int) * (cmplxt->tl_vdata + cmplxt->tl_dialog);
 }
@@ -175,8 +175,7 @@ regenerate_scene(vf_t *vpt)
   if (!recurrant++) {
     map = (hmapf_t **) selectf_a;
     *map = p_hmapf(15);
-    char chars[] = "dialog: GNU Free Software vrtater pre-alpha "
-      "on Savannah...\n\n";
+    char chars[] = "dialog: vrtater (pre-alpha) is GNU Free Software...\n";
     add_dialog(*map, chars, 0, 0);
     (*map)->attribs.sign |= (VRT_MASK_DIALOG | VRT_MASK_DIALOG_MODS);
     select_t sel = { 0, 1, map, 0, NULL };
@@ -234,7 +233,7 @@ rm_partial_list(void)
    cumulatively stored alongside node-orgin.  Also, for now any maps following
    nodemap are ignored for simplicity. */
 struct partial *
-mk_partial(session_t *session, hmapf_t **maps, unsigned int count, complextimate_t *cmplxt)
+mk_partial(session_t *session, hmapf_t **maps, unsigned int count, struct complextimate *cmplxt)
 {
   struct partial *listed = NULL;
 
@@ -257,7 +256,7 @@ mk_partial(session_t *session, hmapf_t **maps, unsigned int count, complextimate
     listed->ptlgrps = mk_ptlgrps_list(&(listed->session));
   }
   listed->reputed = mk_ptlrepute_list(&(listed->session));
-  listed->ptlmaps = mk_ptlmaps_list(&(listed->session));
+  listed->ptlmaps = mk_ptlmap_list(&(listed->session));
   listed->nodemap = *maps;
   listed->nodemap->attribs.mode |= VRT_MASK_NODEMAP;
   cmplxt->hmap_count += count;
@@ -308,7 +307,7 @@ rm_partial(struct partial *ptl)
   rm_ptlgrps_list(ptl->ptlgrps);
   rm_ptlrepute_list(ptl->reputed);
   (&sel)->counta = select_partial_set(ptl->ptlmaps, (&sel)->seta);
-  rm_ptlmaps_list(ptl->ptlmaps);
+  rm_ptlmap_list(ptl->ptlmaps);
   if (current == passed) {
     if (!current->precursor)
       partials->last = NULL;
@@ -451,14 +450,15 @@ diag_generator_key_h(void)
 #endif
 }
 
-/* Diagnostic test: Add a group to local flexible partial. */
-ptlgrp_t *
-test_add_group(session_t *groupmap_name)
+/* Diagnostic test: Add a group with groupmap having mapname to local flexible
+   partial. */
+struct ptlgrp *
+test_add_group(session_t *mapname)
 {
   struct partial *ptl;
   session_t session;
 
-  cp_session(groupmap_name, &session);
+  cp_session(mapname, &session);
   if ((ptl = find_partial(&session)) == NULL) {
     __builtin_fprintf(stderr, "vrtater:%s:%d: "
       "Error: test_add_group\n",
@@ -466,41 +466,37 @@ test_add_group(session_t *groupmap_name)
     return NULL;
   }
   __builtin_printf(" adding group in partial (%x %x %x) vs. groupmap "
-    "(%x %x %x) %i\n", (&ptl->session)->hash.h,
-    (&ptl->session)->hash.m, (&ptl->session)->hash.l,
-    groupmap_name->hash.h, groupmap_name->hash.m,
-    groupmap_name->hash.l, groupmap_name->seq);
+    "(%x %x %x) %i\n", (&ptl->session)->hash.h, (&ptl->session)->hash.m,
+    (&ptl->session)->hash.l, mapname->hash.h, mapname->hash.m, mapname->hash.l,
+    mapname->seq);
 
-  return add_ptlgrp(ptl->ptlgrps, groupmap_name);
+  return add_ptlgrp(ptl->ptlgrps, mapname);
 }
 
-/* Diagnostic test: Add a member to locally hosted group. */
-ptlmbr_t *
-test_add_member(session_t *sign_in, session_t *groupmap_name)
+/* Diagnostic test: Add a member to locally hosted group mapname. */
+struct modlg *
+test_add_member(session_t *sign_in, session_t *mapname)
 {
   struct partial *ptl;
   session_t session;
-  ptlgrp_t *group;
+  struct ptlgrp *group;
 
-  cp_session(&session, groupmap_name);
+  cp_session(&session, mapname);
   if ((ptl = find_partial(&session)) == NULL) {
     __builtin_fprintf(stderr, "vrtater:%s:%d: "
       "Error: session non-existant in test_add_member\n",
       __FILE__, __LINE__);
     abort();
   }
-  if ((group = find_group(ptl->ptlgrps, groupmap_name)) == NULL) {
-    __builtin_printf("Group with groupmap (%x %x %x) %i not "
-      "found\n", groupmap_name->hash.h,
-      groupmap_name->hash.m, groupmap_name->hash.l,
-      groupmap_name->seq);
+  if ((group = find_group(ptl->ptlgrps, mapname)) == NULL) {
+    __builtin_printf("Group with groupmap (%x %x %x) %i not found\n",
+    mapname->hash.h, mapname->hash.m, mapname->hash.l, mapname->seq);
     return NULL;
   }
-  __builtin_printf(" adding member for group with groupmap (%x %x %x) "
-    "%i\n", groupmap_name->hash.h, groupmap_name->hash.m,
-    groupmap_name->hash.l, groupmap_name->seq);
+  __builtin_printf(" adding member for group with groupmap (%x %x %x) %i\n",
+  mapname->hash.h, mapname->hash.m, mapname->hash.l, mapname->seq);
 
-  return add_ptlmbr(group->members, sign_in);
+  return add_modlg(group->holdmaps, sign_in);
 }
 
 /* Diagnostic test: Place first two defined partials in selectf_a. */
@@ -521,7 +517,7 @@ test_select_partial_set(void)
 /* Diagnostic test: Place n test hmaps to node represented by session, adding
    them to complextimate cmplxt, and leaving them selected in selectf_a. */
 void
-test_add_maps(unsigned int n, int mapstock, session_t *session, vf_t *portal, select_t *sel, complextimate_t *cmplxt)
+test_add_maps(unsigned int n, int mapstock, session_t *session, vf_t *portal, select_t *sel, struct complextimate *cmplxt)
 {
   int i;
   struct partial *node;
